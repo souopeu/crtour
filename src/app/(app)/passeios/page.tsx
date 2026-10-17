@@ -45,7 +45,10 @@ export default function PasseiosPage({ searchParams }: PageProps<'/passeios'>) {
     <section className="mx-auto flex max-w-3xl flex-col gap-4">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold tracking-tight">Passeios</h1>
-        <Link href="/passeios/novo" className="inline-flex min-h-12 items-center rounded-full bg-destaque px-6 font-semibold text-destaque-texto">Novo passeio</Link>
+        <div className="flex items-center gap-4">
+          <Link href="/fornecedores" className="text-primaria underline">Fornecedores</Link>
+          <Link href="/passeios/novo" className="inline-flex min-h-12 items-center rounded-full bg-destaque px-6 font-semibold text-destaque-texto">Novo passeio</Link>
+        </div>
       </div>
       <Suspense fallback={<Carregando altura="h-40" />}>
         <Lista searchParams={searchParams} />

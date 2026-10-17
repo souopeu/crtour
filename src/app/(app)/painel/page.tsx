@@ -6,6 +6,8 @@ import { hojeNoBrasil } from '@/lib/formato'
 import { listarMembros, listarNegociacoes } from '@/lib/negociacoes/dados'
 import { rotuloDaEtapa, rotuloDoMotivo } from '@/lib/negociacoes/negociacoes'
 import { buscarMeta, etapasAntesDaPerda } from '@/lib/painel/dados'
+import { margem } from '@/lib/custos/custos'
+import { custosDoMes } from '@/lib/custos/dados'
 import { calcularPainel, lerFiltrosPainel, progressoMeta, rotuloDoMes } from '@/lib/painel/painel'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
 import { Carregando } from '@/components/Carregando'
@@ -63,7 +65,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
   const hoje = hojeNoBrasil()
   // R41: a seller only ever sees her own numbers, whatever the URL says.
   const filtros = ehDono ? lerFiltrosPainel(sp, hoje, membros.map((m) => m.user_id)) : { ...lerFiltrosPainel(sp, hoje, []), responsavel: membro.user_id }
-  const meta = await buscarMeta(filtros.mes)
+  const [meta, doMes] = await Promise.all([buscarMeta(filtros.mes), ehDono ? custosDoMes(filtros.mes) : Promise.resolve(null)])
   const p = calcularPainel(
     negociacoes
       .filter((n) => !filtros.responsavel || n.responsavel_id === filtros.responsavel)
@@ -91,6 +93,13 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
         </div>}
         <button type="submit" className="min-h-12 rounded-full bg-destaque px-6 font-semibold text-destaque-texto">Ver</button>
       </form>
+
+      {doMes && !filtros.responsavel && doMes.saidas > 0 && (() => {
+        // Costs and margin come from departures, not deals: shown even with an empty funnel.
+        const m = margem(doMes.receita, doMes.custos)
+        return <Numero titulo={`Margem das saídas de ${rotulo}`} valor={formatarReais(m.margem)}
+          detalhe={`${doMes.saidas} ${doMes.saidas === 1 ? 'saída' : 'saídas'} · vendido ${formatarReais(m.receita)} · custos ${formatarReais(m.custos)}`} />
+      })()}
 
       {p.vazio ? (
         <p className={cartao}>Ainda não há negociações{filtros.responsavel ? ' deste responsável' : ''}. Crie em <Link href="/funil" className="text-primaria underline">Funil</Link> ou pela ficha de um cliente; o painel se monta sozinho a partir delas.</p>

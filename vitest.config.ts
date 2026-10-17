@@ -29,6 +29,7 @@ export default defineConfig({
         'src/lib/negociacoes/sugestoesDados.ts',
         'src/lib/importacao/dadosReservas.ts',
         'src/lib/comissao/dados.ts',
+        'src/lib/custos/dados.ts',
       ],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },

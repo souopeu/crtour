@@ -12,6 +12,7 @@ import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
 import { excluirSaida, salvarSaida } from '../../passeios/actions'
 import { cancelarReserva } from '../actions'
 import { Carregando } from '@/components/Carregando'
+import { CustosSaida } from '@/components/custos/CustosSaida'
 
 export const metadata = { title: 'Saída' }
 
@@ -147,6 +148,9 @@ async function Conteudo({ params, searchParams }: Pick<PageProps<'/saidas/[id]'>
           />
         </section>
       </div>
+      <Suspense fallback={<Carregando altura="h-40" />}>
+        <CustosSaida saidaId={saida.id} />
+      </Suspense>
     </div>
   )
 }
