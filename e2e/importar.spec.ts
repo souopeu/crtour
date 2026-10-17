@@ -66,7 +66,7 @@ test('import: preview with row errors, import, duplicates, re-import blocked, un
   await expect(page.getByText('Repetidos na planilha').locator('xpath=following-sibling::dd')).toHaveText('1')
 
   await importar.click()
-  await expect(page.getByText('Importação concluída: 2 clientes criados e 1 ignorados.')).toBeVisible()
+  await expect(page.getByText('Importação concluída: 2 clientes criados, 0 campos vazios preenchidos e 0 sugestões para você decidir na ficha do cliente.')).toBeVisible()
   await expect(page.getByText(/2 clientes criados · 1 ignorados/)).toBeVisible()
 
   // Clients and tags are in the list
@@ -140,5 +140,5 @@ test('import button works with a single file checked once, and a changed file mu
   await page.getByRole('button', { name: 'Conferir planilha' }).click()
   await expect(importar).toBeEnabled()
   await importar.click()
-  await expect(page.getByText('Importação concluída: 1 clientes criados e 0 ignorados.')).toBeVisible()
+  await expect(page.getByText('Importação concluída: 1 clientes criados, 0 campos vazios preenchidos e 0 sugestões para você decidir na ficha do cliente.')).toBeVisible()
 })

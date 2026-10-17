@@ -20,15 +20,18 @@ export async function buscarLimites(): Promise<Limites> {
 }
 
 // Pending activities scheduled before `ate` (end of today in Brazil), with the client's contact data.
-export async function listarPendentesAte(ate: string): Promise<PendenteLinha[]> {
+// `somenteDe`: only activities in that person's charge (or unassigned ones they created).
+export async function listarPendentesAte(ate: string, somenteDe?: string): Promise<PendenteLinha[]> {
   const supabase = await criarClienteServidor()
-  const { data } = await supabase
+  let consulta = supabase
     .from('atividades')
     .select('id, tipo, titulo, quando, cliente_id, responsavel_id, motivo')
     .eq('status', 'pendente')
     .lt('quando', ate)
     .order('quando')
     .limit(LIMITE_LISTA)
+  if (somenteDe) consulta = consulta.or(`responsavel_id.eq.${somenteDe},and(responsavel_id.is.null,criado_por.eq.${somenteDe})`)
+  const { data } = await consulta
   const linhas = (data ?? []) as { id: string; tipo: TipoAtividade; titulo: string; quando: string; cliente_id: string; responsavel_id: string | null; motivo: string | null }[]
   if (linhas.length === 0) return []
 

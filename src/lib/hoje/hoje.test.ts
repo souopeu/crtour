@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { diasDesde, estaParada, limiteSemContato, limitesSchema, separarAtividades, textoHaDias } from './hoje'
+import { diasDesde, estaParada, lerVisao, limiteSemContato, limitesSchema, separarAtividades, textoHaDias } from './hoje'
 
 describe('diasDesde', () => {
   test('counts Brazilian calendar days, not 24h blocks', () => {
@@ -74,5 +74,18 @@ describe('limitesSchema', () => {
       expect(campos.diasSemContato?.[0]).toBe('Use um número inteiro de dias, de 1 a 365.')
       expect(campos.diasParada?.[0]).toBe('Use um número inteiro de dias, de 1 a 365.')
     }
+  })
+})
+
+describe('lerVisao', () => {
+  test('seller starts on her own items, owner on everything', () => {
+    expect(lerVisao({}, 'vendedor')).toBe('minhas')
+    expect(lerVisao({}, 'dono')).toBe('todas')
+  })
+  test('explicit choice wins; anything else falls back to the default', () => {
+    expect(lerVisao({ ver: 'todas' }, 'vendedor')).toBe('todas')
+    expect(lerVisao({ ver: 'minhas' }, 'dono')).toBe('minhas')
+    expect(lerVisao({ ver: 'x' }, 'dono')).toBe('todas')
+    expect(lerVisao({ ver: ['minhas'] }, 'dono')).toBe('todas')
   })
 })

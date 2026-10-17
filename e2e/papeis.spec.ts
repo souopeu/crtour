@@ -64,6 +64,23 @@ test('roles: owner invites a seller by link, seller works with limits, owner rem
   await expect(vera.getByRole('link', { name: 'Avisos' })).toHaveCount(0)
   await expect(vera.getByText('Cliente Compartilhada')).toBeVisible() // same agency data
 
+  // Hoje: the seller starts on her own items; an unassigned activity created by the owner shows only under "Todas"
+  await dono.goto(urlCliente)
+  const atividades = dono.getByRole('region', { name: 'Atividades' })
+  await atividades.getByLabel('O que fazer ou o que foi feito').fill('Ligar para a cliente')
+  await atividades.getByLabel('Data e hora').fill(`${new Date(Date.now() - 2 * 86_400_000).toISOString().slice(0, 10)}T10:00`)
+  await atividades.getByLabel('Situação').selectOption('pendente')
+  await atividades.getByRole('button', { name: 'Salvar atividade' }).click()
+  await expect(atividades.getByRole('listitem').filter({ hasText: 'Ligar para a cliente' })).toBeVisible()
+  await dono.goto('/hoje')
+  await expect(dono.getByRole('link', { name: 'Todas' })).toHaveAttribute('aria-current', 'page')
+  await expect(dono.getByRole('region', { name: /Atrasadas/ })).toContainText('Ligar para a cliente')
+  await vera.goto('/hoje')
+  await expect(vera.getByRole('link', { name: 'Só as minhas' })).toHaveAttribute('aria-current', 'page')
+  await expect(vera.getByRole('region', { name: /Atrasadas/ })).toContainText('Nada atrasado.')
+  await vera.getByRole('link', { name: 'Todas' }).click()
+  await expect(vera.getByRole('region', { name: /Atrasadas/ })).toContainText('Ligar para a cliente')
+
   // The same link cannot be used twice
   const ctxOutra = await browser.newContext()
   const outra = await ctxOutra.newPage()

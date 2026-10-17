@@ -6,7 +6,7 @@ import { getMembro } from '@/lib/auth/agencia'
 import { rotuloDoTipo } from '@/lib/atividades/atividades'
 import { formatarDataHora, hojeNoBrasil } from '@/lib/formato'
 import { buscarLimites, listarPendentesAte, listarSemContato, type PendenteLinha } from '@/lib/hoje/dados'
-import { diasDesde, estaParada, limiteSemContato, separarAtividades, textoHaDias } from '@/lib/hoje/hoje'
+import { diasDesde, estaParada, lerVisao, limiteSemContato, separarAtividades, textoHaDias } from '@/lib/hoje/hoje'
 import { listarNegociacoes } from '@/lib/negociacoes/dados'
 import { rotuloDaEtapa } from '@/lib/negociacoes/negociacoes'
 
@@ -43,25 +43,36 @@ function ListaAtividades({ itens, hoje, atrasadas }: { itens: PendenteLinha[]; h
   )
 }
 
-async function Conteudo() {
-  const limites = await buscarLimites() // reads the session first, so "today" is computed per request
+async function Conteudo({ searchParams }: Pick<PageProps<'/hoje'>, 'searchParams'>) {
+  const [limites, membro, sp] = await Promise.all([buscarLimites(), getMembro(), searchParams]) // reads the session first, so "today" is computed per request
+  if (!membro) return null
   const hoje = hojeNoBrasil()
-  const [pendentes, semContato, negociacoes, membro] = await Promise.all([
-    listarPendentesAte(limiteSemContato(hoje, 0)), // start of tomorrow = end of today
+  const visao = lerVisao(sp, membro.papel)
+  const minhas = visao === 'minhas' ? membro.user_id : undefined
+  const [pendentes, semContato, negociacoes] = await Promise.all([
+    listarPendentesAte(limiteSemContato(hoje, 0), minhas), // start of tomorrow = end of today
     listarSemContato(limiteSemContato(hoje, limites.dias_sem_contato)),
     listarNegociacoes(),
-    getMembro(),
   ])
   const { atrasadas, deHoje } = separarAtividades(pendentes, hoje)
   const paradas = negociacoes
-    .filter((n) => estaParada(n.etapa, n.etapa_desde, limites.dias_negociacao_parada, hoje))
+    .filter((n) => estaParada(n.etapa, n.etapa_desde, limites.dias_negociacao_parada, hoje) && (!minhas || n.responsavel_id === minhas))
     .sort((a, b) => Date.parse(a.etapa_desde) - Date.parse(b.etapa_desde))
 
   return (
     <>
+      <nav aria-label="O que mostrar" className="flex flex-wrap gap-2">
+        {([['minhas', 'Só as minhas'], ['todas', 'Todas']] as const).map(([v, rotulo]) => (
+          <Link key={v} href={`/hoje?ver=${v}`} aria-current={visao === v ? 'page' : undefined}
+            className={`inline-flex min-h-11 items-center rounded-full border px-4 ${visao === v ? 'border-primaria bg-primaria text-white' : 'border-linha bg-superficie'}`}>
+            {rotulo}
+          </Link>
+        ))}
+      </nav>
       <p className="text-sm text-tinta-suave">
+        {visao === 'minhas' ? 'Atividades e negociações em que você é a pessoa responsável. Clientes sem contato são da agência toda. ' : ''}
         Sem contato a partir de {limites.dias_sem_contato} dias; negociação parada depois de {limites.dias_negociacao_parada} dias na mesma etapa.{' '}
-        {membro?.papel === 'dono' && <Link href="/configuracoes" className="text-primaria underline">Ajustar</Link>}
+        {membro.papel === 'dono' && <Link href="/configuracoes" className="text-primaria underline">Ajustar</Link>}
       </p>
 
       <section aria-labelledby="atrasadas-titulo" className="flex flex-col gap-2">
@@ -118,12 +129,12 @@ async function Conteudo() {
   )
 }
 
-export default function HojePage() {
+export default function HojePage({ searchParams }: PageProps<'/hoje'>) {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <h1 className="text-2xl font-bold tracking-tight">Hoje</h1>
       <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-64" />}>
-        <Conteudo />
+        <Conteudo searchParams={searchParams} />
       </Suspense>
     </div>
   )

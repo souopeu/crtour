@@ -36,3 +36,12 @@ const dias = z
   .transform(Number)
 
 export const limitesSchema = z.object({ diasSemContato: dias, diasParada: dias })
+
+export type Visao = 'minhas' | 'todas'
+
+// "Só as minhas" vs "Todas" on the Hoje screen: sellers start on their own items, owners on everything.
+export function lerVisao(p: Record<string, string | string[] | undefined>, papel: 'dono' | 'vendedor'): Visao {
+  const v = p.ver
+  if (v === 'minhas' || v === 'todas') return v
+  return papel === 'vendedor' ? 'minhas' : 'todas'
+}
