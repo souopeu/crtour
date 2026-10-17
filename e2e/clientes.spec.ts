@@ -21,7 +21,7 @@ test('creates, reopens and edits a client; other agencies cannot open it', async
   await expect(page.getByText('Digite o nome do cliente.')).toBeVisible()
 
   await page.getByLabel('Nome', { exact: true }).fill('Ana Souza')
-  await page.getByLabel('WhatsApp').fill('(11) 99999-9999')
+  await page.getByRole('textbox', { name: /WhatsApp/ }).fill('(11) 99999-9999')
   await page.getByLabel('E-mail', { exact: true }).fill('ana@mail.com')
   await page.getByLabel('Cidade', { exact: true }).fill('Santos')
   await page.getByLabel('Aniversário').fill('1990-05-17')
@@ -37,7 +37,7 @@ test('creates, reopens and edits a client; other agencies cannot open it', async
 
   await page.reload()
   await expect(page.getByLabel('Nome', { exact: true })).toHaveValue('Ana Souza')
-  await expect(page.getByLabel('WhatsApp')).toHaveValue('5511999999999')
+  await expect(page.getByRole('textbox', { name: /WhatsApp/ })).toHaveValue('5511999999999')
   await expect(page.getByLabel('E-mail', { exact: true })).toHaveValue('ana@mail.com')
   await expect(page.getByLabel('Cidade', { exact: true })).toHaveValue('Santos')
   await expect(page.getByLabel('Aniversário')).toHaveValue('1990-05-17')
@@ -52,7 +52,7 @@ test('creates, reopens and edits a client; other agencies cannot open it', async
   await page.reload()
   await expect(page.getByLabel('Cidade', { exact: true })).toHaveValue('Rio de Janeiro')
 
-  await page.getByLabel('WhatsApp').fill('123')
+  await page.getByRole('textbox', { name: /WhatsApp/ }).fill('123')
   await page.getByRole('button', { name: 'Salvar alterações' }).click()
   await expect(page.getByText('WhatsApp inválido')).toBeVisible()
 
@@ -129,7 +129,7 @@ test('client list: search, filters and empty states', async ({ page }) => {
   async function novo(nome: string, cidade: string, origem: string, whatsapp: string) {
     await page.goto('/clientes/novo')
     await page.getByLabel('Nome', { exact: true }).fill(nome)
-    await page.getByLabel('WhatsApp').fill(whatsapp)
+    await page.getByRole('textbox', { name: /WhatsApp/ }).fill(whatsapp)
     await page.getByLabel('Cidade', { exact: true }).fill(cidade)
     await page.getByLabel('Como conheceu a agência').selectOption(origem)
     await page.getByRole('button', { name: 'Salvar cliente' }).click()
@@ -188,4 +188,47 @@ test('client list: search, filters and empty states', async ({ page }) => {
   // a malformed page number does not break the list
   await page.goto('/?pagina=abc&etiqueta=xyz&origem=tv')
   await expect(page.getByText('Mostrando 1–2 de 2')).toBeVisible()
+})
+
+test('WhatsApp button: link with editable message, warning, and blocked cases', async ({ page }) => {
+  await cadastrar(page, 'zap')
+
+  async function novo(nome: string, whatsapp: string, consentimento: string) {
+    await page.goto('/clientes/novo')
+    await expect(page.getByRole('heading', { name: 'Novo cliente' })).toBeVisible()
+    await page.getByLabel('Nome', { exact: true }).fill(nome)
+    await page.getByRole('textbox', { name: /WhatsApp/ }).fill(whatsapp)
+    await page.getByLabel('Consentimento').selectOption(consentimento)
+    await page.getByRole('button', { name: 'Salvar cliente' }).click()
+    await expect(page.getByRole('heading', { name: nome })).toBeVisible()
+  }
+
+  // Accepted: enabled link with the default message, editable
+  await novo('Ana Souza', '(11) 99999-9999', 'aceitou')
+  const link = page.getByRole('link', { name: 'Chamar no WhatsApp' })
+  await expect(link).toHaveAttribute('href', 'https://wa.me/5511999999999?text=Ol%C3%A1%2C%20Ana!%20Tudo%20bem%3F')
+  await expect(link).toHaveAttribute('target', '_blank')
+  await expect(link).toHaveAttribute('rel', /noopener/)
+  await expect(page.getByRole('note')).toHaveCount(0)
+
+  await page.getByLabel('Mensagem').fill('Temos vaga para Lisboa!')
+  await expect(link).toHaveAttribute('href', 'https://wa.me/5511999999999?text=Temos%20vaga%20para%20Lisboa!')
+
+  // Opting out blocks the button
+  await page.getByLabel('Consentimento').selectOption('pediu_saida')
+  await page.getByRole('button', { name: 'Salvar alterações' }).click()
+  await expect(page.getByText('Alterações salvas.')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Chamar no WhatsApp' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Chamar no WhatsApp' })).toBeDisabled()
+  await expect(page.getByText('pediu para não receber mensagens')).toBeVisible()
+
+  // Unknown consent: enabled, with a warning
+  await novo('Caio Lima', '(21) 98888-7777', 'nao_informado')
+  await expect(page.getByRole('link', { name: 'Chamar no WhatsApp' })).toBeVisible()
+  await expect(page.getByRole('note')).toContainText('Consentimento não informado')
+
+  // No number: disabled with guidance
+  await novo('Dora Reis', '', 'aceitou')
+  await expect(page.getByRole('button', { name: 'Chamar no WhatsApp' })).toBeDisabled()
+  await expect(page.getByText('Cadastre o WhatsApp do cliente')).toBeVisible()
 })

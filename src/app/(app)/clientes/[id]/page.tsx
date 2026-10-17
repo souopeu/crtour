@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 import { AnotacoesCliente } from '@/components/clientes/AnotacoesCliente'
+import { ChamarWhatsapp } from '@/components/clientes/ChamarWhatsapp'
 import { ClienteForm } from '@/components/clientes/ClienteForm'
 import { EtiquetasCliente } from '@/components/clientes/EtiquetasCliente'
 import { getMembro } from '@/lib/auth/agencia'
@@ -29,6 +30,9 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="mb-4 text-2xl font-bold tracking-tight">{cliente.nome}</h1>
+        <div className="mb-8">
+          <ChamarWhatsapp key={`${cliente.nome}|${cliente.whatsapp}|${cliente.consentimento_whatsapp}`} nome={cliente.nome} whatsapp={cliente.whatsapp} consentimento={cliente.consentimento_whatsapp} />
+        </div>
         <ClienteForm acao={salvarCliente.bind(null, cliente.id)} inicial={valoresDaLinha(cliente)} rotuloBotao="Salvar alterações" />
       </div>
       <EtiquetasCliente
