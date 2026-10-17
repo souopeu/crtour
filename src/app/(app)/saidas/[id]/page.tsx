@@ -65,7 +65,9 @@ async function Conteudo({ params, searchParams }: Pick<PageProps<'/saidas/[id]'>
                     </div>
                     <p className="text-sm text-tinta-suave">
                       {r.qtd_pessoas} {r.qtd_pessoas === 1 ? 'pessoa' : 'pessoas'} · {formatarReais(r.valor_total_centavos)}
+                      {r.situacao === 'ativa' && <> · pago {formatarReais(r.pago_centavos)} · {r.saldo_centavos > 0 ? `falta ${formatarReais(r.saldo_centavos)}` : 'quitada'}</>}
                     </p>
+                    <Link href={`/reservas/${r.id}`} className="inline-flex min-h-11 w-fit items-center text-primaria underline">Pagamentos e detalhes</Link>
                     {r.observacao && <p className="text-sm">{r.observacao}</p>}
                     {r.situacao === 'ativa' && (
                       <Acompanhantes

@@ -58,14 +58,15 @@ export type PassageiroLinha = { id: string; nome: string; whatsapp: string | nul
 export type ReservaLinha = {
   id: string; cliente_id: string; cliente_nome: string; qtd_pessoas: number
   valor_total_centavos: number; situacao: 'ativa' | 'cancelada'; observacao: string | null
+  pago_centavos: number; saldo_centavos: number; vencimento_saldo: string | null
   passageiros: PassageiroLinha[]
 }
 
 export async function listarReservas(saidaId: string): Promise<ReservaLinha[]> {
   const supabase = await criarClienteServidor()
   const { data } = await supabase
-    .from('reservas')
-    .select('id, cliente_id, qtd_pessoas, valor_total_centavos, situacao, observacao')
+    .from('v_reservas_saldo')
+    .select('id, cliente_id, qtd_pessoas, valor_total_centavos, situacao, observacao, pago_centavos, saldo_centavos, vencimento_saldo')
     .eq('saida_id', saidaId)
     .order('criada_em')
   const reservas = (data ?? []) as Omit<ReservaLinha, 'cliente_nome' | 'passageiros'>[]

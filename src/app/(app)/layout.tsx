@@ -17,6 +17,7 @@ async function Casca({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-3 text-sm">
           <Link href="/" className="inline-flex min-h-11 items-center underline">Clientes</Link>
           <Link href="/passeios" className="inline-flex min-h-11 items-center underline">Passeios</Link>
+          <Link href="/cobrancas" className="inline-flex min-h-11 items-center underline">Cobranças</Link>
           <Link href="/configuracoes" className="inline-flex min-h-11 items-center underline">Configurações</Link>
           <span className="hidden sm:inline">{usuario.email}</span>
           <form action={sair}>

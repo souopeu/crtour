@@ -1,0 +1,77 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+import { z } from 'zod'
+import type { EstadoForm } from '@/lib/forms'
+import { hojeNoBrasil } from '@/lib/formato'
+import { criarPagamentoSchema, totalSchema, vencimentoSchema } from '@/lib/pagamentos/cobranca'
+import { mensagemDeErroReserva } from '@/lib/reservas/schema'
+import { criarClienteServidor } from '@/lib/supabase/server'
+
+const uuid = (v: string) => z.uuid().safeParse(v).success
+const texto = (fd: FormData, n: string) => String(fd.get(n) ?? '')
+const ESPERADOS = ['CR006', 'CR007', 'CR008', '22008', '22023', '23514', '22003']
+
+function atualizarTelas(reservaId: string) {
+  revalidatePath(`/reservas/${reservaId}`)
+  revalidatePath('/cobrancas')
+  revalidatePath('/saidas', 'layout')
+}
+
+function falha(error: { code?: string }, valores?: Record<string, string>): EstadoForm {
+  if (!ESPERADOS.includes(error.code ?? '')) console.error('reserva/pagamento falhou', error.code)
+  return { erro: mensagemDeErroReserva(error.code), valores, versao: crypto.randomUUID() }
+}
+
+export async function registrarPagamento(reservaId: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const valores = { valor: texto(fd, 'valor'), tipo: texto(fd, 'tipo'), forma: texto(fd, 'forma'), data: texto(fd, 'data'), observacao: texto(fd, 'observacao') }
+  const r = criarPagamentoSchema(hojeNoBrasil()).safeParse(valores)
+  if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
+  if (!uuid(reservaId)) return { erro: mensagemDeErroReserva(undefined), valores, versao }
+
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.rpc('registrar_pagamento', {
+    p_reserva: reservaId, p_valor: r.data.valor_centavos, p_tipo: r.data.tipo, p_forma: r.data.forma,
+    p_data: r.data.data, p_observacao: r.data.observacao,
+  })
+  if (error) return falha(error, valores)
+  atualizarTelas(reservaId)
+  return { ok: 'Pagamento registrado.', versao } // clean form for the next one
+}
+
+export async function estornarPagamento(reservaId: string, pagamentoId: string): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  if (!uuid(reservaId) || !uuid(pagamentoId)) return { erro: mensagemDeErroReserva(undefined), versao }
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.rpc('estornar_pagamento', { p_pagamento: pagamentoId })
+  if (error) return falha(error)
+  atualizarTelas(reservaId)
+  return { ok: 'Pagamento estornado. O valor foi descontado do total pago.', versao }
+}
+
+export async function definirVencimento(reservaId: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const valores = { data: texto(fd, 'data') }
+  const r = vencimentoSchema.safeParse(valores)
+  if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
+  if (!uuid(reservaId)) return { erro: mensagemDeErroReserva(undefined), valores, versao }
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.rpc('definir_vencimento_saldo', { p_reserva: reservaId, p_data: r.data.data })
+  if (error) return falha(error, valores)
+  atualizarTelas(reservaId)
+  return { ok: r.data.data ? 'Vencimento salvo.' : 'Vencimento removido.', valores, versao }
+}
+
+export async function alterarValorTotal(reservaId: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const valores = { valor: texto(fd, 'valor') }
+  const r = totalSchema.safeParse(valores)
+  if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
+  if (!uuid(reservaId)) return { erro: mensagemDeErroReserva(undefined), valores, versao }
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.rpc('alterar_valor_total', { p_reserva: reservaId, p_valor: r.data.valor_total_centavos })
+  if (error) return falha(error, valores)
+  atualizarTelas(reservaId)
+  return { ok: 'Valor total atualizado.', valores, versao }
+}
