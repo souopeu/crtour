@@ -14,6 +14,7 @@ const texto = (fd: FormData, n: string) => String(fd.get(n) ?? '')
 function atualizarTelas(clienteId: string) {
   revalidatePath(`/clientes/${clienteId}`)
   revalidatePath('/')
+  revalidatePath('/hoje')
 }
 
 export async function criarAtividade(clienteId: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {

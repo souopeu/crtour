@@ -1,8 +1,11 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { getAgenciaId } from '@/lib/auth/agencia'
 import { getUsuario } from '@/lib/auth/usuario'
 import type { EstadoForm } from '@/lib/forms'
+import { limitesSchema } from '@/lib/hoje/hoje'
 import { criarClienteServidor } from '@/lib/supabase/server'
 
 const PALAVRA = 'EXCLUIR'
@@ -32,4 +35,25 @@ export async function excluirConta(_: EstadoForm, fd: FormData): Promise<EstadoF
   }
   await supabase.auth.signOut({ scope: 'local' })
   redirect('/login?conta=excluida')
+}
+
+export async function salvarLimites(_: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const valores = { diasSemContato: String(fd.get('diasSemContato') ?? ''), diasParada: String(fd.get('diasParada') ?? '') }
+  const r = limitesSchema.safeParse(valores)
+  if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
+  const agenciaId = await getAgenciaId()
+  if (!agenciaId) return { erro: 'Não foi possível salvar. Tente novamente em instantes.', valores, versao }
+
+  const supabase = await criarClienteServidor()
+  const { data, error } = await supabase.from('agencias').update({ dias_sem_contato: r.data.diasSemContato, dias_negociacao_parada: r.data.diasParada }).eq('id', agenciaId).select('id')
+  if (error) {
+    console.error('salvarLimites falhou', error.code)
+    return { erro: 'Não foi possível salvar. Tente novamente em instantes.', valores, versao }
+  }
+  if (!data?.length) return { erro: 'Só o dono da agência pode mudar estes prazos.', valores, versao }
+  revalidatePath('/hoje')
+  revalidatePath('/funil')
+  revalidatePath('/configuracoes')
+  return { ok: 'Prazos salvos.', valores, versao }
 }

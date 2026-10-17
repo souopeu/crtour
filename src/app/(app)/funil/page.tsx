@@ -3,6 +3,8 @@ import { Suspense } from 'react'
 import { diaNoBrasil, formatarDataBr, hojeNoBrasil } from '@/lib/formato'
 import { diasAte } from '@/lib/pagamentos/cobranca'
 import { KanbanFunil } from '@/components/negociacoes/KanbanFunil'
+import { buscarLimites } from '@/lib/hoje/dados'
+import { estaParada } from '@/lib/hoje/hoje'
 import { listarNegociacoes, listarSaidasParaSelecao } from '@/lib/negociacoes/dados'
 import { agruparNegociacoes } from '@/lib/negociacoes/negociacoes'
 import { formatarReais } from '@/lib/passeios/dinheiro'
@@ -13,7 +15,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/funil'>, 'searchParam
   const sp = await searchParams
   const visao = sp.visao === 'tabela' ? 'tabela' : 'kanban'
   const por = sp.agrupar === 'responsavel' ? 'responsavel' : 'etapa'
-  const [negociacoes, saidas] = await Promise.all([listarNegociacoes(), listarSaidasParaSelecao()])
+  const [negociacoes, saidas, limites] = await Promise.all([listarNegociacoes(), listarSaidasParaSelecao(), buscarLimites()])
   const hoje = hojeNoBrasil()
   const rotuloSaida = new Map(saidas.map((s) => [s.id, s.rotulo]))
   const grupos = agruparNegociacoes(
@@ -51,6 +53,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/funil'>, 'searchParam
             previsto: n.valor_previsto_centavos, probabilidade: n.probabilidade, responsavelNome: n.responsavel_nome,
             saidaRotulo: n.saida_id ? (rotuloSaida.get(n.saida_id) ?? null) : null,
             diasNaEtapa: -diasAte(diaNoBrasil(n.etapa_desde), hoje),
+            parada: estaParada(n.etapa, n.etapa_desde, limites.dias_negociacao_parada, hoje),
           }))}
         />
       ) : (

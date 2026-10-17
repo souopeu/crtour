@@ -8,7 +8,7 @@ import { formatarReais } from '@/lib/passeios/dinheiro'
 
 export type CartaoKanban = {
   id: string; titulo: string; clienteId: string; clienteNome: string; etapa: Etapa; valor: number; previsto: number
-  probabilidade: number; responsavelNome: string | null; saidaRotulo: string | null; diasNaEtapa: number
+  probabilidade: number; responsavelNome: string | null; saidaRotulo: string | null; diasNaEtapa: number; parada: boolean
 }
 
 // Stage strip: blue (open) to green (won); always labelled with text, never colour alone.
@@ -101,6 +101,7 @@ export function KanbanFunil({ cartoes }: { cartoes: CartaoKanban[] }) {
                     <Link href={`/clientes/${c.clienteId}`} className="text-sm underline">{c.clienteNome}</Link>
                     <p className="text-sm">{formatarReais(c.valor)} · {c.probabilidade}% · <strong>{formatarReais(c.previsto)}</strong></p>
                     {c.saidaRotulo && <p className="text-xs text-tinta-suave">{c.saidaRotulo}</p>}
+                    {c.parada && <p className="text-xs font-semibold text-alerta"><span aria-hidden="true">⏸ </span>Negociação parada</p>}
                     <p className="text-xs text-tinta-suave">{c.responsavelNome ?? 'Sem responsável'} · {c.diasNaEtapa <= 0 ? 'desde hoje' : `há ${c.diasNaEtapa} ${c.diasNaEtapa === 1 ? 'dia' : 'dias'}`} na etapa</p>
                     <label className="text-xs font-medium" htmlFor={`mover-${c.id}`}>Mover para…</label>
                     <select id={`mover-${c.id}`} aria-label={`Mover ${c.titulo} para`} value={c.etapa} onChange={(ev) => pedirMovimento(c.id, ev.target.value as Etapa)} className={select}>

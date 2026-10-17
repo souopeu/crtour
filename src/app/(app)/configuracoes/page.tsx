@@ -1,6 +1,8 @@
 import { Suspense } from 'react'
 import { FormExcluirConta } from '@/components/FormExcluirConta'
+import { FormLimites } from '@/components/FormLimites'
 import { getMembro } from '@/lib/auth/agencia'
+import { buscarLimites } from '@/lib/hoje/dados'
 
 export const metadata = { title: 'Configurações' }
 
@@ -20,12 +22,27 @@ async function ExcluirConta() {
   )
 }
 
+async function Prazos() {
+  const [membro, limites] = await Promise.all([getMembro(), buscarLimites()])
+  if (membro?.papel !== 'dono') {
+    return <p className="text-sm text-tinta-suave">Cliente sem contato depois de {limites.dias_sem_contato} dias; negociação parada depois de {limites.dias_negociacao_parada} dias. Só o dono muda estes prazos.</p>
+  }
+  return <FormLimites diasSemContato={limites.dias_sem_contato} diasParada={limites.dias_negociacao_parada} />
+}
+
 const link = 'inline-flex min-h-11 items-center text-primaria underline'
 
 export default function ConfiguracoesPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8">
       <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
+
+      <section aria-labelledby="prazos-titulo" className="flex flex-col gap-2">
+        <h2 id="prazos-titulo" className="text-lg font-semibold">Prazos da tela Hoje</h2>
+        <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-24" />}>
+          <Prazos />
+        </Suspense>
+      </section>
 
       <section aria-labelledby="exportar-titulo" className="flex flex-col gap-2">
         <h2 id="exportar-titulo" className="text-lg font-semibold">Exportar seus dados</h2>
