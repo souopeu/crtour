@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(8);
+select plan(9);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('aaaaaaaa-0000-0000-0000-000000000001', 'a@test.dev', '{"agencia_nome":"Alfa"}'),
@@ -19,6 +19,10 @@ insert into public.clientes (id, agencia_id, nome) values
   ('b1000000-0000-0000-0000-000000000001', current_setting('t.beta')::uuid, 'Cliente Beta');
 insert into public.anotacoes (agencia_id, cliente_id, texto) values
   (current_setting('t.alfa')::uuid, 'a1000000-0000-0000-0000-000000000001', 'nota alfa');
+insert into public.passeios (id, agencia_id, nome) values
+  ('a5000000-0000-0000-0000-000000000001', current_setting('t.alfa')::uuid, 'Passeio Alfa');
+insert into public.saidas (agencia_id, passeio_id, data, capacidade, preco_centavos) values
+  (current_setting('t.alfa')::uuid, 'a5000000-0000-0000-0000-000000000001', '2027-03-10', 10, 1000);
 insert into public.importacoes (agencia_id, nome, hash_arquivo) values
   (current_setting('t.alfa')::uuid, 'x.xlsx', repeat('a', 64));
 
@@ -36,6 +40,8 @@ select lives_ok($$select public.excluir_minha_conta()$$, 'owner deletes the acco
 reset role;
 select is((select count(*) from public.agencias where id = current_setting('t.alfa')::uuid), 0::bigint, 'the agency is gone');
 select is((select count(*) from public.clientes where agencia_id = current_setting('t.alfa')::uuid), 0::bigint, 'its clients are gone');
+select is((select count(*) from public.passeios where agencia_id = current_setting('t.alfa')::uuid)
+        + (select count(*) from public.saidas where agencia_id = current_setting('t.alfa')::uuid), 0::bigint, 'its tours and departures are gone too');
 select is((select count(*) from public.anotacoes where agencia_id = current_setting('t.alfa')::uuid)
         + (select count(*) from public.importacoes where agencia_id = current_setting('t.alfa')::uuid), 0::bigint, 'its notes and imports are gone');
 select is((select count(*) from auth.users where id in ('aaaaaaaa-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000003')), 0::bigint, 'all users of the agency are removed');
