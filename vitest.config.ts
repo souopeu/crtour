@@ -18,6 +18,7 @@ export default defineConfig({
         'src/lib/auth/agencia.ts',
         'src/lib/clientes/dados.ts',
         'src/lib/exportacao/dados.ts',
+        'src/lib/passeios/dados.ts',
       ],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },
