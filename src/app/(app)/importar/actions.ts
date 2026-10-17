@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { separarLinhas, type ErroDeLinha } from '@/lib/importacao/analise'
 import { LIMITE_BYTES, lerPlanilha } from '@/lib/importacao/planilha'
+import type { EstadoForm } from '@/lib/forms'
 import { criarClienteServidor } from '@/lib/supabase/server'
 
 export type Previa = {
@@ -86,11 +87,21 @@ export async function processarPlanilha(_: EstadoImportacao, fd: FormData): Prom
   return { ok: `Importação concluída: ${resultado.criados} clientes criados e ${resultado.ignoradas} ignorados.` }
 }
 
-export async function desfazerImportacao(id: string): Promise<void> {
-  if (!z.uuid().safeParse(id).success) return
+export async function desfazerImportacao(id: string): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  if (!z.uuid().safeParse(id).success) return { erro: ERRO_GERAL, versao }
   const supabase = await criarClienteServidor()
   const { error } = await supabase.from('importacoes').delete().eq('id', id)
-  if (error) console.error('desfazerImportacao falhou', error.code)
+  if (error) {
+    console.error('desfazerImportacao falhou', error.code)
+    return {
+      erro: error.code === '23503'
+        ? 'Alguns clientes desta importação já têm reservas e não podem ser apagados.'
+        : ERRO_GERAL,
+      versao,
+    }
+  }
   revalidatePath('/')
   revalidatePath('/importar')
+  return { ok: 'Importação desfeita.', versao }
 }

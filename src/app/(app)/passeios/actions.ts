@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { getAgenciaId } from '@/lib/auth/agencia'
 import type { EstadoForm } from '@/lib/forms'
 import { passeioSchema, saidaSchema } from '@/lib/passeios/schema'
+import { mensagemDeErroReserva } from '@/lib/reservas/schema'
 import { criarClienteServidor } from '@/lib/supabase/server'
 
 const ERRO = 'Não foi possível salvar. Tente novamente em instantes.'
@@ -91,7 +92,7 @@ export async function salvarSaida(passeioId: string, saidaId: string | null, _: 
   const { data, error } = await supabase.from('saidas').update(r.data).eq('id', saidaId).select('id')
   if (error || !data?.length) {
     console.error('salvarSaida update falhou', error?.code)
-    return { erro: ERRO, valores, versao }
+    return { erro: error?.code === 'CR003' ? mensagemDeErroReserva('CR003') : ERRO, valores, versao }
   }
   revalidatePath(`/saidas/${saidaId}`)
   revalidatePath(`/passeios/${passeioId}`)

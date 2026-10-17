@@ -1,0 +1,40 @@
+import { z } from 'zod'
+import { reaisParaCentavos } from '@/lib/passeios/dinheiro'
+
+export const reservaSchema = z
+  .object({
+    qtd: z
+      .string()
+      .trim()
+      .refine((v) => /^\d+$/.test(v) && Number(v) >= 1 && Number(v) <= 500, 'Informe de 1 a 500 pessoas.')
+      .transform(Number),
+    valor: z
+      .string()
+      .trim()
+      .refine((v) => v === '' || reaisParaCentavos(v) !== null, 'Digite o valor total, ex.: 2.700,00, ou deixe em branco.'),
+    observacao: z
+      .string()
+      .trim()
+      .max(1000, 'A observação pode ter no máximo 1.000 caracteres.')
+      .transform((v) => (v === '' ? null : v)),
+  })
+  .transform((v) => ({
+    qtd_pessoas: v.qtd,
+    valor_total_centavos: v.valor === '' ? null : (reaisParaCentavos(v.valor) as number),
+    observacao: v.observacao,
+  }))
+
+const MENSAGENS: Record<string, string> = {
+  CR001: 'Não há vagas suficientes nesta saída.',
+  CR002: 'Esta saída não está aberta para reservas.',
+  CR003: 'A capacidade não pode ser menor que as vagas já reservadas.',
+  CR004: 'Esta reserva já estava cancelada.',
+  '23503': 'Cliente ou saída não encontrados nesta agência.',
+  '42501': 'Você não tem acesso a esta saída.',
+  '22003': 'O valor total está fora do limite permitido.',
+  '23514': 'Informe uma quantidade de pessoas válida.',
+}
+
+export function mensagemDeErroReserva(codigo: string | undefined): string {
+  return (codigo && MENSAGENS[codigo]) || 'Não foi possível concluir. Tente novamente em instantes.'
+}

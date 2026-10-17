@@ -57,9 +57,9 @@ async function Conteudo({ params }: Pick<PageProps<'/passeios/[id]'>, 'params'>)
                   <Link href={`/saidas/${s.id}`} className="flex min-h-14 flex-col gap-1 rounded-[--radius-cartao] border border-linha bg-superficie p-3 sm:flex-row sm:items-center sm:justify-between">
                     <span className="font-semibold">{formatarDataBr(s.data)}</span>
                     <span className="flex flex-wrap gap-x-3 text-sm text-tinta-suave">
-                      <span>Vagas: 0 / {s.capacidade}</span>
+                      <span>Vagas: {s.reservadas} / {s.capacidade}</span>
                       <span>{formatarReais(s.preco_centavos)} por pessoa</span>
-                      <span className={s.situacao === 'cancelada' ? 'text-despesa' : ''}>{ROTULO_SITUACAO[s.situacao]}</span>
+                      <span className={s.situacao === 'cancelada' ? 'text-despesa' : ''}>{s.situacao === 'aberta' && s.livres <= 0 ? 'Lotada' : ROTULO_SITUACAO[s.situacao]}</span>
                     </span>
                   </Link>
                 </li>
