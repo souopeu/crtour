@@ -1,12 +1,16 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getAgenciaId } from '@/lib/auth/agencia'
+import { urlDoSite } from '@/lib/auth/site'
+import { conviteSchema, gerarToken, hashToken, linkDoConvite } from '@/lib/equipe/equipe'
 import { getUsuario } from '@/lib/auth/usuario'
 import type { EstadoForm } from '@/lib/forms'
 import { limitesSchema } from '@/lib/hoje/hoje'
 import { criarClienteServidor } from '@/lib/supabase/server'
+import { z } from 'zod'
 
 const PALAVRA = 'EXCLUIR'
 
@@ -56,4 +60,50 @@ export async function salvarLimites(_: EstadoForm, fd: FormData): Promise<Estado
   revalidatePath('/funil')
   revalidatePath('/configuracoes')
   return { ok: 'Prazos salvos.', valores, versao }
+}
+
+const ERRO_EQUIPE = 'Não foi possível concluir. Tente novamente em instantes.'
+
+// Owner invites a seller: a one-time link (shown once; only its hash is stored).
+export async function convidar(_: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const valores = { nome: String(fd.get('nome') ?? ''), email: String(fd.get('email') ?? '') }
+  const r = conviteSchema.safeParse(valores)
+  if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
+  const agenciaId = await getAgenciaId()
+  const h = await headers()
+  const site = urlDoSite(process.env, h.get('origin'))
+  if (!agenciaId || !site) return { erro: ERRO_EQUIPE, valores, versao }
+
+  const token = gerarToken()
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.from('convites').insert({ ...r.data, agencia_id: agenciaId, token_hash: hashToken(token) })
+  if (error) {
+    if (error.code === '23505') return { erro: 'Já existe um convite pendente para esse e-mail. Cancele o anterior para gerar outro link.', valores, versao }
+    if (error.code === '42501') return { erro: 'Só o dono da agência convida pessoas.', valores, versao }
+    console.error('convidar falhou', error.code)
+    return { erro: ERRO_EQUIPE, valores, versao }
+  }
+  revalidatePath('/configuracoes')
+  return { ok: `Convite criado para ${r.data.email}.`, valores: { link: linkDoConvite(site, token, r.data.email) }, versao }
+}
+
+export async function cancelarConvite(conviteId: string): Promise<void> {
+  if (!z.uuid().safeParse(conviteId).success) return
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.from('convites').delete().eq('id', conviteId)
+  if (error) console.error('cancelarConvite falhou', error.code)
+  revalidatePath('/configuracoes')
+}
+
+export async function removerMembro(userId: string): Promise<EstadoForm> {
+  if (!z.uuid().safeParse(userId).success) return { erro: ERRO_EQUIPE }
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.rpc('remover_membro', { p_user: userId })
+  if (error) {
+    if (error.code !== '42501') console.error('removerMembro falhou', error.code)
+    return { erro: error.code === '42501' ? 'Só o dono remove vendedores.' : ERRO_EQUIPE }
+  }
+  revalidatePath('/configuracoes')
+  return { ok: 'Acesso removido.' }
 }

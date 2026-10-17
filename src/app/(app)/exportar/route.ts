@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server'
-import { getUsuario } from '@/lib/auth/usuario'
+import { getMembro } from '@/lib/auth/agencia'
 import {
   exportarAcompanhantes, exportarAnotacoes, exportarClientes, exportarPagamentos, exportarReservas,
 } from '@/lib/exportacao/dados'
@@ -8,7 +8,9 @@ import {
 const CABECALHOS = { 'Content-Type': 'text/csv; charset=utf-8', 'Cache-Control': 'private, no-store' }
 
 export async function GET(request: NextRequest) {
-  if (!(await getUsuario())) return new Response('Não autorizado', { status: 401 })
+  const membro = await getMembro()
+  if (!membro) return new Response('Não autorizado', { status: 401 })
+  if (membro.papel !== 'dono') return new Response('Só o dono da agência baixa os dados.', { status: 403 }) // R41
 
   const EXPORTADORES = {
     clientes: exportarClientes, anotacoes: exportarAnotacoes, reservas: exportarReservas,

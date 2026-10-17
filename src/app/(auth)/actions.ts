@@ -2,7 +2,7 @@
 
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { cadastroSchema, loginSchema, novaSenhaSchema, recuperarSchema } from '@/lib/auth/schemas'
+import { cadastroConviteSchema, cadastroSchema, loginSchema, novaSenhaSchema, recuperarSchema } from '@/lib/auth/schemas'
 import { traduzirErroAuth } from '@/lib/auth/mensagens'
 import { proximoSeguro } from '@/lib/auth/redirect'
 import type { EstadoForm } from '@/lib/forms'
@@ -32,6 +32,7 @@ export async function entrar(_: EstadoForm, fd: FormData): Promise<EstadoForm> {
 }
 
 export async function cadastrar(_: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  if (texto(fd, 'convite')) return cadastrarComConvite(fd)
   const dados = {
     nome: texto(fd, 'nome'),
     agenciaNome: texto(fd, 'agenciaNome'),
@@ -95,4 +96,35 @@ export async function sair() {
   const supabase = await criarClienteServidor()
   await supabase.auth.signOut()
   redirect('/login')
+}
+
+const CONVITE_INVALIDO = 'Este convite não vale mais (já foi usado, venceu ou é de outro e-mail). Peça um novo link ao dono da agência.'
+
+// Seller joining by invite link: checked here for a clear message, and again by the database when the account is created.
+async function cadastrarComConvite(fd: FormData): Promise<EstadoForm> {
+  const dados = { nome: texto(fd, 'nome'), email: texto(fd, 'email'), senha: texto(fd, 'senha'), aceite: fd.get('aceite') ?? undefined, convite: texto(fd, 'convite') }
+  const valores = { nome: dados.nome, email: dados.email }
+  const r = cadastroConviteSchema.safeParse(dados)
+  if (!r.success) {
+    const campos = r.error.flatten().fieldErrors
+    return campos.convite ? { erro: campos.convite[0], valores } : { campos, valores }
+  }
+  const site = await origem()
+  if (!site) return { erro: ERRO_SITE, valores }
+
+  const supabase = await criarClienteServidor()
+  const { data: valido } = await supabase.rpc('verificar_convite', { p_token: r.data.convite, p_email: r.data.email })
+  if (valido !== true) return { erro: CONVITE_INVALIDO, valores }
+
+  const { data, error } = await supabase.auth.signUp({
+    email: r.data.email,
+    password: r.data.senha,
+    options: {
+      emailRedirectTo: `${site}/auth/confirmar`,
+      data: { nome: r.data.nome, convite: r.data.convite, aceite_termos_em: new Date().toISOString() },
+    },
+  })
+  if (error) return { erro: traduzirErroAuth(error), valores }
+  if (!data.session) return { ok: 'Enviamos um link de confirmação para o seu e-mail. Abra-o para entrar.', valores }
+  redirect('/')
 }

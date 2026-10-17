@@ -56,10 +56,12 @@ function Meta({ mes, meta, efetivo }: { mes: string; meta: number | null; efetiv
 
 async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchParams'>) {
   const membro = await getMembro()
-  if (membro?.papel !== 'dono') return <p className={cartao}>O painel é do dono da agência.</p>
+  if (!membro) return null
+  const ehDono = membro.papel === 'dono'
   const [sp, negociacoes, membros, antes] = await Promise.all([searchParams, listarNegociacoes(), listarMembros(), etapasAntesDaPerda()])
   const hoje = hojeNoBrasil()
-  const filtros = lerFiltrosPainel(sp, hoje, membros.map((m) => m.user_id))
+  // R41: a seller only ever sees her own numbers, whatever the URL says.
+  const filtros = ehDono ? lerFiltrosPainel(sp, hoje, membros.map((m) => m.user_id)) : { ...lerFiltrosPainel(sp, hoje, []), responsavel: membro.user_id }
   const meta = await buscarMeta(filtros.mes)
   const p = calcularPainel(
     negociacoes
@@ -79,13 +81,13 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
           <label htmlFor="mes" className="text-sm font-medium">Mês</label>
           <input id="mes" name="mes" type="month" defaultValue={filtros.mes} className="h-12 rounded-xl border border-controle bg-superficie px-3 text-base" />
         </div>
-        <div className="flex flex-col gap-1">
+        {ehDono && <div className="flex flex-col gap-1">
           <label htmlFor="responsavel" className="text-sm font-medium">Responsável</label>
           <select id="responsavel" name="responsavel" defaultValue={filtros.responsavel ?? ''} className="h-12 rounded-xl border border-controle bg-superficie px-3 text-base">
             <option value="">Toda a agência</option>
             {membros.map((m) => <option key={m.user_id} value={m.user_id}>{m.nome}</option>)}
           </select>
-        </div>
+        </div>}
         <button type="submit" className="min-h-12 rounded-full bg-destaque px-6 font-semibold text-destaque-texto">Ver</button>
       </form>
 
@@ -93,7 +95,9 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
         <p className={cartao}>Ainda não há negociações{filtros.responsavel ? ' deste responsável' : ''}. Crie em <Link href="/funil" className="text-primaria underline">Funil</Link> ou pela ficha de um cliente; o painel se monta sozinho a partir delas.</p>
       ) : (
         <>
-          {filtros.responsavel ? (
+          {!ehDono ? (
+            <p className="text-sm text-tinta-suave">Estes são os números das negociações em que você é a pessoa responsável.</p>
+          ) : filtros.responsavel ? (
             <p className="text-sm text-tinta-suave">A meta é da agência toda; escolha &quot;Toda a agência&quot; para ver o andamento dela.</p>
           ) : (
             <Meta mes={filtros.mes} meta={meta} efetivo={p.receita.valor} />

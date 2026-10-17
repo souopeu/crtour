@@ -7,14 +7,16 @@ import { BotaoEnviar } from './BotaoEnviar'
 import { Campo } from './Campo'
 import { Mensagem } from './Mensagem'
 
-export function FormCadastro() {
+// With an invite, the person joins an existing agency: no agency name, e-mail comes from the link.
+export function FormCadastro({ convite }: { convite?: { token: string; email: string } }) {
   const [estado, acao] = useActionState<EstadoForm, FormData>(cadastrar, {})
   return (
     <form action={acao} className="flex flex-col gap-4">
       <Mensagem estado={estado} />
+      {convite && <input type="hidden" name="convite" value={convite.token} />}
       <Campo nome="nome" rotulo="Seu nome" autoComplete="name" valor={estado.valores?.nome} erros={estado.campos?.nome} />
-      <Campo nome="agenciaNome" rotulo="Nome da agência" autoComplete="organization" valor={estado.valores?.agenciaNome} erros={estado.campos?.agenciaNome} />
-      <Campo nome="email" rotulo="E-mail" tipo="email" autoComplete="email" valor={estado.valores?.email} erros={estado.campos?.email} />
+      {!convite && <Campo nome="agenciaNome" rotulo="Nome da agência" autoComplete="organization" valor={estado.valores?.agenciaNome} erros={estado.campos?.agenciaNome} />}
+      <Campo nome="email" rotulo="E-mail" tipo="email" autoComplete="email" valor={estado.valores?.email ?? convite?.email} erros={estado.campos?.email} />
       <Campo nome="senha" rotulo="Senha" tipo="password" autoComplete="new-password" dica="Mínimo de 8 caracteres, com letras e números." erros={estado.campos?.senha} />
       <div className="flex flex-col gap-1">
         <label className="flex min-h-11 items-start gap-3 text-sm">
@@ -28,7 +30,7 @@ export function FormCadastro() {
           <p role="alert" className="text-sm text-despesa">{estado.campos.aceite[0]}</p>
         ) : null}
       </div>
-      <BotaoEnviar>Criar conta</BotaoEnviar>
+      <BotaoEnviar>{convite ? 'Entrar na equipe' : 'Criar conta'}</BotaoEnviar>
       <p className="text-sm">
         Já tem conta? <Link href="/login" className="text-primaria underline">Entrar</Link>
       </p>

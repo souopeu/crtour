@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { tokenSchema } from '@/lib/equipe/equipe'
 
 const senha = z
   .string()
@@ -19,6 +20,11 @@ export const cadastroSchema = z.object({
   email,
   senha,
   aceite: z.literal('on', 'Para criar a conta, aceite os termos e a política de privacidade.'),
+})
+
+// Joining an agency by invite link: no agency name; the token goes to the database, which checks it with the e-mail.
+export const cadastroConviteSchema = cadastroSchema.omit({ agenciaNome: true }).extend({
+  convite: z.string().refine((v) => tokenSchema.safeParse(v).success, 'Este link de convite está incompleto. Peça um novo ao dono da agência.'),
 })
 
 export const loginSchema = z.object({

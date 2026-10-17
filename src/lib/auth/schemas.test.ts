@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { cadastroSchema, loginSchema, novaSenhaSchema, recuperarSchema } from './schemas'
+import { cadastroConviteSchema, cadastroSchema, loginSchema, novaSenhaSchema, recuperarSchema } from './schemas'
 
 const cadastroValido = {
   nome: 'Ana Dona',
@@ -55,5 +55,17 @@ describe('novaSenhaSchema', () => {
     expect(novaSenhaSchema.safeParse({ senha: 'abcd1234', confirmacao: 'abcd1234' }).success).toBe(true)
     expect(novaSenhaSchema.safeParse({ senha: 'abcd1234', confirmacao: 'abcd9999' }).success).toBe(false)
     expect(novaSenhaSchema.safeParse({ senha: 'abc', confirmacao: 'abc' }).success).toBe(false)
+  })
+})
+
+describe('cadastroConviteSchema', () => {
+  const base = { nome: 'Vera', email: ' Vera@Test.dev ', senha: 'senha1234', aceite: 'on', convite: 'abcdefghijklmnopqrstuvwxyz012345' }
+  test('no agency name; e-mail normalized; token kept', () => {
+    expect(cadastroConviteSchema.parse(base)).toEqual({ nome: 'Vera', email: 'vera@test.dev', senha: 'senha1234', aceite: 'on', convite: base.convite })
+  })
+  test('a malformed token is refused with a clear message', () => {
+    const r = cadastroConviteSchema.safeParse({ ...base, convite: 'x y' })
+    expect(r.success).toBe(false)
+    if (!r.success) expect(r.error.flatten().fieldErrors.convite).toEqual(['Este link de convite está incompleto. Peça um novo ao dono da agência.'])
   })
 })
