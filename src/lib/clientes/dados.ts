@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { criarClienteServidor } from '@/lib/supabase/server'
 import { POR_PAGINA, type Filtros } from './filtros'
 import type { LinhaCliente } from './formulario'
+import { sugestaoSchema, type Sugestao } from './sugestoes'
 import type { Viagem } from './viagens'
 
 export const COLUNAS_CLIENTE =
@@ -130,4 +131,14 @@ export async function listarViagensDoCliente(clienteId: string): Promise<Viagem[
     ...proprias.map((r): Viagem => ({ ...base(r), total: r.valor_total_centavos, pago: r.pago_centavos, saldo: r.saldo_centavos, papel: 'Responsável' })),
     ...outras.map((r): Viagem => ({ ...base(r), total: 0, pago: 0, saldo: 0, papel: 'Acompanhante' })),
   ].filter((v) => v.saidaData !== '')
+}
+
+export async function listarSugestoes(clienteId: string): Promise<Sugestao[]> {
+  const supabase = await criarClienteServidor()
+  const { data } = await supabase
+    .from('sugestoes_cliente')
+    .select('id, cliente_id, campo, valor_sugerido')
+    .eq('cliente_id', clienteId)
+    .order('criada_em')
+  return z.array(sugestaoSchema).parse(data ?? [])
 }

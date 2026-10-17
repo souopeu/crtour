@@ -11,7 +11,7 @@ import { TIPOS, rotuloDoTipo, type StatusAtividade, type TipoAtividade } from '@
 
 export type AtividadeView = {
   id: string; tipo: TipoAtividade; titulo: string; quando: string; status: StatusAtividade; responsavel: string | null
-  negociacao: string | null; atrasada: boolean; podeApagar: boolean
+  negociacao: string | null; motivo: string | null; atrasada: boolean; podeApagar: boolean
 }
 type Props = {
   clienteId: string
@@ -25,7 +25,7 @@ const select = 'h-12 rounded-xl border border-controle bg-superficie px-3 text-b
 
 export function AtividadesCliente({ clienteId, atividades, agoraLocal, responsaveis, negociacoes }: Props) {
   const [estado, enviar] = useActionState<EstadoForm, FormData>(criarAtividade.bind(null, clienteId), {})
-  const v = estado.valores ?? { tipo: 'ligacao', titulo: '', quando: agoraLocal, status: 'pendente', responsavel: '', negociacao: '' }
+  const v = estado.valores ?? { tipo: 'ligacao', titulo: '', quando: agoraLocal, status: 'pendente', responsavel: '', negociacao: '', motivo: '' }
   const e = (c: string) => estado.campos?.[c]
   const pendentes = atividades.filter((a) => a.status === 'pendente')
   const feitas = atividades.filter((a) => a.status === 'feito')
@@ -36,6 +36,7 @@ export function AtividadesCliente({ clienteId, atividades, agoraLocal, responsav
         <span className="font-semibold">{rotuloDoTipo(a.tipo)}: {a.titulo}</span>
         <span className={`text-sm ${a.atrasada ? 'font-semibold text-despesa' : 'text-tinta-suave'}`}>{a.quando}{a.atrasada ? ' · atrasada' : ''}</span>
       </div>
+      {a.motivo && <p className="text-sm text-tinta-suave">Por quê: {a.motivo}</p>}
       {(a.responsavel || a.negociacao) && (
         <p className="text-sm text-tinta-suave">{[a.responsavel && `Responsável: ${a.responsavel}`, a.negociacao && `Negociação: ${a.negociacao}`].filter(Boolean).join(' · ')}</p>
       )}
@@ -62,6 +63,7 @@ export function AtividadesCliente({ clienteId, atividades, agoraLocal, responsav
           </select>
         </div>
         <Campo nome="titulo" id="atv-titulo" rotulo="O que fazer ou o que foi feito" valor={v.titulo} erros={e('titulo')} autoComplete="off" />
+        <Campo nome="motivo" id="atv-motivo" rotulo="Por quê (opcional)" valor={v.motivo} erros={e('motivo')} autoComplete="off" />
         <Campo nome="quando" id="atv-quando" rotulo="Data e hora" tipo="datetime-local" valor={v.quando} erros={e('quando')} />
         <div className="flex flex-col gap-1">
           <label htmlFor="atv-status" className="text-sm font-medium">Situação</label>

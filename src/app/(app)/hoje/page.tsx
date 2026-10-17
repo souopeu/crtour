@@ -25,6 +25,7 @@ function ListaAtividades({ itens, hoje, atrasadas }: { itens: PendenteLinha[]; h
       {itens.map((a) => (
         <li key={a.id} className={cartao}>
           <p className="font-semibold">{a.titulo}</p>
+          {a.motivo && <p className="text-sm text-tinta-suave">Por quê: {a.motivo}</p>}
           <p className="text-sm">
             {rotuloDoTipo(a.tipo)} · <Link href={`/clientes/${a.cliente.id}`} className="text-primaria underline">{a.cliente.nome}</Link> · {formatarDataHora(a.quando)}
             {a.responsavel_nome && <> · {a.responsavel_nome}</>}

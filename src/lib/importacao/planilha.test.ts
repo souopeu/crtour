@@ -1,7 +1,8 @@
 import ExcelJS from 'exceljs'
 import JSZip from 'jszip'
 import { describe, expect, test } from 'vitest'
-import { LIMITE_BYTES, LIMITE_LINHAS, LIMITE_DESCOMPRIMIDO, lerPlanilha, tamanhoDescomprimido } from './planilha'
+import { IMPORTACAO } from './config'
+import { lerPlanilha, tamanhoDescomprimido } from './planilha'
 
 async function xlsx(linhas: unknown[][], nomeAba = 'Clientes') {
   const wb = new ExcelJS.Workbook()
@@ -54,9 +55,9 @@ describe('lerPlanilha (xlsx)', () => {
   })
 
   test('refuses too many rows and too big files', async () => {
-    const muitas = [['Nome'], ...Array.from({ length: LIMITE_LINHAS + 1 }, (_, i) => [`N${i}`])]
+    const muitas = [['Nome'], ...Array.from({ length: IMPORTACAO.arquivo.maxLinhas + 1 }, (_, i) => [`N${i}`])]
     expect((await lerPlanilha(await xlsx(muitas), 'a.xlsx')).ok).toBe(false)
-    expect((await lerPlanilha(Buffer.alloc(LIMITE_BYTES + 1), 'a.xlsx')).ok).toBe(false)
+    expect((await lerPlanilha(Buffer.alloc(IMPORTACAO.arquivo.maxBytes + 1), 'a.xlsx')).ok).toBe(false)
   })
 })
 
@@ -90,8 +91,8 @@ describe('zip bomb guard', () => {
   })
 
   test('refuses a small file that expands to a huge one', async () => {
-    const bomba = await zipDe(LIMITE_DESCOMPRIMIDO + 1)
-    expect(bomba.length).toBeLessThan(LIMITE_BYTES)
+    const bomba = await zipDe(IMPORTACAO.arquivo.maxDescomprimidoBytes + 1)
+    expect(bomba.length).toBeLessThan(IMPORTACAO.arquivo.maxBytes)
     const r = await lerPlanilha(bomba, 'bomba.xlsx')
     expect(r).toEqual({ ok: false, erro: expect.stringMatching(/grande demais/i) })
   })

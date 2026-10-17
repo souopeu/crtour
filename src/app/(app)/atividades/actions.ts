@@ -21,7 +21,7 @@ export async function criarAtividade(clienteId: string, _: EstadoForm, fd: FormD
   const versao = crypto.randomUUID()
   const valores = {
     tipo: texto(fd, 'tipo'), titulo: texto(fd, 'titulo'), quando: texto(fd, 'quando'), status: texto(fd, 'status'),
-    responsavel: texto(fd, 'responsavel'), negociacao: texto(fd, 'negociacao'),
+    responsavel: texto(fd, 'responsavel'), negociacao: texto(fd, 'negociacao'), motivo: texto(fd, 'motivo'),
   }
   const r = atividadeSchema.safeParse(valores)
   if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }

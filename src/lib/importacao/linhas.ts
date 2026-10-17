@@ -1,4 +1,5 @@
 import { clienteSchema, type DadosCliente } from '@/lib/clientes/schema'
+import { IMPORTACAO } from './config'
 import { normalizarCabecalho, type CampoImportacao } from './colunas'
 
 export type CelulasLinha = Partial<Record<CampoImportacao, unknown>>
@@ -8,8 +9,7 @@ export type ResultadoLinha =
   | { ok: true; linha: LinhaImportacao }
   | { ok: false; linha: number; erros: ErroLinha[] }
 
-const MAX_ETIQUETAS = 20
-const MAX_NOME_ETIQUETA = 40
+const { maxPorCliente: MAX_ETIQUETAS, maxCaracteres: MAX_NOME_ETIQUETA } = IMPORTACAO.etiquetas
 
 function texto(v: unknown): string {
   if (v === null || v === undefined) return ''

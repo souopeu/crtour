@@ -4,7 +4,8 @@ import { createHash } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { separarLinhas, type ErroDeLinha } from '@/lib/importacao/analise'
-import { LIMITE_BYTES, lerPlanilha } from '@/lib/importacao/planilha'
+import { IMPORTACAO } from '@/lib/importacao/config'
+import { lerPlanilha } from '@/lib/importacao/planilha'
 import type { EstadoForm } from '@/lib/forms'
 import { criarClienteServidor } from '@/lib/supabase/server'
 
@@ -20,16 +21,17 @@ export type Previa = {
   amostra: string[]
   jaImportado: boolean
 }
+const importacaoSchema = z.object({ criados: z.number(), preenchidos: z.number(), sugestoes: z.number() })
+
 export type EstadoImportacao = { erro?: string; ok?: string; previa?: Previa }
 
 const ERRO_GERAL = 'Não foi possível processar a planilha. Tente novamente em instantes.'
-const MAX_ERROS_MOSTRADOS = 50
 
 export async function processarPlanilha(_: EstadoImportacao, fd: FormData): Promise<EstadoImportacao> {
   const acao = fd.get('acao') === 'importar' ? 'importar' : 'conferir'
   const arquivo = fd.get('arquivo')
   if (!(arquivo instanceof File) || arquivo.size === 0) return { erro: 'Escolha um arquivo .xlsx ou .csv.' }
-  if (arquivo.size > LIMITE_BYTES) return { erro: 'O arquivo é maior que 4 MB. Divida a planilha em partes menores.' }
+  if (arquivo.size > IMPORTACAO.arquivo.maxBytes) return { erro: 'O arquivo é maior que 4 MB. Divida a planilha em partes menores.' }
 
   const buffer = Buffer.from(await arquivo.arrayBuffer())
   const lido = await lerPlanilha(buffer, arquivo.name)
@@ -59,7 +61,7 @@ export async function processarPlanilha(_: EstadoImportacao, fd: FormData): Prom
     novas: contar('nova'),
     jaCadastradas: contar('ja_cadastrada'),
     repetidas: contar('repetida_no_arquivo'),
-    erros: erros.slice(0, MAX_ERROS_MOSTRADOS),
+    erros: erros.slice(0, IMPORTACAO.previa.maxErrosMostrados),
     totalErros: erros.length,
     colunasIgnoradas: lido.colunasIgnoradas,
     amostra: validas.filter((l) => situacoes.get(l.linha) === 'nova').slice(0, 5).map((l) => l.nome),
@@ -69,7 +71,7 @@ export async function processarPlanilha(_: EstadoImportacao, fd: FormData): Prom
   if (acao === 'conferir') return { previa }
   if (erros.length > 0) return { previa, erro: 'Corrija as linhas com erro e confira de novo. Nada foi importado.' }
   if (existente) return { previa, erro: 'Este arquivo já foi importado. Para importar de novo, desfaça a importação anterior.' }
-  if (previa.novas === 0) return { previa, erro: 'Não há clientes novos para importar.' }
+  if (previa.novas === 0 && previa.jaCadastradas === 0) return { previa, erro: 'Não há clientes para importar.' }
 
   const { data, error } = await supabase.rpc('importar_clientes', {
     p_nome: arquivo.name.slice(0, 200),
@@ -81,10 +83,10 @@ export async function processarPlanilha(_: EstadoImportacao, fd: FormData): Prom
     console.error('importar_clientes falhou', error.code)
     return { previa, erro: ERRO_GERAL }
   }
-  const resultado = data as { criados: number; ignoradas: number }
+  const resultado = importacaoSchema.parse(data)
   revalidatePath('/')
   revalidatePath('/importar')
-  return { ok: `Importação concluída: ${resultado.criados} clientes criados e ${resultado.ignoradas} ignorados.` }
+  return { ok: `Importação concluída: ${resultado.criados} clientes criados, ${resultado.preenchidos} campos vazios preenchidos e ${resultado.sugestoes} sugestões para você decidir na ficha do cliente.` }
 }
 
 export async function desfazerImportacao(id: string): Promise<EstadoForm> {

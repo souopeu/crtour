@@ -53,6 +53,7 @@ export const atividadeSchema = z
     status: z.enum(['pendente', 'feito'], 'Escolha se está pendente ou feita.'),
     responsavel: uuidOuNulo('Escolha o responsável na lista.'),
     negociacao: uuidOuNulo('Escolha a negociação na lista.'),
+    motivo: z.string().trim().max(200, 'O motivo pode ter no máximo 200 caracteres.').transform((v) => (v === '' ? null : v)),
   })
   .transform((v) => ({
     tipo: v.tipo,
@@ -61,6 +62,7 @@ export const atividadeSchema = z
     status: v.status,
     responsavel_id: v.responsavel,
     negociacao_id: v.negociacao,
+    motivo: v.motivo,
   }))
 
 export type NotaDaLinha = { id: string; texto: string; autor: string; criada_em: string }

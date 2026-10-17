@@ -6,14 +6,14 @@ import type { StatusAtividade, TipoAtividade } from './atividades'
 export type AtividadeLinha = {
   id: string; tipo: TipoAtividade; titulo: string; quando: string; status: StatusAtividade; feito_em: string | null
   responsavel_id: string | null; responsavel_nome: string | null; negociacao_id: string | null; negociacao_titulo: string | null
-  criado_por: string | null
+  criado_por: string | null; motivo: string | null
 }
 
 export async function listarAtividadesDoCliente(clienteId: string): Promise<AtividadeLinha[]> {
   const supabase = await criarClienteServidor()
   const { data } = await supabase
     .from('atividades')
-    .select('id, tipo, titulo, quando, status, feito_em, responsavel_id, negociacao_id, criado_por')
+    .select('id, tipo, titulo, quando, status, feito_em, responsavel_id, negociacao_id, criado_por, motivo')
     .eq('cliente_id', clienteId)
     .order('quando', { ascending: false })
     .limit(200)

@@ -1,10 +1,8 @@
 import ExcelJS from 'exceljs'
+import { IMPORTACAO } from './config'
 import { campoDaColuna, type CampoImportacao } from './colunas'
 import type { CelulasLinha } from './linhas'
 
-export const LIMITE_BYTES = 4 * 1024 * 1024
-export const LIMITE_LINHAS = 5000
-export const LIMITE_DESCOMPRIMIDO = 50 * 1024 * 1024 // a few MB of rows never expand to this much
 
 export type LinhaBruta = { numero: number; celulas: CelulasLinha }
 export type ResultadoPlanilha =
@@ -39,7 +37,7 @@ function montar(cabecalhos: string[], linhasBrutas: { numero: number; valores: u
       if (campo && !vazia(valores[i]) && celulas[campo] === undefined) celulas[campo] = valores[i]
     })
     linhas.push({ numero, celulas })
-    if (linhas.length > LIMITE_LINHAS) return falha(`A planilha pode ter no máximo ${LIMITE_LINHAS.toLocaleString('pt-BR')} linhas.`)
+    if (linhas.length > IMPORTACAO.arquivo.maxLinhas) return falha(`A planilha pode ter no máximo ${IMPORTACAO.arquivo.maxLinhas.toLocaleString('pt-BR')} linhas.`)
   }
   if (linhas.length === 0) return falha('A planilha não tem nenhum cliente (só o cabeçalho ou linhas vazias).')
   return { ok: true, linhas, colunasIgnoradas }
@@ -72,7 +70,7 @@ async function lerXlsx(buffer: Buffer): Promise<ResultadoPlanilha> {
   if (buffer.subarray(0, 4).toString('latin1') !== 'PK\u0003\u0004') {
     return falha('Esse arquivo não parece ser uma planilha .xlsx válida.')
   }
-  if (tamanhoDescomprimido(buffer) > LIMITE_DESCOMPRIMIDO) {
+  if (tamanhoDescomprimido(buffer) > IMPORTACAO.arquivo.maxDescomprimidoBytes) {
     return falha('A planilha é grande demais depois de aberta. Remova abas, imagens ou linhas vazias e tente de novo.')
   }
   const wb = new ExcelJS.Workbook()
@@ -129,7 +127,7 @@ function lerCsv(buffer: Buffer): ResultadoPlanilha {
 
 export async function lerPlanilha(buffer: Buffer, nomeArquivo: string): Promise<ResultadoPlanilha> {
   if (buffer.length === 0) return falha('O arquivo está vazio.')
-  if (buffer.length > LIMITE_BYTES) return falha('O arquivo é maior que 4 MB. Divida a planilha em partes menores.')
+  if (buffer.length > IMPORTACAO.arquivo.maxBytes) return falha('O arquivo é maior que 4 MB. Divida a planilha em partes menores.')
   const nome = nomeArquivo.toLowerCase()
   if (nome.endsWith('.xlsx')) return lerXlsx(buffer)
   if (nome.endsWith('.csv')) return lerCsv(buffer)

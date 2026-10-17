@@ -6,7 +6,9 @@ import { ClienteForm } from '@/components/clientes/ClienteForm'
 import { EtiquetasCliente } from '@/components/clientes/EtiquetasCliente'
 import { getMembro } from '@/lib/auth/agencia'
 import { getUsuario } from '@/lib/auth/usuario'
-import { buscarAnotacoes, buscarCliente, buscarEtiquetas, listarViagensDoCliente } from '@/lib/clientes/dados'
+import { buscarAnotacoes, buscarCliente, buscarEtiquetas, listarSugestoes, listarViagensDoCliente } from '@/lib/clientes/dados'
+import { SugestoesCliente } from '@/components/clientes/SugestoesCliente'
+import { descreverSugestao } from '@/lib/clientes/sugestoes'
 import { separarViagens } from '@/lib/clientes/viagens'
 import { AtividadesCliente } from '@/components/atividades/AtividadesCliente'
 import { LinhaDoTempo } from '@/components/atividades/LinhaDoTempo'
@@ -27,7 +29,7 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
   const cliente = await buscarCliente(id)
   if (!cliente) notFound()
 
-  const [etiquetas, anotacoes, viagens, negociacoes, atividades, ultimaInteracao, responsaveis, usuario, membro] = await Promise.all([
+  const [etiquetas, anotacoes, viagens, negociacoes, atividades, ultimaInteracao, responsaveis, usuario, membro, sugestoes] = await Promise.all([
     buscarEtiquetas(cliente.id),
     buscarAnotacoes(cliente.id),
     listarViagensDoCliente(cliente.id),
@@ -37,6 +39,7 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
     listarMembros(),
     getUsuario(),
     getMembro(),
+    listarSugestoes(cliente.id),
   ])
   const aplicadasIds = new Set(etiquetas.aplicadas.map((e) => e.id))
   const { futuras, passadas } = separarViagens(viagens, hojeNoBrasil())
@@ -55,6 +58,14 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
         whatsapp={cliente.whatsapp}
         consentimento={cliente.consentimento_whatsapp}
       />
+      <SugestoesCliente
+        clienteId={cliente.id}
+        sugestoes={sugestoes.map((s) => {
+          const nova = descreverSugestao(s.campo, s.valor_sugerido)
+          const atual = descreverSugestao(s.campo, String(cliente[s.campo] ?? ''))
+          return { id: s.id, rotulo: nova.rotulo, atual: atual.valor, sugerido: nova.valor }
+        })}
+      />
       <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
         <ClienteForm acao={salvarCliente.bind(null, cliente.id)} inicial={valoresDaLinha(cliente)} rotuloBotao="Salvar alterações" />
         <div className="flex max-w-xl flex-col gap-8 lg:max-w-none">
@@ -66,7 +77,7 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
             negociacoes={negociacoes.map((n) => ({ id: n.id, titulo: n.titulo }))}
             atividades={atividades.map((a) => ({
               id: a.id, tipo: a.tipo, titulo: a.titulo, quando: formatarDataHora(a.feito_em ?? a.quando), status: a.status,
-              responsavel: a.responsavel_nome, negociacao: a.negociacao_titulo, atrasada: atrasadaAgora(a.status, a.quando, agora),
+              responsavel: a.responsavel_nome, negociacao: a.negociacao_titulo, motivo: a.motivo, atrasada: atrasadaAgora(a.status, a.quando, agora),
               podeApagar: a.criado_por === usuario?.id || membro?.papel === 'dono',
             }))}
           />

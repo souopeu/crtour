@@ -30,10 +30,10 @@ describe('tipos', () => {
 
 describe('atividadeSchema', () => {
   const uuid = 'a4000000-0000-4000-8000-000000000001'
-  const ok = { tipo: 'ligacao', titulo: ' Ligar para a Ana ', quando: '2026-10-17T14:30', status: 'pendente', responsavel: '', negociacao: '' }
+  const ok = { tipo: 'ligacao', titulo: ' Ligar para a Ana ', quando: '2026-10-17T14:30', status: 'pendente', responsavel: '', negociacao: '', motivo: '' }
   test('converts the date and nulls the optional ids', () => {
     expect(atividadeSchema.parse(ok)).toEqual({
-      tipo: 'ligacao', titulo: 'Ligar para a Ana', quando: '2026-10-17T17:30:00.000Z', status: 'pendente', responsavel_id: null, negociacao_id: null,
+      tipo: 'ligacao', titulo: 'Ligar para a Ana', quando: '2026-10-17T17:30:00.000Z', status: 'pendente', responsavel_id: null, negociacao_id: null, motivo: null,
     })
     expect(atividadeSchema.parse({ ...ok, status: 'feito', responsavel: uuid, negociacao: uuid })).toMatchObject({ status: 'feito', responsavel_id: uuid, negociacao_id: uuid })
   })

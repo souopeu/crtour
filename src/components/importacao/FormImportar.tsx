@@ -64,7 +64,7 @@ export function FormImportar() {
           <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-5">
             <div><dt className="text-tinta-suave">Linhas</dt><dd className="text-lg font-semibold">{previa.total}</dd></div>
             <div><dt className="text-tinta-suave">Novos clientes</dt><dd className="text-lg font-semibold text-receita">{previa.novas}</dd></div>
-            <div><dt className="text-tinta-suave">Já cadastrados</dt><dd className="text-lg font-semibold">{previa.jaCadastradas}</dd></div>
+            <div><dt className="text-tinta-suave">Já cadastrados (campos vazios são preenchidos; diferenças viram sugestões)</dt><dd className="text-lg font-semibold">{previa.jaCadastradas}</dd></div>
             <div><dt className="text-tinta-suave">Repetidos na planilha</dt><dd className="text-lg font-semibold">{previa.repetidas}</dd></div>
             <div><dt className="text-tinta-suave">Com erro</dt><dd className={`text-lg font-semibold ${previa.totalErros ? 'text-despesa' : ''}`}>{previa.totalErros}</dd></div>
           </dl>
