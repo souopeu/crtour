@@ -80,3 +80,15 @@ export async function listarEtiquetas(): Promise<EtiquetaLinha[]> {
   const { data } = await supabase.from('etiquetas').select('id, nome').order('nome')
   return (data ?? []) as EtiquetaLinha[]
 }
+
+export type ImportacaoLinha = { id: string; nome: string; criada_em: string; qtd_criados: number; qtd_ignorados: number }
+
+export async function listarImportacoes(): Promise<ImportacaoLinha[]> {
+  const supabase = await criarClienteServidor()
+  const { data } = await supabase
+    .from('importacoes')
+    .select('id, nome, criada_em, qtd_criados, qtd_ignorados')
+    .order('criada_em', { ascending: false })
+    .limit(50)
+  return (data ?? []) as ImportacaoLinha[]
+}
