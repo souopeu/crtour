@@ -4,7 +4,7 @@ import { Suspense } from 'react'
 import { NegociacaoForm } from '@/components/negociacoes/NegociacaoForm'
 import { formatarDataHora, formatarDataBr } from '@/lib/formato'
 import { buscarNegociacao, listarEventos, listarMembros, listarSaidasParaSelecao } from '@/lib/negociacoes/dados'
-import { rotuloDaEtapa } from '@/lib/negociacoes/negociacoes'
+import { rotuloDaEtapa, rotuloDoMotivo } from '@/lib/negociacoes/negociacoes'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
 import { atualizarNegociacao } from '../actions'
 
@@ -24,6 +24,9 @@ async function Conteudo({ params }: Pick<PageProps<'/negociacoes/[id]'>, 'params
         <p className="text-tinta-suave">
           Cliente: <Link href={`/clientes/${n.cliente_id}`} className="text-primaria underline">{n.cliente_nome}</Link> · {rotuloDaEtapa(n.etapa)} · {n.probabilidade}%
         </p>
+        {n.etapa === 'perdido' && n.motivo_perda && (
+          <p className="mt-1 text-despesa">Motivo da perda: {rotuloDoMotivo(n.motivo_perda)}{n.motivo_texto ? ` (${n.motivo_texto})` : ''}</p>
+        )}
         <p className="mt-1 text-lg">
           Valor {formatarReais(n.valor_centavos)} · <strong>previsto {formatarReais(n.valor_previsto_centavos)}</strong>
           {n.fechado_em && <span className="ml-2 text-sm text-receita">Fechada em {formatarDataBr(n.fechado_em)}</span>}
@@ -37,11 +40,11 @@ async function Conteudo({ params }: Pick<PageProps<'/negociacoes/[id]'>, 'params
             inicial={{
               titulo: n.titulo, valor: n.valor_centavos === 0 ? '' : centavosParaCampo(n.valor_centavos), etapa: n.etapa,
               probabilidade: String(n.probabilidade), responsavel: n.responsavel_id ?? '', dataEsperada: n.data_fechamento_esperada ?? '', saida: n.saida_id ?? '',
+              motivo: n.motivo_perda ?? '', motivoTexto: n.motivo_texto ?? '',
             }}
             rotuloBotao="Salvar alterações"
             responsaveis={responsaveis}
             saidas={saidas}
-            etapaAtual={n.etapa}
           />
         </section>
         <section aria-labelledby="historico-titulo" className="flex flex-col gap-3">
@@ -50,6 +53,7 @@ async function Conteudo({ params }: Pick<PageProps<'/negociacoes/[id]'>, 'params
             {eventos.map((e) => (
               <li key={e.id} className="rounded-[--radius-cartao] border border-linha bg-superficie p-3 text-sm">
                 <strong>{e.de ? `${rotuloDaEtapa(e.de)} → ${rotuloDaEtapa(e.para)}` : `Criada em ${rotuloDaEtapa(e.para)}`}</strong>
+                {e.motivo && <span className="block text-despesa">Motivo: {rotuloDoMotivo(e.motivo)}</span>}
                 <span className="block text-tinta-suave">{formatarDataHora(e.em)}{e.por_nome ? ` · ${e.por_nome}` : ''}</span>
               </li>
             ))}

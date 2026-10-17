@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { getAgenciaId } from '@/lib/auth/agencia'
 import type { EstadoForm } from '@/lib/forms'
-import { negociacaoSchema } from '@/lib/negociacoes/negociacoes'
+import { negociacaoSchema, validarMovimento } from '@/lib/negociacoes/negociacoes'
 import { criarClienteServidor } from '@/lib/supabase/server'
 
 const ERRO = 'Não foi possível salvar a negociação. Tente novamente em instantes.'
@@ -16,6 +16,7 @@ function lerForm(fd: FormData) {
   const valores = {
     titulo: texto(fd, 'titulo'), valor: texto(fd, 'valor'), etapa: texto(fd, 'etapa'), probabilidade: texto(fd, 'probabilidade'),
     responsavel: texto(fd, 'responsavel'), dataEsperada: texto(fd, 'dataEsperada'), saida: texto(fd, 'saida'),
+    motivo: texto(fd, 'motivo'), motivoTexto: texto(fd, 'motivoTexto'),
   }
   return { valores, r: negociacaoSchema.safeParse(valores) }
 }
@@ -63,6 +64,31 @@ export async function atualizarNegociacao(id: string, _: EstadoForm, fd: FormDat
     return { erro: ERRO, valores, versao }
   }
   revalidatePath('/funil')
+  revalidatePath('/avisos')
   revalidatePath(`/negociacoes/${id}`)
   return { ok: 'Alterações salvas.', versao } // remount with the saved (possibly recalculated) values
+}
+
+// Kanban drop and "Mover para…": changes only the stage (the database applies the stage default
+// probability, the closing date, the history and, when winning, the notice for the owner).
+export async function moverNegociacao(id: string, etapa: string, motivo: string, motivoTexto: string): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  if (!uuid(id)) return { erro: ERRO, versao }
+  const m = validarMovimento(etapa, motivo, motivoTexto)
+  if (!m.ok) return { erro: m.erro, versao }
+
+  const supabase = await criarClienteServidor()
+  const { data, error } = await supabase
+    .from('negociacoes')
+    .update({ etapa: m.etapa, motivo_perda: m.motivo_perda, motivo_texto: m.motivo_texto })
+    .eq('id', id)
+    .select('id')
+  if (error || !data?.length) {
+    console.error('moverNegociacao falhou', error?.code)
+    return { erro: 'Não foi possível mover a negociação. Atualize a página e tente de novo.', versao }
+  }
+  revalidatePath('/funil')
+  revalidatePath('/avisos')
+  revalidatePath(`/negociacoes/${id}`)
+  return { ok: 'Negociação movida.', versao }
 }

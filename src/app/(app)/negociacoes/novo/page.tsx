@@ -21,7 +21,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/negociacoes/novo'>, '
         <p className="mb-4">Negociação para <strong>{nomeEscolhido}</strong>. <Link href="/negociacoes/novo" className="text-primaria underline">Escolher outro cliente</Link></p>
         <NegociacaoForm
           acao={criarNegociacao.bind(null, clienteId)}
-          inicial={{ titulo: '', valor: '', etapa: 'interessado', probabilidade: '', responsavel: '', dataEsperada: '', saida: '' }}
+          inicial={{ titulo: '', valor: '', etapa: 'interessado', probabilidade: '', responsavel: '', dataEsperada: '', saida: '', motivo: '', motivoTexto: '' }}
           rotuloBotao="Criar negociação"
           responsaveis={responsaveis}
           saidas={saidas}

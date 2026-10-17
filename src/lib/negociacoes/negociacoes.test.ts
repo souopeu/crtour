@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
-  ETAPAS, ETAPAS_SELECIONAVEIS, PROBABILIDADE_PADRAO, agruparNegociacoes, ehGanha, negociacaoSchema, rotuloDaEtapa,
+  ETAPAS, MOTIVOS, PROBABILIDADE_PADRAO, agruparNegociacoes, ehGanha, negociacaoSchema, rotuloDaEtapa, rotuloDoMotivo, validarMovimento,
 } from './negociacoes'
 
 const uuid = 'a4000000-0000-4000-8000-000000000001'
@@ -18,31 +18,42 @@ describe('etapas', () => {
     expect(['interessado', 'orcamento', 'reservado', 'perdido'].some((e) => ehGanha(e as never))).toBe(false)
     expect(['pago', 'viajou', 'pos_venda'].every((e) => ehGanha(e as never))).toBe(true)
   })
-  test('"perdido" is not selectable until the loss-reason step exists', () => {
-    expect(ETAPAS_SELECIONAVEIS.map((e) => e.valor)).not.toContain('perdido')
+  test('loss reasons are fixed and labelled', () => {
+    expect(MOTIVOS.map((m) => m.valor)).toEqual(['achou_caro', 'mudou_data', 'fechou_com_outro', 'sem_resposta', 'desistiu', 'outro'])
+    expect(rotuloDoMotivo('mudou_data')).toBe('Mudou a data')
+    expect(rotuloDoMotivo('desistiu')).toBe('Desistiu da viagem')
   })
 })
 
 describe('negociacaoSchema', () => {
-  const vazio = { titulo: '', valor: '', etapa: 'interessado', probabilidade: '', responsavel: '', dataEsperada: '', saida: '' }
+  const vazio = { titulo: '', valor: '', etapa: 'interessado', probabilidade: '', responsavel: '', dataEsperada: '', saida: '', motivo: '', motivoTexto: '' }
   test('only the title is required; the rest becomes null/default', () => {
     expect(negociacaoSchema.parse({ ...vazio, titulo: '  Maria: Lisboa em março ' })).toEqual({
       titulo: 'Maria: Lisboa em março', valor_centavos: 0, etapa: 'interessado', probabilidade: null,
-      responsavel_id: null, data_fechamento_esperada: null, saida_id: null,
+      responsavel_id: null, data_fechamento_esperada: null, saida_id: null, motivo_perda: null, motivo_texto: null,
     })
   })
   test('converts value, probability and ids', () => {
-    expect(negociacaoSchema.parse({ titulo: 'X', valor: '12.500,00', etapa: 'reservado', probabilidade: '75', responsavel: uuid, dataEsperada: '2027-02-01', saida: uuid })).toEqual({
+    expect(negociacaoSchema.parse({ titulo: 'X', valor: '12.500,00', etapa: 'reservado', probabilidade: '75', responsavel: uuid, dataEsperada: '2027-02-01', saida: uuid, motivo: '', motivoTexto: '' })).toEqual({
       titulo: 'X', valor_centavos: 1250000, etapa: 'reservado', probabilidade: 75, responsavel_id: uuid,
-      data_fechamento_esperada: '2027-02-01', saida_id: uuid,
+      data_fechamento_esperada: '2027-02-01', saida_id: uuid, motivo_perda: null, motivo_texto: null,
     })
+  })
+  test('a lost deal needs a reason; "outro" needs a text; a reason is ignored on other stages', () => {
+    const base = { ...vazio, titulo: 'X', etapa: 'perdido' }
+    expect(negociacaoSchema.safeParse(base).success).toBe(false)
+    expect(negociacaoSchema.safeParse({ ...base, motivo: 'outro' }).success).toBe(false)
+    expect(negociacaoSchema.parse({ ...base, motivo: 'outro', motivoTexto: ' mudou de ideia ' })).toMatchObject({ etapa: 'perdido', motivo_perda: 'outro', motivo_texto: 'mudou de ideia' })
+    expect(negociacaoSchema.parse({ ...base, motivo: 'achou_caro', motivoTexto: 'ignorado' })).toMatchObject({ motivo_perda: 'achou_caro', motivo_texto: null })
+    expect(negociacaoSchema.parse({ ...vazio, titulo: 'X', etapa: 'orcamento', motivo: 'achou_caro' })).toMatchObject({ motivo_perda: null, motivo_texto: null })
   })
   test.each([
     ['blank title', { titulo: '  ' }],
     ['long title', { titulo: 'a'.repeat(201) }],
     ['bad value', { titulo: 'X', valor: 'caro' }],
     ['unknown stage', { titulo: 'X', etapa: 'sonhando' }],
-    ['lost stage not selectable yet', { titulo: 'X', etapa: 'perdido' }],
+    ['unknown loss reason', { titulo: 'X', etapa: 'perdido', motivo: 'tedio' }],
+    ['long reason text', { titulo: 'X', etapa: 'perdido', motivo: 'outro', motivoTexto: 'a'.repeat(201) }],
     ['probability over 100', { titulo: 'X', probabilidade: '101' }],
     ['decimal probability', { titulo: 'X', probabilidade: '7.5' }],
     ['bad responsible id', { titulo: 'X', responsavel: 'maria' }],
@@ -77,5 +88,21 @@ describe('agruparNegociacoes', () => {
   })
   test('no deals, no groups', () => {
     expect(agruparNegociacoes([], 'etapa')).toEqual([])
+  })
+})
+
+describe('validarMovimento (kanban and "Mover para…")', () => {
+  test('any open or won stage moves without a reason', () => {
+    expect(validarMovimento('reservado', '', '')).toEqual({ ok: true, etapa: 'reservado', motivo_perda: null, motivo_texto: null })
+  })
+  test('the lost stage always asks for a reason', () => {
+    expect(validarMovimento('perdido', '', '')).toEqual({ ok: false, erro: 'Escolha o motivo da perda.' })
+    expect(validarMovimento('perdido', 'outro', ' ')).toEqual({ ok: false, erro: 'Descreva o motivo da perda.' })
+    expect(validarMovimento('perdido', 'achou_caro', '')).toEqual({ ok: true, etapa: 'perdido', motivo_perda: 'achou_caro', motivo_texto: null })
+    expect(validarMovimento('perdido', 'outro', 'sem verba')).toEqual({ ok: true, etapa: 'perdido', motivo_perda: 'outro', motivo_texto: 'sem verba' })
+  })
+  test('unknown stages and reasons are refused', () => {
+    expect(validarMovimento('sonhando', '', '').ok).toBe(false)
+    expect(validarMovimento('perdido', 'tedio', '').ok).toBe(false)
   })
 })

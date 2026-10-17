@@ -1,17 +1,18 @@
 import 'server-only'
 import { z } from 'zod'
 import { criarClienteServidor } from '@/lib/supabase/server'
-import type { Etapa } from './negociacoes'
+import type { Etapa, Motivo } from './negociacoes'
 
 export type NegociacaoLinha = {
   id: string; cliente_id: string; cliente_nome: string; titulo: string; valor_centavos: number; etapa: Etapa
   probabilidade: number; valor_previsto_centavos: number; responsavel_id: string | null; responsavel_nome: string | null
   data_fechamento_esperada: string | null; saida_id: string | null; fechado_em: string | null; etapa_desde: string
+  motivo_perda: Motivo | null; motivo_texto: string | null
 }
 export type MembroLinha = { user_id: string; nome: string }
-export type EventoLinha = { id: string; de: Etapa | null; para: Etapa; por_nome: string | null; em: string }
+export type EventoLinha = { id: string; de: Etapa | null; para: Etapa; por_nome: string | null; em: string; motivo: Motivo | null }
 
-const COLUNAS = 'id, cliente_id, titulo, valor_centavos, etapa, probabilidade, valor_previsto_centavos, responsavel_id, data_fechamento_esperada, saida_id, fechado_em, etapa_desde'
+const COLUNAS = 'id, cliente_id, titulo, valor_centavos, etapa, probabilidade, valor_previsto_centavos, responsavel_id, data_fechamento_esperada, saida_id, fechado_em, etapa_desde, motivo_perda, motivo_texto'
 
 export async function listarMembros(): Promise<MembroLinha[]> {
   const supabase = await criarClienteServidor()
@@ -58,12 +59,12 @@ export async function buscarNegociacao(id: string): Promise<NegociacaoLinha | nu
 export async function listarEventos(negociacaoId: string): Promise<EventoLinha[]> {
   const supabase = await criarClienteServidor()
   const [eventos, membros] = await Promise.all([
-    supabase.from('negociacao_eventos').select('id, de, para, por, em').eq('negociacao_id', negociacaoId).order('em', { ascending: false }),
+    supabase.from('negociacao_eventos').select('id, de, para, por, em, motivo').eq('negociacao_id', negociacaoId).order('em', { ascending: false }),
     listarMembros(),
   ])
   const nome = new Map(membros.map((m) => [m.user_id, m.nome]))
-  return ((eventos.data ?? []) as { id: string; de: Etapa | null; para: Etapa; por: string | null; em: string }[]).map((e) => ({
-    id: e.id, de: e.de, para: e.para, em: e.em, por_nome: e.por ? (nome.get(e.por) ?? null) : null,
+  return ((eventos.data ?? []) as { id: string; de: Etapa | null; para: Etapa; por: string | null; em: string; motivo: Motivo | null }[]).map((e) => ({
+    id: e.id, de: e.de, para: e.para, em: e.em, motivo: e.motivo, por_nome: e.por ? (nome.get(e.por) ?? null) : null,
   }))
 }
 
@@ -78,4 +79,23 @@ export async function listarSaidasParaSelecao(): Promise<SaidaOpcao[]> {
   const { data: passeios } = await supabase.from('passeios').select('id, nome').in('id', [...new Set(saidas.map((s) => s.passeio_id))])
   const nome = new Map(((passeios ?? []) as { id: string; nome: string }[]).map((p) => [p.id, p.nome]))
   return saidas.map((s) => ({ id: s.id, rotulo: `${nome.get(s.passeio_id) ?? 'Passeio'} · ${s.data.split('-').reverse().join('/')}` }))
+}
+
+export type AvisoLinha = { id: string; titulo: string; cliente_nome: string; valor_centavos: number; por_nome: string | null; lido_em: string | null; criado_em: string; negociacao_id: string | null }
+
+// RLS returns avisos only to the owner, so an empty list also means "not an owner".
+export async function listarAvisos(): Promise<AvisoLinha[]> {
+  const supabase = await criarClienteServidor()
+  const { data } = await supabase
+    .from('avisos')
+    .select('id, titulo, cliente_nome, valor_centavos, por_nome, lido_em, criado_em, negociacao_id')
+    .order('criado_em', { ascending: false })
+    .limit(100)
+  return (data ?? []) as AvisoLinha[]
+}
+
+export async function contarAvisosNaoLidos(): Promise<number> {
+  const supabase = await criarClienteServidor()
+  const { count } = await supabase.from('avisos').select('id', { count: 'exact', head: true }).is('lido_em', null)
+  return count ?? 0
 }

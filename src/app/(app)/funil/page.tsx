@@ -2,16 +2,20 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { diaNoBrasil, formatarDataBr, hojeNoBrasil } from '@/lib/formato'
 import { diasAte } from '@/lib/pagamentos/cobranca'
-import { listarNegociacoes } from '@/lib/negociacoes/dados'
+import { KanbanFunil } from '@/components/negociacoes/KanbanFunil'
+import { listarNegociacoes, listarSaidasParaSelecao } from '@/lib/negociacoes/dados'
 import { agruparNegociacoes } from '@/lib/negociacoes/negociacoes'
 import { formatarReais } from '@/lib/passeios/dinheiro'
 
 export const metadata = { title: 'Funil' }
 
-async function Tabela({ searchParams }: Pick<PageProps<'/funil'>, 'searchParams'>) {
-  const por = (await searchParams).agrupar === 'responsavel' ? 'responsavel' : 'etapa'
-  const negociacoes = await listarNegociacoes()
+async function Conteudo({ searchParams }: Pick<PageProps<'/funil'>, 'searchParams'>) {
+  const sp = await searchParams
+  const visao = sp.visao === 'tabela' ? 'tabela' : 'kanban'
+  const por = sp.agrupar === 'responsavel' ? 'responsavel' : 'etapa'
+  const [negociacoes, saidas] = await Promise.all([listarNegociacoes(), listarSaidasParaSelecao()])
   const hoje = hojeNoBrasil()
+  const rotuloSaida = new Map(saidas.map((s) => [s.id, s.rotulo]))
   const grupos = agruparNegociacoes(
     negociacoes.map((n) => ({ id: n.id, etapa: n.etapa, valor: n.valor_centavos, previsto: n.valor_previsto_centavos, responsavelId: n.responsavel_id, responsavelNome: n.responsavel_nome })),
     por,
@@ -20,14 +24,18 @@ async function Tabela({ searchParams }: Pick<PageProps<'/funil'>, 'searchParams'
   const totalValor = negociacoes.reduce((s, n) => s + n.valor_centavos, 0)
   const totalPrevisto = negociacoes.reduce((s, n) => s + n.valor_previsto_centavos, 0)
 
-  const link = (v: 'etapa' | 'responsavel') => (v === 'etapa' ? '/funil' : '/funil?agrupar=responsavel')
+  const abas = [
+    { chave: 'kanban', rotulo: 'Kanban', href: '/funil', ativa: visao === 'kanban' },
+    { chave: 'etapa', rotulo: 'Tabela por etapa', href: '/funil?visao=tabela', ativa: visao === 'tabela' && por === 'etapa' },
+    { chave: 'responsavel', rotulo: 'Tabela por responsável', href: '/funil?visao=tabela&agrupar=responsavel', ativa: visao === 'tabela' && por === 'responsavel' },
+  ]
   return (
     <>
-      <nav aria-label="Agrupar por" className="flex flex-wrap gap-2">
-        {(['etapa', 'responsavel'] as const).map((v) => (
-          <Link key={v} href={link(v)} aria-current={v === por ? 'page' : undefined}
-            className={`inline-flex min-h-11 items-center rounded-full border px-4 ${v === por ? 'border-primaria bg-primaria text-white' : 'border-linha bg-superficie'}`}>
-            {v === 'etapa' ? 'Por etapa' : 'Por responsável'}
+      <nav aria-label="Visões do funil" className="flex flex-wrap gap-2">
+        {abas.map((a) => (
+          <Link key={a.chave} href={a.href} aria-current={a.ativa ? 'page' : undefined}
+            className={`inline-flex min-h-11 items-center rounded-full border px-4 ${a.ativa ? 'border-primaria bg-primaria text-white' : 'border-linha bg-superficie'}`}>
+            {a.rotulo}
           </Link>
         ))}
       </nav>
@@ -36,6 +44,15 @@ async function Tabela({ searchParams }: Pick<PageProps<'/funil'>, 'searchParams'
         <p className="rounded-[--radius-cartao] border border-linha bg-superficie p-4">
           Nenhuma negociação ainda. Crie a primeira em &quot;Nova negociação&quot; ou pela ficha de um cliente.
         </p>
+      ) : visao === 'kanban' ? (
+        <KanbanFunil
+          cartoes={negociacoes.map((n) => ({
+            id: n.id, titulo: n.titulo, clienteId: n.cliente_id, clienteNome: n.cliente_nome, etapa: n.etapa, valor: n.valor_centavos,
+            previsto: n.valor_previsto_centavos, probabilidade: n.probabilidade, responsavelNome: n.responsavel_nome,
+            saidaRotulo: n.saida_id ? (rotuloSaida.get(n.saida_id) ?? null) : null,
+            diasNaEtapa: -diasAte(diaNoBrasil(n.etapa_desde), hoje),
+          }))}
+        />
       ) : (
         <>
           <p aria-live="polite" className="text-tinta-suave">
@@ -97,7 +114,7 @@ export default function FunilPage({ searchParams }: PageProps<'/funil'>) {
         <Link href="/negociacoes/novo" className="inline-flex min-h-12 items-center rounded-full bg-destaque px-6 font-semibold text-destaque-texto">Nova negociação</Link>
       </div>
       <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-40" />}>
-        <Tabela searchParams={searchParams} />
+        <Conteudo searchParams={searchParams} />
       </Suspense>
     </section>
   )

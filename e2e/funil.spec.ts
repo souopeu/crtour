@@ -28,6 +28,7 @@ test('funnel: create deals, automatic forecast, stage defaults, history, groupin
   await page.getByRole('link', { name: 'Funil' }).click()
   await expect(page.getByRole('heading', { name: 'Funil de vendas' })).toBeVisible()
   await expect(page.getByText('Nenhuma negociação ainda.')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Kanban' })).toHaveAttribute('aria-current', 'page')
 
   // From the client sheet
   await page.goto(urlAna)
@@ -95,7 +96,7 @@ test('funnel: create deals, automatic forecast, stage defaults, history, groupin
   await expect(page.getByText('previsto R$ 0,00')).toBeVisible()
 
   // Table: grouped by stage in funnel order, with money totals and no probability sum
-  await page.goto('/funil')
+  await page.goto('/funil?visao=tabela')
   await expect(page.getByText('2 negociações · valor R$ 10.000,00 · previsto R$ 3.000,00')).toBeVisible()
   const grupos = page.getByRole('heading', { level: 2 })
   await expect(grupos).toHaveText(['Interessado (1)', 'Orçamento (1)'])
@@ -108,7 +109,7 @@ test('funnel: create deals, automatic forecast, stage defaults, history, groupin
   await expect(page.getByText(/soma.*probabilidade/i)).toHaveCount(0)
 
   // Grouped by person in charge
-  await page.getByRole('link', { name: 'Por responsável' }).click()
+  await page.getByRole('link', { name: 'Tabela por responsável' }).click()
   await expect(grupos).toHaveText(['Pessoa funil (1)', 'Sem responsável (1)'])
 
   // The client sheet lists the deal

@@ -2,6 +2,9 @@ import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
   testDir: './e2e',
+  // Long user journeys (20-40 s each) share the machine with a production build and parallel workers.
+  timeout: 90_000,
+  expect: { timeout: 10_000 },
   // Uses the installed Chrome (no browser download needed).
   use: { baseURL: 'http://localhost:3100', channel: 'chrome' },
   webServer: {
