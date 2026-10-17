@@ -244,6 +244,16 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# crTOUR e-mails (Portuguese). The links carry token_hash/type because /auth/confirmar expects them.
+# In the hosted project, paste the same HTML into Authentication > Email Templates.
+[auth.email.template.confirmation]
+subject = "Confirme seu e-mail no crTOUR"
+content_path = "./supabase/templates/confirmacao.html"
+
+[auth.email.template.recovery]
+subject = "Crie uma nova senha no crTOUR"
+content_path = "./supabase/templates/recuperacao.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"
