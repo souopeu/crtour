@@ -3,6 +3,8 @@ import { FormExcluirConta } from '@/components/FormExcluirConta'
 import { FormLimites } from '@/components/FormLimites'
 import { Equipe } from '@/components/equipe/Equipe'
 import { SecaoComissao } from '@/components/comissao/SecaoComissao'
+import { FormMensagensPasseio } from '@/components/mensagens/FormMensagensPasseio'
+import { buscarConfigMensagens } from '@/lib/mensagens/dados'
 import { getMembro } from '@/lib/auth/agencia'
 import { buscarLimites } from '@/lib/hoje/dados'
 import { Carregando } from '@/components/Carregando'
@@ -34,6 +36,15 @@ async function Prazos() {
 }
 
 const link = 'inline-flex min-h-11 items-center text-primaria underline'
+
+async function MensagensPasseio() {
+  const [membro, c] = await Promise.all([getMembro(), buscarConfigMensagens()])
+  if (membro?.papel !== 'dono') return <p className="text-sm text-tinta-suave">Lembrete {c.dias_lembrete} {c.dias_lembrete === 1 ? 'dia' : 'dias'} antes da saída; avaliação {c.dias_avaliacao} {c.dias_avaliacao === 1 ? 'dia' : 'dias'} depois. Só o dono muda as mensagens.</p>
+  return <FormMensagensPasseio inicial={{
+    diasLembrete: String(c.dias_lembrete), diasAvaliacao: String(c.dias_avaliacao),
+    confirmacao: c.modelo_confirmacao ?? '', lembrete: c.modelo_lembrete ?? '', avaliacao: c.modelo_avaliacao ?? '',
+  }} />
+}
 
 async function Comissao() {
   const membro = await getMembro()
@@ -79,6 +90,13 @@ export default function ConfiguracoesPage() {
         <h2 id="equipe-titulo" className="text-lg font-semibold">Equipe</h2>
         <Suspense fallback={<Carregando altura="h-24" />}>
           <SecaoEquipe />
+        </Suspense>
+      </section>
+
+      <section aria-labelledby="mensagens-passeio-titulo" className="flex flex-col gap-3">
+        <h2 id="mensagens-passeio-titulo" className="text-lg font-semibold">Mensagens do passeio</h2>
+        <Suspense fallback={<Carregando altura="h-24" />}>
+          <MensagensPasseio />
         </Suspense>
       </section>
 

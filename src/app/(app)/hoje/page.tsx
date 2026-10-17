@@ -8,6 +8,9 @@ import { formatarDataHora, hojeNoBrasil } from '@/lib/formato'
 import { buscarLimites, listarPendentesAte, listarSemContato, type PendenteLinha } from '@/lib/hoje/dados'
 import { diasDesde, estaParada, lerVisao, limiteSemContato, separarAtividades, textoHaDias } from '@/lib/hoje/hoje'
 import { listarNegociacoes } from '@/lib/negociacoes/dados'
+import { ItemMensagemPasseio } from '@/components/mensagens/ItemMensagemPasseio'
+import { buscarConfigMensagens, filaMensagensPasseio } from '@/lib/mensagens/dados'
+import { aplicarModeloPasseio, modeloEfetivo } from '@/lib/mensagens/mensagensPasseio'
 import { rotuloDaEtapa } from '@/lib/negociacoes/negociacoes'
 import { Carregando } from '@/components/Carregando'
 
@@ -50,11 +53,14 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/hoje'>, 'searchParams
   const hoje = hojeNoBrasil()
   const visao = lerVisao(sp, membro.papel)
   const minhas = visao === 'minhas' ? membro.user_id : undefined
-  const [pendentes, semContato, negociacoes] = await Promise.all([
+  const [pendentes, semContato, negociacoes, mensagens, configMsg] = await Promise.all([
     listarPendentesAte(limiteSemContato(hoje, 0), minhas), // start of tomorrow = end of today
     listarSemContato(limiteSemContato(hoje, limites.dias_sem_contato)),
     listarNegociacoes(),
+    filaMensagensPasseio(hoje, minhas),
+    buscarConfigMensagens(),
   ])
+  const modelos = { confirmacao: configMsg.modelo_confirmacao, lembrete: configMsg.modelo_lembrete, avaliacao: configMsg.modelo_avaliacao }
   const { atrasadas, deHoje } = separarAtividades(pendentes, hoje)
   const paradas = negociacoes
     .filter((n) => estaParada(n.etapa, n.etapa_desde, limites.dias_negociacao_parada, hoje) && (!minhas || n.responsavel_id === minhas))
@@ -84,6 +90,19 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/hoje'>, 'searchParams
       <section aria-labelledby="dehoje-titulo" className="flex flex-col gap-2">
         <Titulo id="dehoje-titulo" total={deHoje.length}>Para hoje</Titulo>
         {deHoje.length === 0 ? <p className={vazio}>Nenhuma atividade marcada para hoje.</p> : <ListaAtividades itens={deHoje} hoje={hoje} atrasadas={false} />}
+      </section>
+
+      <section aria-labelledby="mensagens-titulo" className="flex flex-col gap-2">
+        <Titulo id="mensagens-titulo" total={mensagens.length}>Mensagens do passeio</Titulo>
+        {mensagens.length === 0 ? <p className={vazio}>Nenhuma mensagem de passeio para hoje.</p> : (
+          <ul className="flex flex-col gap-2">
+            {mensagens.map((m) => (
+              <ItemMensagemPasseio key={`${m.reserva_id}-${m.tipo}`} reservaId={m.reserva_id} clienteId={m.cliente_id} tipo={m.tipo} nome={m.nome}
+                whatsapp={m.whatsapp} consentimento={m.consentimento} passeio={m.passeio} data={m.saida_data}
+                mensagem={aplicarModeloPasseio(modeloEfetivo(m.tipo, modelos[m.tipo]), { nome: m.nome, passeio: m.passeio, data: m.saida_data, saldoCentavos: m.saldo_centavos })} />
+            ))}
+          </ul>
+        )}
       </section>
 
       <section aria-labelledby="semcontato-titulo" className="flex flex-col gap-2">
