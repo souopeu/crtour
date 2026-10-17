@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { criarClienteServidor } from '@/lib/supabase/server'
 import { POR_PAGINA, type Filtros } from './filtros'
 import type { LinhaCliente } from './formulario'
+import type { Viagem } from './viagens'
 
 export const COLUNAS_CLIENTE =
   'nome, whatsapp, email, cidade, aniversario, origem, destinos_interesse, faixa_orcamento, qtd_pessoas, restricoes, passaporte_validade, consentimento_whatsapp'
@@ -91,4 +92,42 @@ export async function listarImportacoes(): Promise<ImportacaoLinha[]> {
     .order('criada_em', { ascending: false })
     .limit(50)
   return (data ?? []) as ImportacaoLinha[]
+}
+
+// Trips of a client: as the responsible (with money) and as a registered companion.
+export async function listarViagensDoCliente(clienteId: string): Promise<Viagem[]> {
+  const supabase = await criarClienteServidor()
+  const [responsavel, acompanhante] = await Promise.all([
+    supabase
+      .from('v_reservas_saldo')
+      .select('id, saida_id, qtd_pessoas, situacao, valor_total_centavos, pago_centavos, saldo_centavos')
+      .eq('cliente_id', clienteId),
+    supabase.from('passageiros').select('reserva_id').eq('cliente_id', clienteId),
+  ])
+  const proprias = (responsavel.data ?? []) as { id: string; saida_id: string; qtd_pessoas: number; situacao: 'ativa' | 'cancelada'; valor_total_centavos: number; pago_centavos: number; saldo_centavos: number }[]
+  const idsProprios = new Set(proprias.map((r) => r.id))
+  const comoAcompanhante = [...new Set(((acompanhante.data ?? []) as { reserva_id: string }[]).map((p) => p.reserva_id))].filter((id) => !idsProprios.has(id))
+
+  let outras: { id: string; saida_id: string; qtd_pessoas: number; situacao: 'ativa' | 'cancelada' }[] = []
+  if (comoAcompanhante.length > 0) {
+    const { data } = await supabase.from('v_reservas_saldo').select('id, saida_id, qtd_pessoas, situacao').in('id', comoAcompanhante)
+    outras = (data ?? []) as typeof outras
+  }
+  const todas = [...proprias, ...outras]
+  if (todas.length === 0) return []
+
+  const { data: saidas } = await supabase.from('saidas').select('id, data, passeio_id').in('id', [...new Set(todas.map((r) => r.saida_id))])
+  const saidasLinhas = (saidas ?? []) as { id: string; data: string; passeio_id: string }[]
+  const { data: passeios } = await supabase.from('passeios').select('id, nome').in('id', [...new Set(saidasLinhas.map((s) => s.passeio_id))])
+  const nomePasseio = new Map(((passeios ?? []) as { id: string; nome: string }[]).map((p) => [p.id, p.nome]))
+  const porSaida = new Map(saidasLinhas.map((s) => [s.id, s]))
+
+  const base = (r: { id: string; saida_id: string; qtd_pessoas: number; situacao: 'ativa' | 'cancelada' }) => {
+    const s = porSaida.get(r.saida_id)
+    return { reservaId: r.id, passeio: s ? (nomePasseio.get(s.passeio_id) ?? '') : '', saidaData: s?.data ?? '', qtd: r.qtd_pessoas, situacao: r.situacao }
+  }
+  return [
+    ...proprias.map((r): Viagem => ({ ...base(r), total: r.valor_total_centavos, pago: r.pago_centavos, saldo: r.saldo_centavos, papel: 'Responsável' })),
+    ...outras.map((r): Viagem => ({ ...base(r), total: 0, pago: 0, saldo: 0, papel: 'Acompanhante' })),
+  ].filter((v) => v.saidaData !== '')
 }

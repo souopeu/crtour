@@ -6,9 +6,11 @@ import { ClienteForm } from '@/components/clientes/ClienteForm'
 import { EtiquetasCliente } from '@/components/clientes/EtiquetasCliente'
 import { getMembro } from '@/lib/auth/agencia'
 import { getUsuario } from '@/lib/auth/usuario'
-import { buscarAnotacoes, buscarCliente, buscarEtiquetas } from '@/lib/clientes/dados'
+import { buscarAnotacoes, buscarCliente, buscarEtiquetas, listarViagensDoCliente } from '@/lib/clientes/dados'
+import { separarViagens } from '@/lib/clientes/viagens'
+import { HistoricoDeViagens } from '@/components/clientes/HistoricoDeViagens'
 import { valoresDaLinha } from '@/lib/clientes/formulario'
-import { formatarDataHora } from '@/lib/formato'
+import { formatarDataHora, hojeNoBrasil } from '@/lib/formato'
 import { salvarCliente } from '../actions'
 
 export const metadata = { title: 'Cliente' }
@@ -18,13 +20,15 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
   const cliente = await buscarCliente(id)
   if (!cliente) notFound()
 
-  const [etiquetas, anotacoes, usuario, membro] = await Promise.all([
+  const [etiquetas, anotacoes, viagens, usuario, membro] = await Promise.all([
     buscarEtiquetas(cliente.id),
     buscarAnotacoes(cliente.id),
+    listarViagensDoCliente(cliente.id),
     getUsuario(),
     getMembro(),
   ])
   const aplicadasIds = new Set(etiquetas.aplicadas.map((e) => e.id))
+  const { futuras, passadas } = separarViagens(viagens, hojeNoBrasil())
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8">
@@ -38,6 +42,7 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
       <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
         <ClienteForm acao={salvarCliente.bind(null, cliente.id)} inicial={valoresDaLinha(cliente)} rotuloBotao="Salvar alterações" />
         <div className="flex max-w-xl flex-col gap-8 lg:max-w-none">
+          <HistoricoDeViagens futuras={futuras} passadas={passadas} todas={viagens} />
           <EtiquetasCliente
             clienteId={cliente.id}
             aplicadas={etiquetas.aplicadas}
