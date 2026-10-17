@@ -5,14 +5,10 @@ import { redirect } from 'next/navigation'
 import { cadastroSchema, loginSchema, novaSenhaSchema, recuperarSchema } from '@/lib/auth/schemas'
 import { traduzirErroAuth } from '@/lib/auth/mensagens'
 import { proximoSeguro } from '@/lib/auth/redirect'
+import type { EstadoForm } from '@/lib/forms'
 import { criarClienteServidor } from '@/lib/supabase/server'
 
-export type EstadoForm = {
-  erro?: string
-  ok?: string
-  campos?: Record<string, string[] | undefined>
-  valores?: Record<string, string>
-}
+export type { EstadoForm }
 
 const texto = (fd: FormData, nome: string) => String(fd.get(nome) ?? '')
 
