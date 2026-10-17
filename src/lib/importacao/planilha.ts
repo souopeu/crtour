@@ -4,6 +4,7 @@ import type { CelulasLinha } from './linhas'
 
 export const LIMITE_BYTES = 4 * 1024 * 1024
 export const LIMITE_LINHAS = 5000
+export const LIMITE_DESCOMPRIMIDO = 50 * 1024 * 1024 // a few MB of rows never expand to this much
 
 export type LinhaBruta = { numero: number; celulas: CelulasLinha }
 export type ResultadoPlanilha =
@@ -44,9 +45,35 @@ function montar(cabecalhos: string[], linhasBrutas: { numero: number; valores: u
   return { ok: true, linhas, colunasIgnoradas }
 }
 
+// Sum of the uncompressed sizes declared in the zip central directory, read without unzipping.
+// Infinity = malformed or zip64 (treated as unsafe).
+export function tamanhoDescomprimido(zip: Buffer): number {
+  let eocd = -1
+  for (let i = zip.length - 22; i >= Math.max(0, zip.length - 22 - 65535); i--) {
+    if (zip.readUInt32LE(i) === 0x06054b50) { eocd = i; break }
+  }
+  if (eocd < 0) return Infinity
+  const entradas = zip.readUInt16LE(eocd + 10)
+  let pos = zip.readUInt32LE(eocd + 16)
+  if (entradas === 0xffff || pos === 0xffffffff) return Infinity
+
+  let total = 0
+  for (let n = 0; n < entradas; n++) {
+    if (pos + 46 > zip.length || zip.readUInt32LE(pos) !== 0x02014b50) return Infinity
+    const tamanho = zip.readUInt32LE(pos + 24)
+    if (tamanho === 0xffffffff) return Infinity
+    total += tamanho
+    pos += 46 + zip.readUInt16LE(pos + 28) + zip.readUInt16LE(pos + 30) + zip.readUInt16LE(pos + 32)
+  }
+  return total
+}
+
 async function lerXlsx(buffer: Buffer): Promise<ResultadoPlanilha> {
   if (buffer.subarray(0, 4).toString('latin1') !== 'PK\u0003\u0004') {
     return falha('Esse arquivo não parece ser uma planilha .xlsx válida.')
+  }
+  if (tamanhoDescomprimido(buffer) > LIMITE_DESCOMPRIMIDO) {
+    return falha('A planilha é grande demais depois de aberta. Remova abas, imagens ou linhas vazias e tente de novo.')
   }
   const wb = new ExcelJS.Workbook()
   try {

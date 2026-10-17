@@ -6,15 +6,18 @@ import { cadastroSchema, loginSchema, novaSenhaSchema, recuperarSchema } from '@
 import { traduzirErroAuth } from '@/lib/auth/mensagens'
 import { proximoSeguro } from '@/lib/auth/redirect'
 import type { EstadoForm } from '@/lib/forms'
+import { urlDoSite } from '@/lib/auth/site'
 import { criarClienteServidor } from '@/lib/supabase/server'
 
 export type { EstadoForm }
 
 const texto = (fd: FormData, nome: string) => String(fd.get(nome) ?? '')
 
+const ERRO_SITE = 'Configuração do site incompleta. Avise o suporte.'
+
 async function origem() {
   const h = await headers()
-  return h.get('origin') ?? `http://${h.get('host')}`
+  return urlDoSite(process.env, h.get('origin'))
 }
 
 export async function entrar(_: EstadoForm, fd: FormData): Promise<EstadoForm> {
@@ -40,12 +43,15 @@ export async function cadastrar(_: EstadoForm, fd: FormData): Promise<EstadoForm
   const r = cadastroSchema.safeParse(dados)
   if (!r.success) return { campos: r.error.flatten().fieldErrors, valores }
 
+  const site = await origem()
+  if (!site) return { erro: ERRO_SITE, valores }
+
   const supabase = await criarClienteServidor()
   const { data, error } = await supabase.auth.signUp({
     email: r.data.email,
     password: r.data.senha,
     options: {
-      emailRedirectTo: `${await origem()}/auth/confirmar`,
+      emailRedirectTo: `${site}/auth/confirmar`,
       data: { nome: r.data.nome, agencia_nome: r.data.agenciaNome, aceite_termos_em: new Date().toISOString() },
     },
   })
@@ -61,9 +67,12 @@ export async function recuperar(_: EstadoForm, fd: FormData): Promise<EstadoForm
   const r = recuperarSchema.safeParse(dados)
   if (!r.success) return { campos: r.error.flatten().fieldErrors, valores: dados }
 
+  const site = await origem()
+  if (!site) return { erro: ERRO_SITE, valores: dados }
+
   const supabase = await criarClienteServidor()
   const { error } = await supabase.auth.resetPasswordForEmail(r.data.email, {
-    redirectTo: `${await origem()}/auth/confirmar?next=/nova-senha`,
+    redirectTo: `${site}/auth/confirmar?next=/nova-senha`,
   })
   if (error?.code === 'over_email_send_rate_limit' || error?.code === 'over_request_rate_limit') {
     return { erro: traduzirErroAuth(error), valores: dados }

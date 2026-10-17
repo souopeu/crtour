@@ -8,6 +8,8 @@ export default defineConfig({
     command: 'npm run build && npx next start -p 3100',
     url: 'http://localhost:3100/login',
     reuseExistingServer: true,
+    // E-mailed links use a configured base URL in production builds.
+    env: { NEXT_PUBLIC_SITE_URL: 'http://localhost:3100' },
     timeout: 180_000,
   },
 })

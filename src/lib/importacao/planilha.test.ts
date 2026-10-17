@@ -1,6 +1,7 @@
 import ExcelJS from 'exceljs'
+import JSZip from 'jszip'
 import { describe, expect, test } from 'vitest'
-import { LIMITE_BYTES, LIMITE_LINHAS, lerPlanilha } from './planilha'
+import { LIMITE_BYTES, LIMITE_LINHAS, LIMITE_DESCOMPRIMIDO, lerPlanilha, tamanhoDescomprimido } from './planilha'
 
 async function xlsx(linhas: unknown[][], nomeAba = 'Clientes') {
   const wb = new ExcelJS.Workbook()
@@ -73,5 +74,29 @@ describe('lerPlanilha (csv)', () => {
   test('detects comma delimiter', async () => {
     const r = await lerPlanilha(Buffer.from('Nome,Cidade\nAna,Santos\n'), 'c.csv')
     expect(r.ok && r.linhas[0].celulas).toMatchObject({ nome: 'Ana', cidade: 'Santos' })
+  })
+})
+
+describe('zip bomb guard', () => {
+  async function zipDe(bytes: number) {
+    const zip = new JSZip()
+    zip.file('xl/worksheets/sheet1.xml', Buffer.alloc(bytes, 'a'))
+    return Buffer.from(await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' }))
+  }
+
+  test('reads the declared uncompressed size from the zip directory', async () => {
+    expect(await xlsx([['Nome'], ['Ana']]).then(tamanhoDescomprimido)).toBeGreaterThan(0)
+    expect(tamanhoDescomprimido(await zipDe(1_000_000))).toBe(1_000_000)
+  })
+
+  test('refuses a small file that expands to a huge one', async () => {
+    const bomba = await zipDe(LIMITE_DESCOMPRIMIDO + 1)
+    expect(bomba.length).toBeLessThan(LIMITE_BYTES)
+    const r = await lerPlanilha(bomba, 'bomba.xlsx')
+    expect(r).toEqual({ ok: false, erro: expect.stringMatching(/grande demais/i) })
+  })
+
+  test('treats a malformed directory as unsafe', () => {
+    expect(tamanhoDescomprimido(Buffer.from('PK\u0003\u0004 sem diretório'))).toBe(Infinity)
   })
 })
