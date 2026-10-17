@@ -28,4 +28,10 @@ describe('decidirAcesso', () => {
     expect(decidirAcesso('/loginx', '', false).tipo).toBe('redirecionar')
     expect(decidirAcesso('/privacidade-admin', '', false).tipo).toBe('redirecionar')
   })
+
+  test('payment provider notices reach their route without a session (the route checks the signature)', () => {
+    expect(decidirAcesso('/api/pagamentos/aviso/asaas', '', false)).toEqual({ tipo: 'seguir' })
+    expect(decidirAcesso('/api/pagamentos/avisoX', '', false).tipo).toBe('redirecionar')
+    expect(decidirAcesso('/api/pagamentos/aviso', '', false).tipo).toBe('redirecionar')
+  })
 })

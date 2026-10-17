@@ -1,6 +1,8 @@
 import { proximoSeguro } from './redirect'
 
 const PUBLICAS = new Set(['/login', '/cadastro', '/recuperar', '/privacidade', '/termos', '/auth/confirmar'])
+// Server-to-server notices (payment providers): authenticated by the provider's signature, not by a session.
+const PREFIXOS_PUBLICOS = ['/api/pagamentos/aviso/']
 // Pages a logged-in user has no reason to see.
 const SO_ANONIMO = new Set(['/login', '/cadastro', '/recuperar'])
 
@@ -10,7 +12,7 @@ export function decidirAcesso(pathname: string, search: string, temSessao: boole
   if (temSessao) {
     return SO_ANONIMO.has(pathname) ? { tipo: 'redirecionar', destino: '/' } : { tipo: 'seguir' }
   }
-  if (PUBLICAS.has(pathname)) return { tipo: 'seguir' }
+  if (PUBLICAS.has(pathname) || PREFIXOS_PUBLICOS.some((p) => pathname.startsWith(p))) return { tipo: 'seguir' }
   const next = proximoSeguro(pathname + search)
   return { tipo: 'redirecionar', destino: `/login?next=${encodeURIComponent(next)}` }
 }
