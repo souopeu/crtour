@@ -4,13 +4,15 @@
 # Usage: supabase/tests/concurrency/overbooking.sh [vagas|passageiros]   (exit code 0 = limit respected)
 #   vagas       - many sellers reserve the same departure (capacity 5)
 #   passageiros - many sessions add companions to one 3-person reservation (2 places)
+#   pagamentos  - many sessions pay R$ 10 each on a R$ 30 reservation (3 payments fit)
 set -euo pipefail
 
 DB=${DB_CONTAINER:-supabase_db_crtour}
 MODE=${1:-vagas}
 WORKERS=${WORKERS:-12}
 CAPACITY=5
-[ "$MODE" = passageiros ] && { CAPACITY=2; WORKERS=${WORKERS:-8}; WORKERS=8; }
+[ "$MODE" = passageiros ] && { CAPACITY=2; WORKERS=8; }
+[ "$MODE" = pagamentos ] && { CAPACITY=3; WORKERS=12; }
 TAG="conc-$$-$(date +%s)"
 UID_TEST=$(uuidgen | tr 'A-Z' 'a-z')
 TMP=$(mktemp -d)
@@ -20,6 +22,7 @@ psql_() { docker exec -i "$DB" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -
 
 cleanup() {
   psql_ -c "
+    delete from public.pagamentos where agencia_id in (select agencia_id from public.membros where user_id = '$UID_TEST');
     delete from public.passageiros where agencia_id in (select agencia_id from public.membros where user_id = '$UID_TEST');
     delete from public.reservas where agencia_id in (select agencia_id from public.membros where user_id = '$UID_TEST');
     delete from public.saidas where agencia_id in (select agencia_id from public.membros where user_id = '$UID_TEST');
@@ -38,13 +41,14 @@ s as (insert into public.saidas (agencia_id, passeio_id, data, capacidade, preco
       select agencia_id, id, '2027-03-10', $CAPACITY, 1000 from p returning id)
 select s.id, c.id from s, c;")
 RESERVA=""
-if [ "$MODE" = passageiros ]; then
+if [ "$MODE" = passageiros ] || [ "$MODE" = pagamentos ]; then
   RESERVA=$(psql_ -c "insert into public.reservas (agencia_id, saida_id, cliente_id, qtd_pessoas, valor_total_centavos)
     select agencia_id, '$SAIDA', '$CLIENTE', 3, 3000 from public.saidas where id = '$SAIDA' returning id;" | head -1)
 fi
 
 for i in $(seq 1 "$WORKERS"); do
   if [ "$MODE" = passageiros ]; then CALL="select public.adicionar_passageiro('$RESERVA', 'Passageiro $i');"
+  elif [ "$MODE" = pagamentos ]; then CALL="select public.registrar_pagamento('$RESERVA', 1000, 'parcela', 'pix', (now() at time zone 'America/Sao_Paulo')::date);"
   else CALL="select public.criar_reserva('$SAIDA', '$CLIENTE', 1);"; fi
   (
     docker exec -i "$DB" psql -U postgres -d postgres -tA -v ON_ERROR_STOP=1 > "$TMP/w$i.out" 2> "$TMP/w$i.err" <<SQL || true
@@ -61,9 +65,13 @@ wait
 
 count() { { grep -l "$1" "$TMP"/w*."$2" 2>/dev/null || true; } | wc -l | tr -d ' '; }
 OK=$(count '^[0-9a-f-]\{36\}$' out)
-NO_SEATS=$(count 'Não há vagas\|já têm nome' err)
+NO_SEATS=$(count 'Não há vagas\|já têm nome\|excede o saldo' err)
 if [ "$MODE" = passageiros ]; then
   SOLD=$(psql_ -c "select count(*) from public.passageiros where reserva_id = '$RESERVA';")
+elif [ "$MODE" = pagamentos ]; then
+  SOLD=$(psql_ -c "select count(*) from public.pagamentos where reserva_id = '$RESERVA';")
+  PAGO=$(psql_ -c "select pago_centavos from public.v_reservas_saldo where id = '$RESERVA';")
+  [ "$PAGO" -le 3000 ] || { echo "FAIL: OVERPAID ($PAGO > 3000)"; exit 1; }
 else
   SOLD=$(psql_ -c "select coalesce(sum(qtd_pessoas),0) from public.reservas where saida_id = '$SAIDA' and situacao = 'ativa';")
 fi
