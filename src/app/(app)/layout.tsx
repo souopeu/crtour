@@ -22,6 +22,7 @@ async function Casca({ children }: { children: React.ReactNode }) {
           <Link href="/hoje" className="inline-flex min-h-11 items-center underline">Hoje</Link>
           <Link href="/" className="inline-flex min-h-11 items-center underline">Clientes</Link>
           <Link href="/funil" className="inline-flex min-h-11 items-center underline">Funil</Link>
+          <Link href="/remarketing" className="inline-flex min-h-11 items-center underline">Remarketing</Link>
           <Link href="/passeios" className="inline-flex min-h-11 items-center underline">Passeios</Link>
           <Link href="/cobrancas" className="inline-flex min-h-11 items-center underline">Cobranças</Link>
           {membro?.papel === 'dono' && (

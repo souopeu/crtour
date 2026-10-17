@@ -23,6 +23,7 @@ export default defineConfig({
         'src/lib/negociacoes/dados.ts',
         'src/lib/atividades/dados.ts',
         'src/lib/hoje/dados.ts',
+        'src/lib/segmentos/dados.ts',
       ],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },
