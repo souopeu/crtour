@@ -9,6 +9,7 @@ import { formatarReais } from '@/lib/passeios/dinheiro'
 export type CartaoKanban = {
   id: string; titulo: string; clienteId: string; clienteNome: string; etapa: Etapa; valor: number; previsto: number
   probabilidade: number; responsavelNome: string | null; saidaRotulo: string | null; diasNaEtapa: number; parada: boolean
+  sugestao?: { para: 'reservado' | 'pago'; texto: string }
 }
 
 // Stage strip: blue (open) to green (won); always labelled with text, never colour alone.
@@ -101,6 +102,14 @@ export function KanbanFunil({ cartoes }: { cartoes: CartaoKanban[] }) {
                     <Link href={`/clientes/${c.clienteId}`} className="text-sm underline">{c.clienteNome}</Link>
                     <p className="text-sm">{formatarReais(c.valor)} · {c.probabilidade}% · <strong>{formatarReais(c.previsto)}</strong></p>
                     {c.saidaRotulo && <p className="text-xs text-tinta-suave">{c.saidaRotulo}</p>}
+                    {c.sugestao && c.etapa !== c.sugestao.para && (
+                      <div className="flex flex-col gap-1 rounded-lg border border-primaria p-2 text-xs">
+                        <p><strong>Sugestão:</strong> {c.sugestao.texto}</p>
+                        <button type="button" onClick={() => pedirMovimento(c.id, c.sugestao!.para)} className="min-h-11 w-fit rounded-full bg-destaque px-3 font-semibold text-destaque-texto">
+                          Mover para {ETAPAS.find((e) => e.valor === c.sugestao!.para)?.rotulo}
+                        </button>
+                      </div>
+                    )}
                     {c.parada && <p className="text-xs font-semibold text-alerta"><span aria-hidden="true">⏸ </span>Negociação parada</p>}
                     <p className="text-xs text-tinta-suave">{c.responsavelNome ?? 'Sem responsável'} · {c.diasNaEtapa <= 0 ? 'desde hoje' : `há ${c.diasNaEtapa} ${c.diasNaEtapa === 1 ? 'dia' : 'dias'}`} na etapa</p>
                     <label className="text-xs font-medium" htmlFor={`mover-${c.id}`}>Mover para…</label>

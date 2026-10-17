@@ -2,9 +2,11 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 import { NegociacaoForm } from '@/components/negociacoes/NegociacaoForm'
+import { SugestaoReserva } from '@/components/negociacoes/SugestaoReserva'
 import { formatarDataHora, formatarDataBr } from '@/lib/formato'
 import { buscarNegociacao, listarEventos, listarMembros, listarSaidasParaSelecao } from '@/lib/negociacoes/dados'
 import { rotuloDaEtapa, rotuloDoMotivo } from '@/lib/negociacoes/negociacoes'
+import { carregarSugestoes } from '@/lib/negociacoes/sugestoesDados'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
 import { atualizarNegociacao } from '../actions'
 
@@ -14,7 +16,8 @@ async function Conteudo({ params }: Pick<PageProps<'/negociacoes/[id]'>, 'params
   const { id } = await params
   const n = await buscarNegociacao(id)
   if (!n) notFound()
-  const [eventos, responsaveis, saidas] = await Promise.all([listarEventos(n.id), listarMembros(), listarSaidasParaSelecao()])
+  const [eventos, responsaveis, saidas, sugestoes] = await Promise.all([listarEventos(n.id), listarMembros(), listarSaidasParaSelecao(), carregarSugestoes(n.id)])
+  const sugestao = sugestoes.get(n.id)
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8">
@@ -32,6 +35,7 @@ async function Conteudo({ params }: Pick<PageProps<'/negociacoes/[id]'>, 'params
           {n.fechado_em && <span className="ml-2 text-sm text-receita">Fechada em {formatarDataBr(n.fechado_em)}</span>}
         </p>
       </div>
+      {sugestao && <SugestaoReserva key={`${sugestao.reservaId}-${sugestao.para}`} negociacaoId={n.id} reservaId={sugestao.reservaId} para={sugestao.para} texto={sugestao.texto} />}
       <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
         <section aria-labelledby="dados-titulo" className="flex flex-col gap-4">
           <h2 id="dados-titulo" className="text-lg font-semibold">Dados da negociação</h2>

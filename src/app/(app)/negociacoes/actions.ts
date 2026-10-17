@@ -92,3 +92,19 @@ export async function moverNegociacao(id: string, etapa: string, motivo: string,
   revalidatePath(`/negociacoes/${id}`)
   return { ok: 'Negociação movida.', versao }
 }
+
+// "Agora não" on a reservation suggestion: stored so the same suggestion does not come back.
+export async function dispensarSugestao(negociacaoId: string, reservaId: string, para: string): Promise<EstadoForm> {
+  if (!uuid(negociacaoId) || !uuid(reservaId) || (para !== 'reservado' && para !== 'pago')) return { erro: ERRO }
+  const agenciaId = await getAgenciaId()
+  if (!agenciaId) return { erro: ERRO }
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.from('sugestoes_dispensadas').insert({ agencia_id: agenciaId, negociacao_id: negociacaoId, reserva_id: reservaId, para })
+  if (error && error.code !== '23505') {
+    console.error('dispensarSugestao falhou', error.code)
+    return { erro: ERRO }
+  }
+  revalidatePath(`/negociacoes/${negociacaoId}`)
+  revalidatePath('/funil')
+  return { ok: 'Sugestão dispensada.' }
+}
