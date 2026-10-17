@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import Link from 'next/link'
 import { sair } from '@/app/(auth)/actions'
 import { APP_NAME } from '@/lib/brand'
 import { exigirUsuario } from '@/lib/auth/usuario'
@@ -14,6 +15,7 @@ async function Casca({ children }: { children: React.ReactNode }) {
       <header className="flex min-h-14 items-center justify-between bg-[#1d4ed8] px-4 text-white">
         <span className="text-xl font-extrabold tracking-tight text-destaque">{APP_NAME}</span>
         <div className="flex items-center gap-3 text-sm">
+          <Link href="/configuracoes" className="inline-flex min-h-11 items-center underline">Configurações</Link>
           <span className="hidden sm:inline">{usuario.email}</span>
           <form action={sair}>
             <button type="submit" className="min-h-11 rounded-full border border-white/40 px-4">Sair</button>
