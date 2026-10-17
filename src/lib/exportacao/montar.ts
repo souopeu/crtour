@@ -1,6 +1,7 @@
-import { ROTULO_ORIGEM } from '@/lib/clientes/rotulos'
+import { ROTULO_ORIGEM, formatarWhatsapp } from '@/lib/clientes/rotulos'
 import { formatarDataBr, formatarDataHora } from '@/lib/formato'
 import { COLUNAS_MODELO } from '@/lib/importacao/modelo'
+import { centavosParaCampo } from '@/lib/passeios/dinheiro'
 import { paraCsv } from './csv'
 
 const PAGINA = 1000 // the API returns at most 1000 rows per request
@@ -60,5 +61,68 @@ export function montarCsvAnotacoes(
   return paraCsv(
     ['Cliente', 'Autor', 'Data', 'Anotação'],
     anotacoes.map((a) => [nomeDoCliente.get(a.cliente_id) ?? '', a.autor_nome, formatarDataHora(a.criada_em), a.texto]),
+  )
+}
+
+// ---- Reservations, payments and companions (so "export all my data" really is all of it) ----
+
+export type NomesDaAgencia = {
+  clientes: Map<string, string>
+  saidas: Map<string, { data: string; passeio: string }>
+}
+export type ReservaExportada = {
+  id: string; cliente_id: string; saida_id: string; qtd_pessoas: number; valor_total_centavos: number
+  pago_centavos: number; saldo_centavos: number; vencimento_saldo: string | null
+  situacao: 'ativa' | 'cancelada'; observacao: string | null; criada_em: string
+}
+export type PagamentoExportado = {
+  id: string; reserva_id: string; tipo: string; forma: string; valor_centavos: number
+  data: string; observacao: string | null; estorno_de: string | null
+}
+export type AcompanhanteExportado = { reserva_id: string; nome: string; whatsapp: string | null; cliente_id: string | null }
+export type ContextoDaReserva = Map<string, { cliente_id: string; saida_id: string }>
+
+const FORMA_ROTULO: Record<string, string> = { pix: 'Pix', dinheiro: 'Dinheiro', cartao: 'Cartão', transferencia: 'Transferência', outro: 'Outro' }
+const TIPO_ROTULO: Record<string, string> = { sinal: 'Sinal', parcela: 'Parcela', saldo: 'Saldo', estorno: 'Estorno' }
+
+export function montarCsvReservas(reservas: ReservaExportada[], nomes: NomesDaAgencia): string {
+  return paraCsv(
+    ['Cliente', 'Passeio', 'Data da saída', 'Pessoas', 'Valor total', 'Pago', 'Falta pagar', 'Vencimento do saldo', 'Situação', 'Observação', 'Criada em'],
+    reservas.map((r) => {
+      const saida = nomes.saidas.get(r.saida_id)
+      return [
+        nomes.clientes.get(r.cliente_id) ?? '', saida?.passeio ?? '', formatarDataBr(saida?.data), r.qtd_pessoas,
+        centavosParaCampo(r.valor_total_centavos), centavosParaCampo(r.pago_centavos), centavosParaCampo(r.saldo_centavos),
+        formatarDataBr(r.vencimento_saldo), r.situacao === 'ativa' ? 'Ativa' : 'Cancelada', r.observacao, formatarDataHora(r.criada_em),
+      ]
+    }),
+  )
+}
+
+export function montarCsvPagamentos(pagamentos: PagamentoExportado[], reservas: ContextoDaReserva, nomes: NomesDaAgencia): string {
+  return paraCsv(
+    ['Cliente', 'Passeio', 'Data da saída', 'Data do pagamento', 'Tipo', 'Forma', 'Valor', 'Observação'],
+    pagamentos.map((p) => {
+      const reserva = reservas.get(p.reserva_id)
+      const saida = reserva ? nomes.saidas.get(reserva.saida_id) : undefined
+      return [
+        reserva ? (nomes.clientes.get(reserva.cliente_id) ?? '') : '', saida?.passeio ?? '', formatarDataBr(saida?.data),
+        formatarDataBr(p.data), TIPO_ROTULO[p.tipo] ?? p.tipo, FORMA_ROTULO[p.forma] ?? p.forma, centavosParaCampo(p.valor_centavos), p.observacao,
+      ]
+    }),
+  )
+}
+
+export function montarCsvAcompanhantes(acompanhantes: AcompanhanteExportado[], reservas: ContextoDaReserva, nomes: NomesDaAgencia): string {
+  return paraCsv(
+    ['Responsável', 'Passeio', 'Data da saída', 'Acompanhante', 'WhatsApp', 'Cadastrado como cliente'],
+    acompanhantes.map((a) => {
+      const reserva = reservas.get(a.reserva_id)
+      const saida = reserva ? nomes.saidas.get(reserva.saida_id) : undefined
+      return [
+        reserva ? (nomes.clientes.get(reserva.cliente_id) ?? '') : '', saida?.passeio ?? '', formatarDataBr(saida?.data),
+        a.nome, formatarWhatsapp(a.whatsapp), a.cliente_id ? 'Sim' : 'Não',
+      ]
+    }),
   )
 }

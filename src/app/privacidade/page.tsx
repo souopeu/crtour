@@ -31,14 +31,19 @@ export default function PrivacidadePage() {
       <p><strong>Dos clientes da agência (inseridos por vocês):</strong> nome, WhatsApp, e-mail, cidade, aniversário, origem do
         contato, destinos de interesse, faixa de orçamento, número de pessoas, restrições e observações, validade do passaporte,
         etiquetas, anotações, registro de consentimento para mensagens no WhatsApp e a data desse registro.</p>
+      <p><strong>Das viagens e reservas (inseridas por vocês):</strong> passeios e datas das saídas, número de pessoas por reserva,
+        valores combinados e pagos (data, tipo, como sinal ou parcela, e forma, como Pix ou dinheiro), vencimento do saldo e, para os
+        acompanhantes, o nome e, se informado, o WhatsApp. Acompanhantes podem ser pessoas que nunca usaram o sistema, inclusive menores.</p>
       <p>
-        <strong>O que não guardamos:</strong> número de passaporte ou de outros documentos, dados de cartão ou de pagamento.
+        <strong>O que não guardamos:</strong> número de passaporte ou de outros documentos, nem número de cartão ou de conta bancária.
+        O crTOUR <em>não recebe nem processa pagamentos</em>: apenas registra o que a agência informa que foi pago.
       </p>
 
       <h2>3. Para que usamos</h2>
       <ul>
         <li>Criar e manter sua conta e permitir o acesso ao sistema (execução do contrato).</li>
         <li>Armazenar, organizar e exibir os clientes da agência, e gerar exportações e importações (execução do contrato).</li>
+        <li>Controlar vagas, reservas, pagamentos, saldos e cobranças, e gerar a lista de passageiros de cada saída (execução do contrato).</li>
         <li>Proteger o sistema contra acessos indevidos e abusos (legítimo interesse e segurança).</li>
         <li>Cumprir obrigações legais, quando houver.</li>
       </ul>
@@ -56,6 +61,11 @@ export default function PrivacidadePage() {
           estritamente necessário para a viagem. Se precisar registrá-los, faça-o apenas com o consentimento específico do titular.
         </li>
         <li>Se cadastrar dados de crianças e adolescentes, garantir o consentimento de um dos pais ou responsáveis.</li>
+        <li>
+          Informar aos acompanhantes que o nome (e o WhatsApp, se houver) deles consta na reserva. Se um acompanhante for cadastrado
+          também como cliente, ele entra sem consentimento para receber promoções.
+        </li>
+        <li>Usar o botão de cobrança no WhatsApp só para tratar de reservas existentes, e nunca para promoções a quem não aceitou receber.</li>
       </ul>
 
       <h2>5. Com quem compartilhamos</h2>
@@ -73,7 +83,12 @@ export default function PrivacidadePage() {
       <h2>6. Quanto tempo guardamos</h2>
       <ul>
         <li>Os dados ficam enquanto a conta existir.</li>
-        <li>Ao excluir a conta (Configurações), apagamos a agência e todos os seus dados do sistema, e removemos o acesso de todos os usuários.</li>
+        <li>Ao excluir a conta (Configurações), apagamos a agência e todos os seus dados do sistema, inclusive reservas, pagamentos e acompanhantes, e removemos o acesso de todos os usuários.</li>
+        <li>
+          Os pagamentos nunca são editados nem apagados um a um: uma correção é um novo registro (estorno), para manter o histórico
+          financeiro. Por isso, um cliente que já tem reserva não pode ser apagado individualmente; a eliminação completa é feita
+          pela exclusão da conta. {PENDENTES.eliminacao}
+        </li>
         <li>Cópias de segurança dos nossos prestadores podem manter os dados por um período limitado após a exclusão: {PENDENTES.backups}.</li>
       </ul>
 
@@ -84,7 +99,7 @@ export default function PrivacidadePage() {
       </p>
       <ul>
         <li>Corrigir qualquer dado na ficha do cliente e na sua conta.</li>
-        <li>Baixar todos os dados em planilha (Configurações → Exportar seus dados).</li>
+        <li>Baixar todos os dados em planilha: clientes, anotações, reservas, pagamentos e acompanhantes (Configurações → Exportar seus dados).</li>
         <li>Excluir a conta e todos os dados (Configurações → Excluir conta; somente o dono da agência).</li>
       </ul>
       <p>

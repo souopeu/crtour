@@ -110,6 +110,11 @@ test('companions, printable passenger list, CSV and access control', async ({ pa
   expect(csv).toContain('1;Ana Souza;Responsável;(11) 99999-0001;Ana Souza')
   expect(csv).toContain('3;(nome a informar);Acompanhante;;Ana Souza')
 
+  // Companions are part of the data export too
+  const acompanhantesCsv = await (await page.request.get('/exportar?tipo=acompanhantes')).text()
+  expect(acompanhantesCsv).toContain('Responsável;Passeio;Data da saída;Acompanhante;WhatsApp;Cadastrado como cliente')
+  expect(acompanhantesCsv).toContain('Ana Souza;Lisboa clássica;10/03/2027;Maria Silva;(11) 98888-0000;Não')
+
   // Access control
   const anonimo = await request.get(`http://localhost:3100${new URL(urlSaida).pathname}/passageiros/csv`, { maxRedirects: 0 })
   expect([307, 308, 401]).toContain(anonimo.status())

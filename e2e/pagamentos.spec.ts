@@ -181,6 +181,19 @@ test('payments, balance, refunds, due dates and the billing list', async ({ page
   await page.goto('/cobrancas')
   await expect(page.getByText('Beto Lima')).toHaveCount(0)
 
+  // "Export all my data" includes reservations and payments (LGPD)
+  const reservasCsv = await (await page.request.get('/exportar?tipo=reservas')).text()
+  expect(reservasCsv).toContain('Cliente;Passeio;Data da saída;Pessoas;Valor total;Pago;Falta pagar')
+  expect(reservasCsv).toContain('Ana Souza;Lisboa clássica;10/03/2027;2;1800,00;1800,00;0,00;')
+  expect(reservasCsv).toMatch(/Beto Lima;Lisboa clássica;10\/03\/2027;1;1000,00;0,00;1000,00;\d{2}\/\d{2}\/\d{4};Cancelada/)
+  const pagamentosCsv = await (await page.request.get('/exportar?tipo=pagamentos')).text()
+  expect(pagamentosCsv).toContain('Cliente;Passeio;Data da saída;Data do pagamento;Tipo;Forma;Valor;Observação')
+  expect(pagamentosCsv).toContain(';Sinal;Pix;500,00;')
+  expect(pagamentosCsv).toContain(';Estorno;Pix;500,00;')
+  expect(pagamentosCsv).toContain(';Saldo;Pix;1200,00;')
+  await page.goto('/configuracoes')
+  for (const nome of [/Baixar reservas/, /Baixar pagamentos/, /Baixar acompanhantes/]) await expect(page.getByRole('link', { name: nome })).toBeVisible()
+
   // Another agency cannot see them
   const contexto = await browser.newContext({ baseURL: 'http://localhost:3100' })
   const outra = await contexto.newPage()

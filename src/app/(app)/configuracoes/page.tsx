@@ -30,10 +30,13 @@ export default function ConfiguracoesPage() {
       <section aria-labelledby="exportar-titulo" className="flex flex-col gap-2">
         <h2 id="exportar-titulo" className="text-lg font-semibold">Exportar seus dados</h2>
         <p className="max-w-prose text-sm text-tinta-suave">
-          Baixe tudo em planilha (CSV). O arquivo de clientes pode ser importado de volta.
+          Baixe tudo em planilha (CSV): clientes, anotações, reservas, pagamentos e acompanhantes. O arquivo de clientes pode ser importado de volta.
         </p>
         <a href="/exportar?tipo=clientes" className={link}>Baixar clientes (.csv)</a>
         <a href="/exportar?tipo=anotacoes" className={link}>Baixar anotações (.csv)</a>
+        <a href="/exportar?tipo=reservas" className={link}>Baixar reservas (.csv)</a>
+        <a href="/exportar?tipo=pagamentos" className={link}>Baixar pagamentos (.csv)</a>
+        <a href="/exportar?tipo=acompanhantes" className={link}>Baixar acompanhantes (.csv)</a>
       </section>
 
       <section aria-labelledby="excluir-titulo" className="flex flex-col gap-3">

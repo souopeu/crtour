@@ -1,6 +1,8 @@
 import type { NextRequest } from 'next/server'
 import { getUsuario } from '@/lib/auth/usuario'
-import { exportarAnotacoes, exportarClientes } from '@/lib/exportacao/dados'
+import {
+  exportarAcompanhantes, exportarAnotacoes, exportarClientes, exportarPagamentos, exportarReservas,
+} from '@/lib/exportacao/dados'
 
 // Never cached or shared: it carries the agency's personal data.
 const CABECALHOS = { 'Content-Type': 'text/csv; charset=utf-8', 'Cache-Control': 'private, no-store' }
@@ -8,9 +10,14 @@ const CABECALHOS = { 'Content-Type': 'text/csv; charset=utf-8', 'Cache-Control':
 export async function GET(request: NextRequest) {
   if (!(await getUsuario())) return new Response('Não autorizado', { status: 401 })
 
-  const tipo = request.nextUrl.searchParams.get('tipo') === 'anotacoes' ? 'anotacoes' : 'clientes'
+  const EXPORTADORES = {
+    clientes: exportarClientes, anotacoes: exportarAnotacoes, reservas: exportarReservas,
+    pagamentos: exportarPagamentos, acompanhantes: exportarAcompanhantes,
+  } as const
+  const pedido = request.nextUrl.searchParams.get('tipo') ?? 'clientes'
+  const tipo = (pedido in EXPORTADORES ? pedido : 'clientes') as keyof typeof EXPORTADORES
   try {
-    const csv = tipo === 'anotacoes' ? await exportarAnotacoes() : await exportarClientes()
+    const csv = await EXPORTADORES[tipo]()
     const dia = new Date().toISOString().slice(0, 10)
     return new Response(csv, {
       headers: { ...CABECALHOS, 'Content-Disposition': `attachment; filename="${tipo}-crtour-${dia}.csv"` },

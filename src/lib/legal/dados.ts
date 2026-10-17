@@ -6,6 +6,7 @@ export const PENDENTES = {
   foro: '[PREENCHER: comarca do foro]',
   regiao: '[CONFIRMAR: país e região dos servidores do banco de dados]',
   backups: '[CONFIRMAR: prazo de retenção de backups]',
+  eliminacao: '[CONFIRMAR COM ADVOGADO: como atender um pedido de eliminação de um cliente que já tem reserva ou pagamento registrado]',
   responsabilidade: '[PREENCHER: limites de responsabilidade, revisados por advogado]',
 }
 
