@@ -5,7 +5,7 @@ async function cadastrar(page: Page, rotulo: string) {
   await page.goto('/cadastro')
   await page.getByLabel('Seu nome').fill(`Pessoa ${rotulo}`)
   await page.getByLabel('Nome da agência').fill(`Agência ${rotulo}`)
-  await page.getByLabel('E-mail').fill(email)
+  await page.getByLabel('E-mail', { exact: true }).fill(email)
   await page.getByLabel('Senha').fill('senha1234')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Criar conta' }).click()
@@ -16,12 +16,13 @@ test('creates, reopens and edits a client; other agencies cannot open it', async
   await cadastrar(page, 'clientes')
 
   await page.getByRole('link', { name: 'Novo cliente' }).click()
+  await expect(page.getByRole('heading', { name: 'Novo cliente' })).toBeVisible()
   await page.getByRole('button', { name: 'Salvar cliente' }).click()
   await expect(page.getByText('Digite o nome do cliente.')).toBeVisible()
 
   await page.getByLabel('Nome', { exact: true }).fill('Ana Souza')
   await page.getByLabel('WhatsApp').fill('(11) 99999-9999')
-  await page.getByLabel('E-mail').fill('ana@mail.com')
+  await page.getByLabel('E-mail', { exact: true }).fill('ana@mail.com')
   await page.getByLabel('Cidade', { exact: true }).fill('Santos')
   await page.getByLabel('Aniversário').fill('1990-05-17')
   await page.getByLabel('Como conheceu a agência').selectOption('instagram')
@@ -37,7 +38,7 @@ test('creates, reopens and edits a client; other agencies cannot open it', async
   await page.reload()
   await expect(page.getByLabel('Nome', { exact: true })).toHaveValue('Ana Souza')
   await expect(page.getByLabel('WhatsApp')).toHaveValue('5511999999999')
-  await expect(page.getByLabel('E-mail')).toHaveValue('ana@mail.com')
+  await expect(page.getByLabel('E-mail', { exact: true })).toHaveValue('ana@mail.com')
   await expect(page.getByLabel('Cidade', { exact: true })).toHaveValue('Santos')
   await expect(page.getByLabel('Aniversário')).toHaveValue('1990-05-17')
   await expect(page.getByLabel('Como conheceu a agência')).toHaveValue('instagram')
@@ -69,6 +70,7 @@ test('creates, reopens and edits a client; other agencies cannot open it', async
 test('tags and dated notes on the client sheet', async ({ page }) => {
   await cadastrar(page, 'notas')
   await page.getByRole('link', { name: 'Novo cliente' }).click()
+  await expect(page.getByRole('heading', { name: 'Novo cliente' })).toBeVisible()
   await page.getByLabel('Nome', { exact: true }).fill('Bia Lima')
   await page.getByRole('button', { name: 'Salvar cliente' }).click()
   await expect(page.getByRole('heading', { name: 'Bia Lima' })).toBeVisible()
@@ -118,4 +120,72 @@ test('tags and dated notes on the client sheet', async ({ page }) => {
   await page.getByRole('listitem').filter({ hasText: 'Segunda nota' }).getByRole('button', { name: 'Apagar' }).click()
   await expect(page.getByText('Segunda nota')).toHaveCount(0)
   await expect(page.getByText('Quer viajar em março')).toBeVisible()
+})
+
+test('client list: search, filters and empty states', async ({ page }) => {
+  await cadastrar(page, 'lista')
+  await expect(page.getByText('Você ainda não tem clientes.')).toBeVisible()
+
+  async function novo(nome: string, cidade: string, origem: string, whatsapp: string) {
+    await page.goto('/clientes/novo')
+    await page.getByLabel('Nome', { exact: true }).fill(nome)
+    await page.getByLabel('WhatsApp').fill(whatsapp)
+    await page.getByLabel('Cidade', { exact: true }).fill(cidade)
+    await page.getByLabel('Como conheceu a agência').selectOption(origem)
+    await page.getByRole('button', { name: 'Salvar cliente' }).click()
+    await expect(page.getByRole('heading', { name: nome })).toBeVisible()
+  }
+  await novo('João Silva', 'São Paulo', 'instagram', '(11) 99999-0001')
+  await novo('Ana Souza', 'Santos', 'indicacao', '(13) 98888-0002')
+
+  // tag Ana
+  await page.getByLabel('Adicionar etiqueta').fill('Europa')
+  await page.getByRole('button', { name: 'Adicionar' }).click()
+  await expect(page.getByRole('button', { name: 'Remover etiqueta Europa' })).toBeVisible()
+
+  await page.goto('/')
+  await expect(page.getByText('Mostrando 1–2 de 2')).toBeVisible()
+  const nomes = page.locator('ul > li > a > span.font-semibold')
+  await expect(nomes).toHaveText(['Ana Souza', 'João Silva'])
+  await expect(page.getByText('(11) 99999-0001')).toBeVisible()
+
+  // accent-insensitive search
+  await page.getByLabel('Buscar por nome, e-mail ou telefone').fill('joao')
+  await page.getByRole('button', { name: 'Filtrar' }).click()
+  await expect(nomes).toHaveText(['João Silva'])
+  await expect(page).toHaveURL(/q=joao/)
+
+  // phone search
+  await page.getByLabel('Buscar por nome, e-mail ou telefone').fill('(13) 98888')
+  await page.getByRole('button', { name: 'Filtrar' }).click()
+  await expect(nomes).toHaveText(['Ana Souza'])
+
+  // filters: tag, origin, city
+  await page.goto('/')
+  await page.getByLabel('Etiqueta').selectOption({ label: 'Europa' })
+  await page.getByRole('button', { name: 'Filtrar' }).click()
+  await expect(nomes).toHaveText(['Ana Souza'])
+
+  await page.getByRole('link', { name: 'Limpar filtros' }).click()
+  await expect(page).toHaveURL('/')
+  await page.getByLabel('Origem').selectOption('instagram')
+  await page.getByRole('button', { name: 'Filtrar' }).click()
+  await expect(nomes).toHaveText(['João Silva'])
+
+  await page.getByRole('link', { name: 'Limpar filtros' }).click()
+  await expect(page).toHaveURL('/')
+  await page.getByLabel('Cidade', { exact: true }).selectOption('Santos')
+  await page.getByRole('button', { name: 'Filtrar' }).click()
+  await expect(nomes).toHaveText(['Ana Souza'])
+
+  // no results + clear
+  await page.getByLabel('Buscar por nome, e-mail ou telefone').fill('zzzz')
+  await page.getByRole('button', { name: 'Filtrar' }).click()
+  await expect(page.getByText('Nenhum cliente combina com esses filtros.')).toBeVisible()
+  await page.getByRole('link', { name: 'Limpar filtros' }).click()
+  await expect(page.getByText('Mostrando 1–2 de 2')).toBeVisible()
+
+  // a malformed page number does not break the list
+  await page.goto('/?pagina=abc&etiqueta=xyz&origem=tv')
+  await expect(page.getByText('Mostrando 1–2 de 2')).toBeVisible()
 })

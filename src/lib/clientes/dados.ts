@@ -1,6 +1,7 @@
 import 'server-only'
 import { z } from 'zod'
 import { criarClienteServidor } from '@/lib/supabase/server'
+import { POR_PAGINA, type Filtros } from './filtros'
 import type { LinhaCliente } from './formulario'
 
 export const COLUNAS_CLIENTE =
@@ -37,4 +38,45 @@ export async function buscarAnotacoes(clienteId: string): Promise<AnotacaoLinha[
     .order('criada_em', { ascending: false })
     .limit(100)
   return (data ?? []) as AnotacaoLinha[]
+}
+
+export type ClienteDaLista = {
+  id: string
+  nome: string
+  whatsapp: string | null
+  email: string | null
+  cidade: string | null
+  origem: string | null
+  consentimento_whatsapp: string
+  total: number
+}
+
+export async function listarClientes(f: Filtros): Promise<{ clientes: ClienteDaLista[]; total: number }> {
+  const supabase = await criarClienteServidor()
+  const { data, error } = await supabase.rpc('buscar_clientes', {
+    p_busca: f.q || null,
+    p_etiqueta: f.etiqueta,
+    p_origem: f.origem,
+    p_cidade: f.cidade || null,
+    p_limite: POR_PAGINA,
+    p_deslocamento: (f.pagina - 1) * POR_PAGINA,
+  })
+  if (error) {
+    console.error('listarClientes falhou', error.code)
+    return { clientes: [], total: 0 }
+  }
+  const clientes = (data ?? []) as ClienteDaLista[]
+  return { clientes, total: clientes[0]?.total ?? 0 }
+}
+
+export async function listarCidades(): Promise<string[]> {
+  const supabase = await criarClienteServidor()
+  const { data } = await supabase.rpc('cidades_dos_clientes')
+  return ((data ?? []) as { cidade: string }[]).map((c) => c.cidade)
+}
+
+export async function listarEtiquetas(): Promise<EtiquetaLinha[]> {
+  const supabase = await criarClienteServidor()
+  const { data } = await supabase.from('etiquetas').select('id, nome').order('nome')
+  return (data ?? []) as EtiquetaLinha[]
 }

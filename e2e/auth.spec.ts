@@ -14,7 +14,7 @@ test('signup, logout, login and wrong password', async ({ page }) => {
   // Terms must be accepted
   await page.getByLabel('Seu nome').fill('Pessoa E2E')
   await page.getByLabel('Nome da agência').fill('Agência E2E')
-  await page.getByLabel('E-mail').fill(email)
+  await page.getByLabel('E-mail', { exact: true }).fill(email)
   await page.getByLabel('Senha').fill(senha)
   await page.getByRole('button', { name: 'Criar conta' }).click()
   await expect(page.getByText('aceite os termos')).toBeVisible()
@@ -35,7 +35,7 @@ test('signup, logout, login and wrong password', async ({ page }) => {
   await page.goto('/')
   await expect(page).toHaveURL(/\/login/)
 
-  await page.getByLabel('E-mail').fill(email)
+  await page.getByLabel('E-mail', { exact: true }).fill(email)
   await page.getByLabel('Senha').fill('errada1234')
   await page.getByRole('button', { name: 'Entrar' }).click()
   await expect(page.getByText('E-mail ou senha incorretos.')).toBeVisible()
@@ -47,7 +47,7 @@ test('signup, logout, login and wrong password', async ({ page }) => {
 
 test('login ignores an external next parameter', async ({ page }) => {
   await page.goto('/login?next=https://evil.com')
-  await page.getByLabel('E-mail').fill(email)
+  await page.getByLabel('E-mail', { exact: true }).fill(email)
   await page.getByLabel('Senha').fill(senha)
   await page.getByRole('button', { name: 'Entrar' }).click()
   await expect(page).toHaveURL('/')
