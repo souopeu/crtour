@@ -12,7 +12,7 @@ async function Casca({ children }: { children: React.ReactNode }) {
   const usuario = await exigirUsuario()
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="flex min-h-14 items-center justify-between bg-[#1d4ed8] px-4 text-white">
+      <header className="flex min-h-14 items-center justify-between bg-[#1d4ed8] px-4 text-white print:hidden">
         <span className="text-xl font-extrabold tracking-tight text-destaque">{APP_NAME}</span>
         <div className="flex items-center gap-3 text-sm">
           <Link href="/" className="inline-flex min-h-11 items-center underline">Clientes</Link>

@@ -3,7 +3,9 @@ import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 import { ConfirmarExclusao } from '@/components/passeios/ConfirmarExclusao'
 import { SaidaForm } from '@/components/passeios/SaidaForm'
+import { Acompanhantes } from '@/components/reservas/Acompanhantes'
 import { ReservaForm } from '@/components/reservas/ReservaForm'
+import { formatarWhatsapp } from '@/lib/clientes/rotulos'
 import { formatarDataBr } from '@/lib/formato'
 import { buscarClientesParaReserva, buscarNomeDoCliente, buscarSaida, listarReservas } from '@/lib/passeios/dados'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
@@ -41,6 +43,7 @@ async function Conteudo({ params, searchParams }: Pick<PageProps<'/saidas/[id]'>
           {lotada && saida.situacao === 'aberta' && <strong className="ml-2 text-alerta">Lotada</strong>}
           {saida.situacao !== 'aberta' && <strong className="ml-2">{saida.situacao === 'cancelada' ? 'Cancelada' : 'Encerrada'}</strong>}
         </p>
+        <Link href={`/saidas/${saida.id}/passageiros`} className="mt-2 inline-flex min-h-11 items-center text-primaria underline">Lista de passageiros (imprimir)</Link>
         {sp.feito === '1' && <p role="status" className="mt-3 w-fit rounded-xl bg-receita-suave p-3 text-sm text-receita">Reserva feita.</p>}
       </div>
 
@@ -64,6 +67,14 @@ async function Conteudo({ params, searchParams }: Pick<PageProps<'/saidas/[id]'>
                       {r.qtd_pessoas} {r.qtd_pessoas === 1 ? 'pessoa' : 'pessoas'} · {formatarReais(r.valor_total_centavos)}
                     </p>
                     {r.observacao && <p className="text-sm">{r.observacao}</p>}
+                    {r.situacao === 'ativa' && (
+                      <Acompanhantes
+                        saidaId={saida.id}
+                        reservaId={r.id}
+                        passageiros={r.passageiros.map((p) => ({ id: p.id, nome: p.nome, telefone: formatarWhatsapp(p.whatsapp) }))}
+                        lugaresLivres={r.qtd_pessoas - 1 - r.passageiros.length}
+                      />
+                    )}
                     {r.situacao === 'ativa' && (
                       <ConfirmarExclusao
                         acao={cancelarReserva.bind(null, saida.id, r.id)}

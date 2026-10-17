@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import type { EstadoForm } from '@/lib/forms'
+import { passageiroSchema } from '@/lib/passageiros/lista'
 import { mensagemDeErroReserva, reservaSchema } from '@/lib/reservas/schema'
 import { criarClienteServidor } from '@/lib/supabase/server'
 
@@ -48,4 +49,35 @@ export async function cancelarReserva(saidaId: string, reservaId: string): Promi
   revalidatePath('/passeios', 'layout')
   revalidatePath(`/saidas/${saidaId}`)
   return { ok: 'Reserva cancelada. As vagas voltaram para a saída.', versao }
+}
+
+export async function adicionarPassageiro(saidaId: string, reservaId: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const valores = { nome: texto(fd, 'nome'), whatsapp: texto(fd, 'whatsapp') }
+  const r = passageiroSchema.safeParse({ ...valores, cadastrar: fd.get('cadastrar') ?? undefined })
+  if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
+  if (!uuid(saidaId) || !uuid(reservaId)) return { erro: mensagemDeErroReserva(undefined), valores, versao }
+
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.rpc('adicionar_passageiro', {
+    p_reserva: reservaId,
+    p_nome: r.data.nome,
+    p_whatsapp: r.data.whatsapp,
+    p_criar_cliente: r.data.criar_cliente,
+  })
+  if (error) {
+    if (!['CR005', 'CR006'].includes(error.code ?? '')) console.error('adicionarPassageiro falhou', error.code)
+    return { erro: mensagemDeErroReserva(error.code), valores, versao }
+  }
+  revalidatePath(`/saidas/${saidaId}`, 'layout')
+  if (r.data.criar_cliente) revalidatePath('/')
+  return { versao } // clean form for the next companion
+}
+
+export async function removerPassageiro(saidaId: string, passageiroId: string): Promise<void> {
+  if (!uuid(saidaId) || !uuid(passageiroId)) return
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.rpc('remover_passageiro', { p_passageiro: passageiroId })
+  if (error) console.error('removerPassageiro falhou', error.code)
+  revalidatePath(`/saidas/${saidaId}`, 'layout')
 }

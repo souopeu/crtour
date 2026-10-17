@@ -29,6 +29,8 @@ const MENSAGENS: Record<string, string> = {
   CR002: 'Esta saída não está aberta para reservas.',
   CR003: 'A capacidade não pode ser menor que as vagas já reservadas.',
   CR004: 'Esta reserva já estava cancelada.',
+  CR005: 'Todos os lugares desta reserva já têm nome.',
+  CR006: 'Esta reserva está cancelada.',
   '23503': 'Cliente ou saída não encontrados nesta agência.',
   '42501': 'Você não tem acesso a esta saída.',
   '22003': 'O valor total está fora do limite permitido.',

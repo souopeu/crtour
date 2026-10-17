@@ -33,6 +33,8 @@ describe('mensagemDeErroReserva', () => {
     ['CR002', /não está aberta/i],
     ['CR003', /capacidade/i],
     ['CR004', /já estava cancelada/i],
+    ['CR005', /lugares/i],
+    ['CR006', /está cancelada/i],
     ['23503', /cliente/i],
     ['42501', /acesso/i],
     ['22003', /valor/i],

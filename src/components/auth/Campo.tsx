@@ -1,5 +1,6 @@
 type Props = {
   nome: string
+  id?: string
   rotulo: string
   tipo?: string
   valor?: string
@@ -8,15 +9,15 @@ type Props = {
   dica?: string
 }
 
-export function Campo({ nome, rotulo, tipo = 'text', valor, erros, autoComplete, dica }: Props) {
-  const idErro = `${nome}-erro`
+export function Campo({ nome, id = nome, rotulo, tipo = 'text', valor, erros, autoComplete, dica }: Props) {
+  const idErro = `${id}-erro`
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={nome} className="text-sm font-medium">
+      <label htmlFor={id} className="text-sm font-medium">
         {rotulo}
       </label>
       <input
-        id={nome}
+        id={id}
         name={nome}
         type={tipo}
         defaultValue={valor}

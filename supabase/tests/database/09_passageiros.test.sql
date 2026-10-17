@@ -64,7 +64,7 @@ select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-0000-0000-0000-0000000
 set local role authenticated;
 select lives_ok($$select public.excluir_minha_conta()$$, 'the owner can delete an account that has reservations and companions');
 reset role;
-select is((select count(*) from public.passageiros) + (select count(*) from public.reservas where agencia_id = current_setting('t.alfa')::uuid), 0::bigint, 'passengers and reservations are gone');
+select is((select count(*) from public.passageiros where agencia_id = current_setting('t.alfa')::uuid) + (select count(*) from public.reservas where agencia_id = current_setting('t.alfa')::uuid), 0::bigint, 'passengers and reservations are gone');
 
 select * from finish();
 rollback;
