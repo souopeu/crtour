@@ -78,6 +78,9 @@ const pGramado = await passeio('Gramado no inverno', 'Gramado')
 const gramadoPassado = await saida(pGramado, -3, 20, 320000)
 const gramado = await saida(pGramado, 60, 20, 320000)
 const maldivas = await saida(await passeio('Maldivas lua de mel', 'Maldivas'), 120, 4, 2100000)
+// Deals linked to their departures: only then do reservations suggest the next stage
+ok(await dono.from('negociacoes').update({ saida_id: gramado }).eq('id', nid['Gramado no inverno']))
+ok(await dono.from('negociacoes').update({ saida_id: maldivas }).eq('id', nid['Lua de mel em Maldivas']))
 
 const resBruno = ok(await dono.rpc('criar_reserva', { p_saida: gramado, p_cliente: id.Bruno, p_qtd: 2 }))
 ok(await dono.rpc('registrar_pagamento', { p_reserva: resBruno, p_valor: 640000, p_tipo: 'saldo', p_forma: 'pix', p_data: data(0) })) // fully paid -> suggests Pago

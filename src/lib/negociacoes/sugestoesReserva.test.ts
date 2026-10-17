@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { sugerirEtapas, type NegSugestao, type ReservaSugestao } from './sugestoesReserva'
 
-const neg = (p: Partial<NegSugestao>): NegSugestao => ({ id: 'n1', clienteId: 'c1', saidaId: null, etapa: 'interessado', criadoEm: '2026-10-01T12:00:00Z', ...p })
+const neg = (p: Partial<NegSugestao>): NegSugestao => ({ id: 'n1', clienteId: 'c1', saidaId: 's1', etapa: 'interessado', ...p })
 const res = (p: Partial<ReservaSugestao>): ReservaSugestao => ({
   id: 'r1', clienteId: 'c1', saidaId: 's1', situacao: 'ativa', valorTotal: 100_000, saldo: 100_000, criadaEm: '2026-10-05T12:00:00Z', ...p,
 })
@@ -31,8 +31,9 @@ describe('sugerirEtapas', () => {
     expect(sugerirEtapas([neg({ saidaId: 's2' })], [res({ saidaId: 's1' })], []).size).toBe(0)
     expect(sugerirEtapas([neg({ saidaId: 's2' })], [res({ saidaId: 's2', criadaEm: '2026-01-01T12:00:00Z' })], []).get('n1')?.para).toBe('reservado')
   })
-  test('without a departure, only reservations made after the deal was created', () => {
-    expect(sugerirEtapas([neg({})], [res({ criadaEm: '2026-09-30T12:00:00Z' })], []).size).toBe(0)
+  test('a deal not tied to a departure never gets suggestions (no guessing which trip it is)', () => {
+    // the client has a fully paid trip to Gramado, but this deal (a cruise) is not linked to it
+    expect(sugerirEtapas([neg({ saidaId: null })], [res({ saldo: 0 }), res({ id: 'r2' })], []).size).toBe(0)
   })
   test('the most recent matching reservation is used', () => {
     const r = sugerirEtapas([neg({})], [res({ id: 'velha', criadaEm: '2026-10-02T12:00:00Z' }), res({ id: 'nova', criadaEm: '2026-10-09T12:00:00Z' })], [])

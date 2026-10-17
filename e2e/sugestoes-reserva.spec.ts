@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 
 const iso = (dias: number) => new Date(Date.now() + dias * 86_400_000 - 3 * 3_600_000).toISOString().slice(0, 10) // Brazil day
 
-test('reservations suggest moving the deal (Reservado, then Pago), one tap or "Agora não", never automatic', async ({ page }) => {
+test('reservations suggest moving the linked deal (Reservado, then Pago), one tap or "Agora não", never automatic nor for unlinked deals', async ({ page }) => {
   await page.goto('/cadastro')
   await page.getByLabel('Seu nome').fill('Pessoa sugestões')
   await page.getByLabel('Nome da agência').fill('Agência sugestões')
@@ -16,13 +16,7 @@ test('reservations suggest moving the deal (Reservado, then Pago), one tap or "A
   await page.getByLabel('Nome', { exact: true }).fill('Ana Souza')
   await page.getByRole('button', { name: 'Salvar cliente' }).click()
   await expect(page.getByRole('heading', { name: 'Ana Souza' })).toBeVisible()
-  await page.getByRole('link', { name: 'Nova negociação' }).click()
-  await page.getByLabel('Título').fill('Lisboa da Ana')
-  await page.getByLabel('Valor (R$)').fill('1.000,00')
-  await page.getByRole('button', { name: 'Criar negociação' }).click()
-  await expect(page.getByRole('heading', { name: 'Lisboa da Ana', level: 1 })).toBeVisible()
-  const urlNeg = page.url()
-  await expect(page.getByRole('region', { name: 'Sugestão' })).toHaveCount(0)
+  const urlAna = page.url()
 
   await page.goto('/passeios/novo')
   await page.getByLabel('Nome do passeio').fill('Lisboa clássica')
@@ -35,6 +29,24 @@ test('reservations suggest moving the deal (Reservado, then Pago), one tap or "A
   await page.getByRole('link', { name: /10\/03\/2027/ }).click()
   await expect(page.getByRole('heading', { name: 'Saída de 10/03/2027' })).toBeVisible()
   const urlSaida = page.url()
+  // Two deals for Ana: one linked to this departure, one not linked (e.g. another trip she is considering)
+  for (const [titulo, ligada] of [['Lisboa da Ana', true], ['Cruzeiro da Ana', false]] as const) {
+    await page.goto(urlAna)
+    await page.getByRole('link', { name: 'Nova negociação' }).click()
+    await page.getByLabel('Título').fill(titulo)
+    await page.getByLabel('Valor (R$)').fill('1.000,00')
+    if (ligada) await page.getByLabel('Saída (opcional)').selectOption({ label: 'Lisboa clássica · 10/03/2027' })
+    await page.getByRole('button', { name: 'Criar negociação' }).click()
+    await expect(page.getByRole('heading', { name: titulo, level: 1 })).toBeVisible()
+  }
+  const urlCruzeiro = page.url()
+  await page.goto('/funil?visao=tabela')
+  await page.getByRole('link', { name: 'Lisboa da Ana' }).click()
+  await expect(page.getByRole('heading', { name: 'Lisboa da Ana', level: 1 })).toBeVisible()
+  const urlNeg = page.url()
+  await expect(page.getByRole('region', { name: 'Sugestão' })).toHaveCount(0)
+
+  await page.goto(urlSaida)
   await page.getByLabel(/Buscar cliente/).fill('ana')
   await page.getByRole('button', { name: 'Buscar' }).click()
   await page.getByRole('link', { name: /Ana Souza/ }).click()
@@ -76,4 +88,11 @@ test('reservations suggest moving the deal (Reservado, then Pago), one tap or "A
   await page.goto(urlNeg)
   await expect(page.getByText(/Pago · 100%/)).toBeVisible()
   await expect(page.getByRole('region', { name: 'Sugestão' })).toHaveCount(0)
+
+  // The deal not linked to the departure never got a suggestion (no guessing which trip it is)
+  await page.goto(urlCruzeiro)
+  await expect(page.getByRole('heading', { name: 'Cruzeiro da Ana', level: 1 })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Sugestão' })).toHaveCount(0)
+  await page.goto('/funil')
+  await expect(page.locator('li[draggable]').filter({ hasText: 'Cruzeiro da Ana' })).not.toContainText('Sugestão')
 })

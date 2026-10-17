@@ -5,7 +5,7 @@ import { listarSaidasParaSelecao } from './dados'
 import { sugerirEtapas, type Sugestao } from './sugestoesReserva'
 
 const ETAPAS_COM_SUGESTAO = ['interessado', 'orcamento', 'reservado'] as const
-const negSchema = z.object({ id: z.uuid(), cliente_id: z.uuid(), saida_id: z.uuid().nullable(), etapa: z.enum(ETAPAS_COM_SUGESTAO), criado_em: z.string() })
+const negSchema = z.object({ id: z.uuid(), cliente_id: z.uuid(), saida_id: z.uuid(), etapa: z.enum(ETAPAS_COM_SUGESTAO) })
 const resSchema = z.object({
   id: z.uuid(), cliente_id: z.uuid(), saida_id: z.uuid(), situacao: z.enum(['ativa', 'cancelada']),
   valor_total_centavos: z.number(), saldo_centavos: z.number(), criada_em: z.string(),
@@ -17,7 +17,7 @@ export type SugestaoComTexto = Sugestao & { texto: string }
 // Suggestions for open deals (optionally one deal), with a sentence naming the reservation's departure.
 export async function carregarSugestoes(negociacaoId?: string): Promise<Map<string, SugestaoComTexto>> {
   const supabase = await criarClienteServidor()
-  let consulta = supabase.from('negociacoes').select('id, cliente_id, saida_id, etapa, criado_em').in('etapa', [...ETAPAS_COM_SUGESTAO]).limit(2000)
+  let consulta = supabase.from('negociacoes').select('id, cliente_id, saida_id, etapa').in('etapa', [...ETAPAS_COM_SUGESTAO]).not('saida_id', 'is', null).limit(2000)
   if (negociacaoId) consulta = consulta.eq('id', negociacaoId)
   const negs = z.array(negSchema).catch([]).parse((await consulta).data ?? [])
   if (negs.length === 0) return new Map()
@@ -33,7 +33,7 @@ export async function carregarSugestoes(negociacaoId?: string): Promise<Map<stri
   const saidaDa = new Map(res.map((r) => [r.id, r.saida_id]))
 
   const sugestoes = sugerirEtapas(
-    negs.map((n) => ({ id: n.id, clienteId: n.cliente_id, saidaId: n.saida_id, etapa: n.etapa, criadoEm: n.criado_em })),
+    negs.map((n) => ({ id: n.id, clienteId: n.cliente_id, saidaId: n.saida_id, etapa: n.etapa })),
     res.map((r) => ({ id: r.id, clienteId: r.cliente_id, saidaId: r.saida_id, situacao: r.situacao, valorTotal: r.valor_total_centavos, saldo: r.saldo_centavos, criadaEm: r.criada_em })),
     z.array(dispSchema).catch([]).parse(dispensas.data ?? []).map((d) => ({ negociacaoId: d.negociacao_id, reservaId: d.reserva_id, para: d.para })),
   )
