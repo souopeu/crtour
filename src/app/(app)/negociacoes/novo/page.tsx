@@ -4,6 +4,7 @@ import { NegociacaoForm } from '@/components/negociacoes/NegociacaoForm'
 import { buscarClientesParaReserva, buscarNomeDoCliente } from '@/lib/passeios/dados'
 import { listarMembros, listarSaidasParaSelecao } from '@/lib/negociacoes/dados'
 import { criarNegociacao } from '../actions'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Nova negociação' }
 
@@ -62,7 +63,7 @@ export default function NovaNegociacaoPage({ searchParams }: PageProps<'/negocia
   return (
     <div className="mx-auto max-w-3xl">
       <h1 className="mb-4 text-2xl font-bold tracking-tight">Nova negociação</h1>
-      <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-40" />}>
+      <Suspense fallback={<Carregando altura="h-40" />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>
     </div>

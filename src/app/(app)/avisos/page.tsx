@@ -5,6 +5,7 @@ import { formatarDataHora } from '@/lib/formato'
 import { listarAvisos } from '@/lib/negociacoes/dados'
 import { formatarReais } from '@/lib/passeios/dinheiro'
 import { marcarAvisoLido, marcarTodosLidos } from './actions'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Avisos' }
 
@@ -52,7 +53,7 @@ export default function AvisosPage() {
   return (
     <section className="mx-auto flex max-w-3xl flex-col gap-4">
       <h1 className="text-2xl font-bold tracking-tight">Avisos</h1>
-      <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-40" />}>
+      <Suspense fallback={<Carregando altura="h-40" />}>
         <Lista />
       </Suspense>
     </section>

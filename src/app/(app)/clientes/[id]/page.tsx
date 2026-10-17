@@ -21,6 +21,7 @@ import { HistoricoDeViagens } from '@/components/clientes/HistoricoDeViagens'
 import { valoresDaLinha } from '@/lib/clientes/formulario'
 import { formatarDataHora, hojeNoBrasil } from '@/lib/formato'
 import { salvarCliente } from '../actions'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Cliente' }
 
@@ -111,7 +112,7 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
 
 export default function ClientePage({ params }: PageProps<'/clientes/[id]'>) {
   return (
-    <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-64" />}>
+    <Suspense fallback={<Carregando altura="h-64" />}>
       <Ficha params={params} />
     </Suspense>
   )

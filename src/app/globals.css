@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
 :root {
+  --duracao-saida: 150ms;
+  --duracao-entrada: 210ms;
+  --duracao-movimento: 400ms;
+  --atraso-esqueleto: 120ms;
   --papel: #ffffff;
   --superficie: #ffffff;
   --superficie-suave: #f1f4fa;
@@ -68,11 +72,34 @@ body {
   font-family: var(--font-sans);
 }
 
+@keyframes esqueleto-entra {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes esqueleto-pulsa {
+  50% { opacity: 0.55; }
+}
+
+/* Appears only after --atraso-esqueleto, so a fast load never flashes a placeholder. */
+.esqueleto {
+  opacity: 0;
+  animation: esqueleto-entra var(--duracao-entrada) ease-out var(--atraso-esqueleto) forwards;
+}
+
+.esqueleto-barra {
+  animation: esqueleto-pulsa 1.6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation: none !important;
     transition: none !important;
+  }
+
+  .esqueleto {
+    opacity: 1;
   }
 }

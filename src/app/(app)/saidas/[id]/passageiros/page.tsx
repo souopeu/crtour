@@ -2,9 +2,10 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 import { BotaoImprimir } from '@/components/BotaoImprimir'
-import { formatarDataBr } from '@/lib/formato'
+import { formatarDataBr, ouTraco } from '@/lib/formato'
 import { buscarSaida, listarPassageirosDaSaida } from '@/lib/passeios/dados'
 import { montarLista } from '@/lib/passageiros/lista'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Lista de passageiros' }
 
@@ -53,8 +54,8 @@ async function Conteudo({ params }: Pick<PageProps<'/saidas/[id]/passageiros'>, 
                 <td className="py-2 pr-2">{l.numero}</td>
                 <td className={`py-2 pr-2 ${l.semNome ? 'italic text-tinta-suave print:text-black' : 'font-medium'}`}>{l.nome}</td>
                 <td className="py-2 pr-2">{l.tipo}</td>
-                <td className="py-2 pr-2">{l.telefone}</td>
-                <td className="py-2">{l.reserva}</td>
+                <td className="py-2 pr-2">{ouTraco(l.telefone)}</td>
+                <td className="py-2">{ouTraco(l.reserva)}</td>
               </tr>
             ))}
           </tbody>
@@ -66,7 +67,7 @@ async function Conteudo({ params }: Pick<PageProps<'/saidas/[id]/passageiros'>, 
 
 export default function PassageirosPage({ params }: PageProps<'/saidas/[id]/passageiros'>) {
   return (
-    <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-64" />}>
+    <Suspense fallback={<Carregando altura="h-64" />}>
       <Conteudo params={params} />
     </Suspense>
   )

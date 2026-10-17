@@ -9,6 +9,7 @@ import { buscarLimites, listarPendentesAte, listarSemContato, type PendenteLinha
 import { diasDesde, estaParada, lerVisao, limiteSemContato, separarAtividades, textoHaDias } from '@/lib/hoje/hoje'
 import { listarNegociacoes } from '@/lib/negociacoes/dados'
 import { rotuloDaEtapa } from '@/lib/negociacoes/negociacoes'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Hoje' }
 
@@ -133,7 +134,7 @@ export default function HojePage({ searchParams }: PageProps<'/hoje'>) {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <h1 className="text-2xl font-bold tracking-tight">Hoje</h1>
-      <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-64" />}>
+      <Suspense fallback={<Carregando altura="h-64" />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>
     </div>

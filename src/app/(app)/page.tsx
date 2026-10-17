@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import { ListaClientes } from '@/components/clientes/ListaClientes'
 import { listarCidades, listarClientes, listarEtiquetas } from '@/lib/clientes/dados'
 import { lerFiltros } from '@/lib/clientes/filtros'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Clientes' }
 
@@ -28,7 +29,7 @@ export default function Home({ searchParams }: PageProps<'/'>) {
           </Link>
         </div>
       </div>
-      <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-64" />}>
+      <Suspense fallback={<Carregando altura="h-64" />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>
     </section>

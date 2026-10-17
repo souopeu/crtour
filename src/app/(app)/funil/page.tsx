@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { diaNoBrasil, formatarDataBr, hojeNoBrasil } from '@/lib/formato'
+import { diaNoBrasil, formatarDataBr, hojeNoBrasil, ouTraco } from '@/lib/formato'
 import { diasAte } from '@/lib/pagamentos/cobranca'
 import { KanbanFunil } from '@/components/negociacoes/KanbanFunil'
 import { buscarLimites } from '@/lib/hoje/dados'
@@ -9,6 +9,7 @@ import { carregarSugestoes } from '@/lib/negociacoes/sugestoesDados'
 import { listarNegociacoes, listarSaidasParaSelecao } from '@/lib/negociacoes/dados'
 import { agruparNegociacoes } from '@/lib/negociacoes/negociacoes'
 import { formatarReais } from '@/lib/passeios/dinheiro'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Funil' }
 
@@ -94,8 +95,8 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/funil'>, 'searchParam
                           <td className="px-2 py-2 text-right">{formatarReais(n.valor_centavos)}</td>
                           <td className="px-2 py-2 text-right">{n.probabilidade}%</td>
                           <td className="px-2 py-2 text-right font-medium">{formatarReais(n.valor_previsto_centavos)}</td>
-                          <td className="px-2 py-2">{n.responsavel_nome ?? '—'}</td>
-                          <td className="px-2 py-2">{n.data_fechamento_esperada ? formatarDataBr(n.data_fechamento_esperada) : '—'}</td>
+                          <td className="px-2 py-2">{ouTraco(n.responsavel_nome)}</td>
+                          <td className="px-2 py-2">{ouTraco(formatarDataBr(n.data_fechamento_esperada))}</td>
                           <td className="px-4 py-2">{dias <= 0 ? 'hoje' : `${dias} ${dias === 1 ? 'dia' : 'dias'}`}</td>
                         </tr>
                       )
@@ -118,7 +119,7 @@ export default function FunilPage({ searchParams }: PageProps<'/funil'>) {
         <h1 className="text-2xl font-bold tracking-tight">Funil de vendas</h1>
         <Link href="/negociacoes/novo" className="inline-flex min-h-12 items-center rounded-full bg-destaque px-6 font-semibold text-destaque-texto">Nova negociação</Link>
       </div>
-      <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-40" />}>
+      <Suspense fallback={<Carregando altura="h-40" />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>
     </section>

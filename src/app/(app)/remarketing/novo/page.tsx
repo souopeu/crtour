@@ -7,6 +7,7 @@ import { ROTULO_CONSENTIMENTO } from '@/lib/clientes/rotulos'
 import { listarCidades, listarEtiquetas } from '@/lib/clientes/dados'
 import { clientesDoSegmento } from '@/lib/segmentos/dados'
 import { criteriosParaQuery, descreverCriterios, lerCriterios } from '@/lib/segmentos/segmentos'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Novo segmento' }
 const PREVIA = 50
@@ -47,7 +48,7 @@ export default function NovoSegmentoPage({ searchParams }: PageProps<'/remarketi
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <Link href="/remarketing" className="w-fit text-primaria underline">Voltar para Remarketing</Link>
       <h1 className="text-2xl font-bold tracking-tight">Novo segmento</h1>
-      <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-64" />}>
+      <Suspense fallback={<Carregando altura="h-64" />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>
     </div>

@@ -10,6 +10,7 @@ import { listarEtiquetas } from '@/lib/clientes/dados'
 import { formatarDataHora } from '@/lib/formato'
 import { buscarSegmento, chamadosNaRodada, clientesDoSegmento } from '@/lib/segmentos/dados'
 import { aplicarModelo, descreverCriterios, separarFila } from '@/lib/segmentos/segmentos'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Segmento' }
 const MODELO_PADRAO = 'Olá, {nome}! Tudo bem?'
@@ -96,7 +97,7 @@ export default function SegmentoPage({ params }: PageProps<'/remarketing/[id]'>)
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <Link href="/remarketing" className="w-fit text-primaria underline">Voltar para Remarketing</Link>
-      <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-64" />}>
+      <Suspense fallback={<Carregando altura="h-64" />}>
         <Conteudo params={params} />
       </Suspense>
     </div>

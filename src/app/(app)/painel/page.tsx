@@ -8,6 +8,7 @@ import { rotuloDaEtapa, rotuloDoMotivo } from '@/lib/negociacoes/negociacoes'
 import { buscarMeta, etapasAntesDaPerda } from '@/lib/painel/dados'
 import { calcularPainel, lerFiltrosPainel, progressoMeta, rotuloDoMes } from '@/lib/painel/painel'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Painel' }
 
@@ -171,7 +172,7 @@ export default function PainelPage({ searchParams }: PageProps<'/painel'>) {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <h1 className="text-2xl font-bold tracking-tight">Painel</h1>
-      <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-64" />}>
+      <Suspense fallback={<Carregando altura="h-64" />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>
     </div>

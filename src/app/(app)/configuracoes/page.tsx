@@ -4,6 +4,7 @@ import { FormLimites } from '@/components/FormLimites'
 import { Equipe } from '@/components/equipe/Equipe'
 import { getMembro } from '@/lib/auth/agencia'
 import { buscarLimites } from '@/lib/hoje/dados'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Configurações' }
 
@@ -63,28 +64,28 @@ export default function ConfiguracoesPage() {
 
       <section aria-labelledby="prazos-titulo" className="flex flex-col gap-2">
         <h2 id="prazos-titulo" className="text-lg font-semibold">Prazos da tela Hoje</h2>
-        <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-24" />}>
+        <Suspense fallback={<Carregando altura="h-24" />}>
           <Prazos />
         </Suspense>
       </section>
 
       <section aria-labelledby="equipe-titulo" className="flex flex-col gap-3">
         <h2 id="equipe-titulo" className="text-lg font-semibold">Equipe</h2>
-        <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-24" />}>
+        <Suspense fallback={<Carregando altura="h-24" />}>
           <SecaoEquipe />
         </Suspense>
       </section>
 
       <section aria-labelledby="exportar-titulo" className="flex flex-col gap-2">
         <h2 id="exportar-titulo" className="text-lg font-semibold">Exportar seus dados</h2>
-        <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-24" />}>
+        <Suspense fallback={<Carregando altura="h-24" />}>
           <Exportar />
         </Suspense>
       </section>
 
       <section aria-labelledby="excluir-titulo" className="flex flex-col gap-3">
         <h2 id="excluir-titulo" className="text-lg font-semibold">Excluir conta</h2>
-        <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-24" />}>
+        <Suspense fallback={<Carregando altura="h-24" />}>
           <ExcluirConta />
         </Suspense>
       </section>

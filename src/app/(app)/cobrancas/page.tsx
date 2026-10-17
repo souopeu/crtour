@@ -5,6 +5,7 @@ import { estadoDoBotao, linkWhatsapp } from '@/lib/clientes/whatsappLink'
 import { FILTROS_COBRANCA, diasAte, mensagemCobranca, type FiltroCobranca } from '@/lib/pagamentos/cobranca'
 import { listarCobrancas } from '@/lib/pagamentos/dados'
 import { formatarReais } from '@/lib/passeios/dinheiro'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Cobranças' }
 
@@ -88,7 +89,7 @@ export default function CobrancasPage({ searchParams }: PageProps<'/cobrancas'>)
     <section className="mx-auto flex max-w-3xl flex-col gap-4">
       <h1 className="text-2xl font-bold tracking-tight">Cobranças</h1>
       <p className="text-tinta-suave">Reservas ativas com saldo a receber, das mais urgentes para as menos.</p>
-      <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-40" />}>
+      <Suspense fallback={<Carregando altura="h-40" />}>
         <Lista searchParams={searchParams} />
       </Suspense>
     </section>

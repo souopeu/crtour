@@ -34,6 +34,15 @@ Next.js 16 (App Router), TypeScript estrito, Tailwind 4, Supabase (Postgres + Au
 - **Recurso opcional nunca derruba o sistema.** Sem a chave (ex.: API do WhatsApp na v3), some a capacidade; não dá erro.
 - **Rotina periódica roda em agenda** (pg_cron ou Vercel Cron), nunca no login nem "depois da resposta" de uma função serverless.
 
+## Segredos, log e saída de dados
+- **Segredos**: só em variáveis de ambiente, nunca no código nem no Git. Meta: cada variável obrigatória checada na partida, com mensagem clara (hoje os clientes Supabase usam `process.env.X!` sem checar). Para derrubar todas as sessões, troque o segredo JWT do projeto no painel do Supabase; vale registrar o passo em `07-guia-publicacao.md`.
+- **Chave privada nunca vai ao navegador.** O cliente recebe só `NEXT_PUBLIC_SUPABASE_URL` e a chave pública. Rota chamada por agenda (cron) exige segredo próprio e recusa rodar sem ele.
+- **Log**: nunca registrar cabeçalhos, cookies, query string, corpo de requisição, telefone, e-mail nem texto de anotação. Registrar só o código do erro e o nome da operação (`console.error('criarAtividade falhou', error.code)` é o padrão).
+- **Saída de dados**: o que sai do sistema (API de terceiros, IA, WhatsApp) leva só o que a pergunta precisa. Nunca anotação, histórico de conversa ou dado de saúde de cliente. Cada chave opcional liga um fornecedor; ligar um de cada vez e anotar em `decisoes.md`.
+- **Dado sensível (LGPD)**: saúde, religião, política, sexualidade, etnia e sindicato não entram na ficha. `restricoes` é só para restrição de roteiro ou alimentar, sem diagnóstico.
+- **Movimento**: usar os tokens `--duracao-saida`, `--duracao-entrada`, `--duracao-movimento` (`globals.css`). Toda animação nova tem de funcionar com `prefers-reduced-motion`. Tela que carrega usa `<Carregando altura="h-NN" />`, que só aparece depois de 120 ms.
+- **Valor vazio**: campo mostrado na tela nunca fica em branco; usar `ouTraco()` (`src/lib/formato.ts`).
+
 ## Relatório final de cada tarefa
 Termine toda resposta com a lista abaixo, uma linha para o problema e uma para a correção. Sem problemas: `None.`
 

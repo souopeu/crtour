@@ -8,6 +8,7 @@ import { diasAte, situacaoCobranca } from '@/lib/pagamentos/cobranca'
 import { buscarReserva, listarPagamentos } from '@/lib/pagamentos/dados'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
 import { estornarPagamento } from '../actions'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Reserva' }
 
@@ -119,7 +120,7 @@ async function Conteudo({ params }: Pick<PageProps<'/reservas/[id]'>, 'params'>)
 
 export default function ReservaPage({ params }: PageProps<'/reservas/[id]'>) {
   return (
-    <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-64" />}>
+    <Suspense fallback={<Carregando altura="h-64" />}>
       <Conteudo params={params} />
     </Suspense>
   )

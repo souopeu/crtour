@@ -4,6 +4,7 @@ import { FormImportar } from '@/components/importacao/FormImportar'
 import { ImportacoesAnteriores } from '@/components/importacao/ImportacoesAnteriores'
 import { listarImportacoes } from '@/lib/clientes/dados'
 import { formatarDataHora } from '@/lib/formato'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Importar planilha' }
 
@@ -29,7 +30,7 @@ export default function ImportarPage() {
       <FormImportar />
       <section aria-labelledby="anteriores-titulo" className="flex flex-col gap-2">
         <h2 id="anteriores-titulo" className="text-lg font-semibold">Importações anteriores</h2>
-        <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-20" />}>
+        <Suspense fallback={<Carregando altura="h-20" />}>
           <Anteriores />
         </Suspense>
       </section>

@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import { listarEtiquetas } from '@/lib/clientes/dados'
 import { listarSegmentos } from '@/lib/segmentos/dados'
 import { descreverCriterios } from '@/lib/segmentos/segmentos'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Remarketing' }
 
@@ -34,7 +35,7 @@ export default function RemarketingPage() {
       <p className="max-w-prose text-sm text-tinta-suave">
         Envio um a um pelo WhatsApp, só para quem aceitou receber mensagens. Cada envio vira atividade na ficha do cliente.
       </p>
-      <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-40" />}>
+      <Suspense fallback={<Carregando altura="h-40" />}>
         <Lista />
       </Suspense>
     </div>

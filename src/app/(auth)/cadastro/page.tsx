@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { FormCadastro } from '@/components/auth/FormCadastro'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Criar conta' }
 
@@ -27,7 +28,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/cadastro'>, 'searchPa
 
 export default function CadastroPage({ searchParams }: PageProps<'/cadastro'>) {
   return (
-    <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-96" />}>
+    <Suspense fallback={<Carregando altura="h-96" />}>
       <Conteudo searchParams={searchParams} />
     </Suspense>
   )

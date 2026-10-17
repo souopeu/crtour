@@ -28,3 +28,11 @@ export function diaNoBrasil(iso: string): string {
   const d = new Date(iso)
   return Number.isNaN(d.getTime()) ? '' : DIA_BRASIL.format(d)
 }
+
+export const SEM_VALOR = '—'
+
+// A shown field is never blank: an empty value reads as a dash.
+export function ouTraco(valor: string | null | undefined): string {
+  const v = (valor ?? '').trim()
+  return v === '' ? SEM_VALOR : v
+}

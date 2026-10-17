@@ -11,6 +11,7 @@ import { buscarClientesParaReserva, buscarNomeDoCliente, buscarSaida, listarRese
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
 import { excluirSaida, salvarSaida } from '../../passeios/actions'
 import { cancelarReserva } from '../actions'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Saída' }
 
@@ -152,7 +153,7 @@ async function Conteudo({ params, searchParams }: Pick<PageProps<'/saidas/[id]'>
 
 export default function SaidaPage({ params, searchParams }: PageProps<'/saidas/[id]'>) {
   return (
-    <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-64" />}>
+    <Suspense fallback={<Carregando altura="h-64" />}>
       <Conteudo params={params} searchParams={searchParams} />
     </Suspense>
   )

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { formatarDataBr } from '@/lib/formato'
 import { listarPasseios } from '@/lib/passeios/dados'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Passeios' }
 
@@ -46,7 +47,7 @@ export default function PasseiosPage({ searchParams }: PageProps<'/passeios'>) {
         <h1 className="text-2xl font-bold tracking-tight">Passeios</h1>
         <Link href="/passeios/novo" className="inline-flex min-h-12 items-center rounded-full bg-destaque px-6 font-semibold text-destaque-texto">Novo passeio</Link>
       </div>
-      <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-40" />}>
+      <Suspense fallback={<Carregando altura="h-40" />}>
         <Lista searchParams={searchParams} />
       </Suspense>
     </section>

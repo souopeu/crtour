@@ -9,6 +9,7 @@ import { rotuloDaEtapa, rotuloDoMotivo } from '@/lib/negociacoes/negociacoes'
 import { carregarSugestoes } from '@/lib/negociacoes/sugestoesDados'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
 import { atualizarNegociacao } from '../actions'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Negociação' }
 
@@ -70,7 +71,7 @@ async function Conteudo({ params }: Pick<PageProps<'/negociacoes/[id]'>, 'params
 
 export default function NegociacaoPage({ params }: PageProps<'/negociacoes/[id]'>) {
   return (
-    <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-64" />}>
+    <Suspense fallback={<Carregando altura="h-64" />}>
       <Conteudo params={params} />
     </Suspense>
   )

@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import { FormLogin } from '@/components/auth/FormLogin'
 import { proximoSeguro } from '@/lib/auth/redirect'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Entrar' }
 
@@ -27,7 +28,7 @@ export default function LoginPage({ searchParams }: PageProps<'/login'>) {
   return (
     <>
       <h1 className="mb-4 text-2xl font-bold tracking-tight">Entrar</h1>
-      <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-64" />}>
+      <Suspense fallback={<Carregando altura="h-64" />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>
     </>

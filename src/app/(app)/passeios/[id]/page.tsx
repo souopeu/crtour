@@ -8,6 +8,7 @@ import { formatarDataBr } from '@/lib/formato'
 import { buscarPasseio, listarSaidas } from '@/lib/passeios/dados'
 import { formatarReais } from '@/lib/passeios/dinheiro'
 import { alternarArquivado, excluirPasseio, salvarPasseio, salvarSaida } from '../actions'
+import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Passeio' }
 
@@ -80,7 +81,7 @@ async function Conteudo({ params }: Pick<PageProps<'/passeios/[id]'>, 'params'>)
 
 export default function PasseioPage({ params }: PageProps<'/passeios/[id]'>) {
   return (
-    <Suspense fallback={<div aria-busy="true" aria-label="Carregando" className="h-64" />}>
+    <Suspense fallback={<Carregando altura="h-64" />}>
       <Conteudo params={params} />
     </Suspense>
   )
