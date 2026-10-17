@@ -106,20 +106,21 @@ test('tags and dated notes on the client sheet', async ({ page }) => {
 
   await page.getByLabel('Nova anotação').fill('Quer viajar em março')
   await page.getByRole('button', { name: 'Salvar anotação' }).click()
-  const primeira = page.getByRole('listitem').filter({ hasText: 'Quer viajar em março' })
+  const anotacoes = page.getByRole('region', { name: 'Anotações' })
+  const primeira = anotacoes.getByRole('listitem').filter({ hasText: 'Quer viajar em março' })
   await expect(primeira).toContainText('Pessoa notas')
   await expect(primeira).toContainText(/\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/)
 
   await page.getByLabel('Nova anotação').fill('Segunda nota')
   await page.getByRole('button', { name: 'Salvar anotação' }).click()
-  await expect(page.getByRole('listitem').filter({ hasText: 'Segunda nota' })).toBeVisible()
-  const textos = await page.locator('ol > li p.whitespace-pre-wrap').allTextContents()
+  await expect(anotacoes.getByRole('listitem').filter({ hasText: 'Segunda nota' })).toBeVisible()
+  const textos = await anotacoes.locator('ol > li p.whitespace-pre-wrap').allTextContents()
   expect(textos).toEqual(['Segunda nota', 'Quer viajar em março'])
 
   await page.reload()
-  await page.getByRole('listitem').filter({ hasText: 'Segunda nota' }).getByRole('button', { name: 'Apagar' }).click()
-  await expect(page.getByText('Segunda nota')).toHaveCount(0)
-  await expect(page.getByText('Quer viajar em março')).toBeVisible()
+  await anotacoes.getByRole('listitem').filter({ hasText: 'Segunda nota' }).getByRole('button', { name: 'Apagar' }).click()
+  await expect(anotacoes.getByText('Segunda nota')).toHaveCount(0)
+  await expect(anotacoes.getByText('Quer viajar em março')).toBeVisible()
 })
 
 test('client list: search, filters and empty states', async ({ page }) => {

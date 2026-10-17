@@ -21,6 +21,7 @@ export default defineConfig({
         'src/lib/passeios/dados.ts',
         'src/lib/pagamentos/dados.ts',
         'src/lib/negociacoes/dados.ts',
+        'src/lib/atividades/dados.ts',
       ],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },

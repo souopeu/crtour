@@ -31,7 +31,7 @@ test('export: CSV with the data, formulas neutralized, notes file, login require
   await novoCliente(page, 'Ana Souza', '(11) 99999-0001')
   await page.getByLabel('Nova anotação').fill('=HYPERLINK("http://evil")')
   await page.getByRole('button', { name: 'Salvar anotação' }).click()
-  await expect(page.getByText('=HYPERLINK')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Anotações' }).getByText('=HYPERLINK')).toBeVisible()
   await novoCliente(page, '=1+1', '(21) 98888-0002')
 
   await page.goto('/configuracoes')

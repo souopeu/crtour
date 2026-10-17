@@ -83,7 +83,7 @@ test('funnel: create deals, automatic forecast, stage defaults, history, groupin
   await expect(historico).toContainText('Pessoa funil')
 
   // The person in charge, then a second deal through the search flow (no value => forecast 0)
-  await page.getByLabel('Responsável', { exact: true }).selectOption({ label: 'Pessoa funil' })
+  await page.getByRole('region', { name: 'Dados da negociação' }).getByLabel('Responsável', { exact: true }).selectOption({ label: 'Pessoa funil' })
   await page.getByRole('button', { name: 'Salvar alterações' }).click()
   await expect(page.getByText('Alterações salvas.')).toBeVisible()
 
