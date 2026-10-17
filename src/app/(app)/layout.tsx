@@ -41,6 +41,7 @@ async function Casca({ children }: { children: React.ReactNode }) {
             { href: '/passeios', rotulo: 'Passeios' },
             { href: '/cobrancas', rotulo: 'Cobranças' },
             { href: '/painel', rotulo: 'Painel' },
+            { href: '/comissoes', rotulo: 'Comissões' },
             ...(membro.papel === 'dono' ? [{ href: '/avisos', rotulo: 'Avisos', novos: avisosNovos }] : []),
             { href: '/configuracoes', rotulo: 'Configurações' },
           ]} />

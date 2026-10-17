@@ -9,6 +9,10 @@ import { buscarReserva, listarPagamentos } from '@/lib/pagamentos/dados'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
 import { estornarPagamento } from '../actions'
 import { Carregando } from '@/components/Carregando'
+import { VendidoPor } from '@/components/comissao/VendidoPor'
+import { getMembro } from '@/lib/auth/agencia'
+import { buscarVendedorDaReserva } from '@/lib/comissao/dados'
+import { listarMembros } from '@/lib/negociacoes/dados'
 
 export const metadata = { title: 'Reserva' }
 
@@ -27,7 +31,7 @@ async function Conteudo({ params }: Pick<PageProps<'/reservas/[id]'>, 'params'>)
   const { id } = await params
   const reserva = await buscarReserva(id)
   if (!reserva) notFound()
-  const pagamentos = await listarPagamentos(reserva.id)
+  const [pagamentos, vendedorId, membros, membro] = await Promise.all([listarPagamentos(reserva.id), buscarVendedorDaReserva(reserva.id), listarMembros(), getMembro()])
   const hoje = hojeNoBrasil()
   const ativa = reserva.situacao === 'ativa'
   const situacao = situacaoCobranca(reserva.saldo_centavos, reserva.vencimento_saldo, hoje)
@@ -41,6 +45,7 @@ async function Conteudo({ params }: Pick<PageProps<'/reservas/[id]'>, 'params'>)
           Reserva de <Link href={`/clientes/${reserva.cliente_id}`} className="text-primaria underline">{reserva.cliente_nome}</Link>
         </h1>
         <p className="text-tinta-suave">{reserva.qtd_pessoas} {reserva.qtd_pessoas === 1 ? 'pessoa' : 'pessoas'}</p>
+        <VendidoPor reservaId={reserva.id} vendedorId={vendedorId} membros={membros} podeMudar={membro?.papel === 'dono'} />
         {!ativa && (
           <p role="note" className="mt-3 rounded-xl bg-alerta-suave p-3 text-sm text-alerta">
             Reserva cancelada.{reserva.pago_centavos > 0 && ` Há ${formatarReais(reserva.pago_centavos)} registrados como pagos: estorne os pagamentos se o dinheiro for devolvido.`}

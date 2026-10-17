@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { FormExcluirConta } from '@/components/FormExcluirConta'
 import { FormLimites } from '@/components/FormLimites'
 import { Equipe } from '@/components/equipe/Equipe'
+import { SecaoComissao } from '@/components/comissao/SecaoComissao'
 import { getMembro } from '@/lib/auth/agencia'
 import { buscarLimites } from '@/lib/hoje/dados'
 import { Carregando } from '@/components/Carregando'
@@ -33,6 +34,11 @@ async function Prazos() {
 }
 
 const link = 'inline-flex min-h-11 items-center text-primaria underline'
+
+async function Comissao() {
+  const membro = await getMembro()
+  return membro ? <SecaoComissao membro={membro} /> : null
+}
 
 async function SecaoEquipe() {
   const membro = await getMembro()
@@ -73,6 +79,13 @@ export default function ConfiguracoesPage() {
         <h2 id="equipe-titulo" className="text-lg font-semibold">Equipe</h2>
         <Suspense fallback={<Carregando altura="h-24" />}>
           <SecaoEquipe />
+        </Suspense>
+      </section>
+
+      <section aria-labelledby="comissao-titulo" className="flex flex-col gap-3">
+        <h2 id="comissao-titulo" className="text-lg font-semibold">Comissão</h2>
+        <Suspense fallback={<Carregando altura="h-24" />}>
+          <Comissao />
         </Suspense>
       </section>
 
