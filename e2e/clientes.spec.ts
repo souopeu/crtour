@@ -3,6 +3,7 @@ import { expect, test, type Page } from '@playwright/test'
 async function cadastrar(page: Page, rotulo: string) {
   const email = `e2e-${rotulo}-${Date.now()}@teste.dev`
   await page.goto('/cadastro')
+  await page.getByLabel('Seu nome').fill(`Pessoa ${rotulo}`)
   await page.getByLabel('Nome da agência').fill(`Agência ${rotulo}`)
   await page.getByLabel('E-mail').fill(email)
   await page.getByLabel('Senha').fill('senha1234')
@@ -63,4 +64,58 @@ test('creates, reopens and edits a client; other agencies cannot open it', async
   await expect(outra.getByText('Ana Souza')).toHaveCount(0)
   await expect(outra.getByLabel('WhatsApp')).toHaveCount(0)
   await contexto.close()
+})
+
+test('tags and dated notes on the client sheet', async ({ page }) => {
+  await cadastrar(page, 'notas')
+  await page.getByRole('link', { name: 'Novo cliente' }).click()
+  await page.getByLabel('Nome', { exact: true }).fill('Bia Lima')
+  await page.getByRole('button', { name: 'Salvar cliente' }).click()
+  await expect(page.getByRole('heading', { name: 'Bia Lima' })).toBeVisible()
+
+  // Tags: add, dedupe ignoring case, add another, remove
+  await expect(page.getByText('Nenhuma etiqueta ainda')).toBeVisible()
+  await page.getByLabel('Adicionar etiqueta').fill('Europa')
+  await page.getByRole('button', { name: 'Adicionar' }).click()
+  await expect(page.getByRole('button', { name: 'Remover etiqueta Europa' })).toBeVisible()
+
+  await page.getByLabel('Adicionar etiqueta').fill('  europa ')
+  await page.getByRole('button', { name: 'Adicionar' }).click()
+  await expect(page.getByLabel('Adicionar etiqueta')).toHaveValue('') // form remounts after each submit
+  await page.getByLabel('Adicionar etiqueta').fill('VIP')
+  await page.getByRole('button', { name: 'Adicionar' }).click()
+  await expect(page.getByRole('button', { name: 'Remover etiqueta VIP' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Remover etiqueta Europa/i })).toHaveCount(1)
+
+  await expect(page.getByLabel('Adicionar etiqueta')).toHaveValue('')
+  await page.getByRole('button', { name: 'Adicionar' }).click()
+  await expect(page.getByText('Digite o nome da etiqueta.')).toBeVisible()
+
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'Remover etiqueta Europa' })).toBeVisible()
+  await page.getByRole('button', { name: 'Remover etiqueta Europa' }).click()
+  await expect(page.getByRole('button', { name: 'Remover etiqueta Europa' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Remover etiqueta VIP' })).toBeVisible()
+
+  // Notes: author and date, newest first, delete
+  await expect(page.getByText('Nenhuma anotação ainda.')).toBeVisible()
+  await page.getByRole('button', { name: 'Salvar anotação' }).click()
+  await expect(page.getByText('Escreva a anotação.')).toBeVisible()
+
+  await page.getByLabel('Nova anotação').fill('Quer viajar em março')
+  await page.getByRole('button', { name: 'Salvar anotação' }).click()
+  const primeira = page.getByRole('listitem').filter({ hasText: 'Quer viajar em março' })
+  await expect(primeira).toContainText('Pessoa notas')
+  await expect(primeira).toContainText(/\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/)
+
+  await page.getByLabel('Nova anotação').fill('Segunda nota')
+  await page.getByRole('button', { name: 'Salvar anotação' }).click()
+  await expect(page.getByRole('listitem').filter({ hasText: 'Segunda nota' })).toBeVisible()
+  const textos = await page.locator('ol > li p.whitespace-pre-wrap').allTextContents()
+  expect(textos).toEqual(['Segunda nota', 'Quer viajar em março'])
+
+  await page.reload()
+  await page.getByRole('listitem').filter({ hasText: 'Segunda nota' }).getByRole('button', { name: 'Apagar' }).click()
+  await expect(page.getByText('Segunda nota')).toHaveCount(0)
+  await expect(page.getByText('Quer viajar em março')).toBeVisible()
 })

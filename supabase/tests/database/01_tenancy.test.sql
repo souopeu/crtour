@@ -11,8 +11,8 @@ insert into auth.users (id, email, raw_user_meta_data) values
 -- C was given an agency by the trigger; move C into Alfa as seller (what the owner/admin does).
 delete from public.agencias
   where id = (select agencia_id from public.membros where user_id = 'cccccccc-0000-0000-0000-000000000003');
-insert into public.membros (user_id, agencia_id, papel)
-  select 'cccccccc-0000-0000-0000-000000000003', agencia_id, 'vendedor'
+insert into public.membros (user_id, agencia_id, papel, nome)
+  select 'cccccccc-0000-0000-0000-000000000003', agencia_id, 'vendedor', 'Vendedora C'
   from public.membros where user_id = 'aaaaaaaa-0000-0000-0000-000000000001';
 
 create function public.tmp_rows_affected(p_sql text) returns bigint language plpgsql as $f$
@@ -23,9 +23,9 @@ select set_config('t.agencia_b', (select agencia_id::text from public.membros wh
 
 select is((select count(*) from public.membros where user_id in ('aaaaaaaa-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000002')), 2::bigint, 'each owner signup creates one agency membership');
 select is((select count(*) from public.membros where papel = 'dono' and user_id in ('aaaaaaaa-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000002')), 2::bigint, 'signup makes the user the owner');
-select is((select nome from public.agencias a join public.membros m on m.agencia_id = a.id
+select is((select a.nome from public.agencias a join public.membros m on m.agencia_id = a.id
            where m.user_id = 'aaaaaaaa-0000-0000-0000-000000000001'), 'Agência Alfa', 'agency name comes from signup metadata');
-select is((select nome from public.agencias a join public.membros m on m.agencia_id = a.id
+select is((select a.nome from public.agencias a join public.membros m on m.agencia_id = a.id
            where m.user_id = 'bbbbbbbb-0000-0000-0000-000000000002'), 'Minha agência', 'agency name defaults when missing');
 
 -- As A

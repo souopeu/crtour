@@ -12,6 +12,7 @@ test('signup, logout, login and wrong password', async ({ page }) => {
   await page.goto('/cadastro')
 
   // Terms must be accepted
+  await page.getByLabel('Seu nome').fill('Pessoa E2E')
   await page.getByLabel('Nome da agência').fill('Agência E2E')
   await page.getByLabel('E-mail').fill(email)
   await page.getByLabel('Senha').fill(senha)

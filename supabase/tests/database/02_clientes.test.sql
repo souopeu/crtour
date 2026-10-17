@@ -9,8 +9,8 @@ insert into auth.users (id, email, raw_user_meta_data) values
   ('cccccccc-0000-0000-0000-000000000003', 'c@test.dev', '{}');
 delete from public.agencias
   where id = (select agencia_id from public.membros where user_id = 'cccccccc-0000-0000-0000-000000000003');
-insert into public.membros (user_id, agencia_id, papel)
-  select 'cccccccc-0000-0000-0000-000000000003', agencia_id, 'vendedor'
+insert into public.membros (user_id, agencia_id, papel, nome)
+  select 'cccccccc-0000-0000-0000-000000000003', agencia_id, 'vendedor', 'Vendedora C'
   from public.membros where user_id = 'aaaaaaaa-0000-0000-0000-000000000001';
 
 select set_config('t.alfa', (select agencia_id::text from public.membros where user_id = 'aaaaaaaa-0000-0000-0000-000000000001'), true);

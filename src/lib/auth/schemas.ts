@@ -10,6 +10,7 @@ const senha = z
 const email = z.string().trim().toLowerCase().pipe(z.email('Digite um e-mail válido.'))
 
 export const cadastroSchema = z.object({
+  nome: z.string().trim().min(1, 'Digite seu nome.').max(80, 'O nome pode ter no máximo 80 caracteres.'),
   agenciaNome: z
     .string()
     .trim()

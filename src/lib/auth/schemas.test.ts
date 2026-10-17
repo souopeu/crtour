@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { cadastroSchema, loginSchema, novaSenhaSchema, recuperarSchema } from './schemas'
 
 const cadastroValido = {
+  nome: 'Ana Dona',
   agenciaNome: 'Agência Alfa',
   email: 'dono@alfa.com.br',
   senha: 'abcd1234',
@@ -25,6 +26,8 @@ describe('cadastroSchema', () => {
     ['password without letters', { senha: '12345678' }],
     ['invalid email', { email: 'nao-e-email' }],
     ['empty agency name', { agenciaNome: '   ' }],
+    ['empty user name', { nome: '   ' }],
+    ['user name too long', { nome: 'a'.repeat(81) }],
     ['agency name too long', { agenciaNome: 'a'.repeat(121) }],
     ['terms not accepted', { aceite: undefined }],
   ])('rejects %s', (_nome, parcial) => {

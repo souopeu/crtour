@@ -30,12 +30,13 @@ export async function entrar(_: EstadoForm, fd: FormData): Promise<EstadoForm> {
 
 export async function cadastrar(_: EstadoForm, fd: FormData): Promise<EstadoForm> {
   const dados = {
+    nome: texto(fd, 'nome'),
     agenciaNome: texto(fd, 'agenciaNome'),
     email: texto(fd, 'email'),
     senha: texto(fd, 'senha'),
     aceite: fd.get('aceite') ?? undefined,
   }
-  const valores = { agenciaNome: dados.agenciaNome, email: dados.email }
+  const valores = { nome: dados.nome, agenciaNome: dados.agenciaNome, email: dados.email }
   const r = cadastroSchema.safeParse(dados)
   if (!r.success) return { campos: r.error.flatten().fieldErrors, valores }
 
@@ -45,7 +46,7 @@ export async function cadastrar(_: EstadoForm, fd: FormData): Promise<EstadoForm
     password: r.data.senha,
     options: {
       emailRedirectTo: `${await origem()}/auth/confirmar`,
-      data: { agencia_nome: r.data.agenciaNome, aceite_termos_em: new Date().toISOString() },
+      data: { nome: r.data.nome, agencia_nome: r.data.agenciaNome, aceite_termos_em: new Date().toISOString() },
     },
   })
   if (error) return { erro: traduzirErroAuth(error), valores }

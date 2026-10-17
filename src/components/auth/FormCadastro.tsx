@@ -12,6 +12,7 @@ export function FormCadastro() {
   return (
     <form action={acao} className="flex flex-col gap-4">
       <Mensagem estado={estado} />
+      <Campo nome="nome" rotulo="Seu nome" autoComplete="name" valor={estado.valores?.nome} erros={estado.campos?.nome} />
       <Campo nome="agenciaNome" rotulo="Nome da agência" autoComplete="organization" valor={estado.valores?.agenciaNome} erros={estado.campos?.agenciaNome} />
       <Campo nome="email" rotulo="E-mail" tipo="email" autoComplete="email" valor={estado.valores?.email} erros={estado.campos?.email} />
       <Campo nome="senha" rotulo="Senha" tipo="password" autoComplete="new-password" dica="Mínimo de 8 caracteres, com letras e números." erros={estado.campos?.senha} />
