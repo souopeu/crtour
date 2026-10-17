@@ -3,37 +3,22 @@ import { Suspense } from 'react'
 import { criarSegmento } from '@/app/(app)/remarketing/actions'
 import { FiltrosSegmento } from '@/components/remarketing/FiltrosSegmento'
 import { FormSegmento } from '@/components/remarketing/FormSegmento'
-import { ROTULO_CONSENTIMENTO } from '@/lib/clientes/rotulos'
+import { PreviaSegmento } from '@/components/remarketing/PreviaSegmento'
 import { listarCidades, listarEtiquetas } from '@/lib/clientes/dados'
 import { clientesDoSegmento } from '@/lib/segmentos/dados'
-import { criteriosParaQuery, descreverCriterios, lerCriterios } from '@/lib/segmentos/segmentos'
+import { criteriosParaQuery, lerCriterios } from '@/lib/segmentos/segmentos'
 import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Novo segmento' }
-const PREVIA = 50
 
 async function Conteudo({ searchParams }: Pick<PageProps<'/remarketing/novo'>, 'searchParams'>) {
   const criterios = lerCriterios(await searchParams)
   const [etiquetas, cidades, clientes] = await Promise.all([listarEtiquetas(), listarCidades(), clientesDoSegmento(criterios)])
-  const aceitaram = clientes.filter((c) => c.consentimento_whatsapp === 'aceitou').length
   return (
     <>
       <FiltrosSegmento criterios={criterios} etiquetas={etiquetas} cidades={cidades} />
 
-      <section aria-labelledby="previa-titulo" className="flex flex-col gap-2">
-        <h2 id="previa-titulo" className="text-lg font-semibold">{clientes.length} {clientes.length === 1 ? 'cliente' : 'clientes'}</h2>
-        <p className="text-sm text-tinta-suave">{descreverCriterios(criterios, new Map(etiquetas.map((e) => [e.id, e.nome]))).join(' · ')} · {aceitaram} com consentimento para mensagens</p>
-        {clientes.length > 0 && (
-          <ul className="flex flex-col divide-y divide-linha rounded-[--radius-cartao] border border-linha bg-superficie">
-            {clientes.slice(0, PREVIA).map((c) => (
-              <li key={c.id} className="flex justify-between gap-2 px-3 py-2 text-sm">
-                <span>{c.nome}</span><span className="text-tinta-suave">{ROTULO_CONSENTIMENTO[c.consentimento_whatsapp]}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {clientes.length > PREVIA && <p className="text-sm text-tinta-suave">Mostrando {PREVIA} de {clientes.length}.</p>}
-      </section>
+      <PreviaSegmento criterios={criterios} clientes={clientes} etiquetas={new Map(etiquetas.map((e) => [e.id, e.nome]))} />
 
       <section aria-labelledby="salvar-titulo" className="flex flex-col gap-2">
         <h2 id="salvar-titulo" className="text-lg font-semibold">Salvar segmento</h2>

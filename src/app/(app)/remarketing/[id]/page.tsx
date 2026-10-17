@@ -32,6 +32,7 @@ async function Conteudo({ params }: Pick<PageProps<'/remarketing/[id]'>, 'params
       <p className="text-sm text-tinta-suave">
         {descreverCriterios(segmento.criterios, new Map(etiquetas.map((e) => [e.id, e.nome]))).join(' · ')} · {clientes.length} {clientes.length === 1 ? 'cliente' : 'clientes'} · rodada {segmento.rodada}
       </p>
+      <Link href={`/remarketing/${segmento.id}/editar`} className="w-fit text-primaria underline">Editar critérios</Link>
 
       <details className="rounded-[--radius-cartao] border border-linha bg-superficie p-3">
         <summary className="min-h-11 cursor-pointer content-center font-semibold">Editar nome e mensagem</summary>

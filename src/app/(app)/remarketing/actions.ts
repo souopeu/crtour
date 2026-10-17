@@ -86,3 +86,18 @@ export async function registrarEnvio(segmentoId: string, clienteId: string, mens
   revalidatePath('/hoje')
   return { ok: 'Envio registrado.' }
 }
+
+// R43: new criteria for a saved segment. Marks of the current round stay; who no longer matches leaves the queue.
+export async function salvarCriterios(segmentoId: string, query: string): Promise<void> {
+  if (!uuid(segmentoId)) return
+  const criterios = lerCriterios(Object.fromEntries(new URLSearchParams(query)))
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.from('segmentos').update({ criterios }).eq('id', segmentoId)
+  if (error) {
+    console.error('salvarCriterios falhou', error.code)
+    return
+  }
+  revalidatePath(`/remarketing/${segmentoId}`)
+  revalidatePath('/remarketing')
+  redirect(`/remarketing/${segmentoId}`)
+}

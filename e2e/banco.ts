@@ -17,7 +17,7 @@ function admin() {
 
 export const diasAtras = (dias: number) => new Date(Date.now() - dias * 86_400_000).toISOString()
 
-export async function atualizar(tabela: 'clientes' | 'negociacoes', id: string, campos: Record<string, string>) {
+export async function atualizar(tabela: 'clientes' | 'negociacoes' | 'saidas', id: string, campos: Record<string, string>) {
   const { error } = await admin().from(tabela).update(campos).eq('id', id)
   if (error) throw new Error(`atualizar ${tabela}: ${error.message}`)
 }

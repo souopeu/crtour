@@ -8,7 +8,7 @@ import { MOTIVOS, rotuloDoMotivo, type Motivo } from '@/lib/negociacoes/negociac
 // Same keys as the jsonb read by public.clientes_do_segmento.
 export type Criterios = Partial<{
   etiqueta: string; destino: string; origem: Origem; cidade: string; aniversarioMes: number
-  semContatoDias: number; motivoPerda: Motivo; passaporteMeses: number
+  semContatoDias: number; motivoPerda: Motivo; passaporteMeses: number; viajouPara: string
 }>
 
 export const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
@@ -25,6 +25,7 @@ const CAMPOS = {
   semContatoDias: inteiro(1, 365),
   motivoPerda: z.enum(MOTIVOS.map((m) => m.valor) as [Motivo, ...Motivo[]]),
   passaporteMeses: inteiro(1, 24),
+  viajouPara: texto(80),
 } as const
 const CHAVES = Object.keys(CAMPOS) as (keyof Criterios)[]
 
@@ -56,6 +57,7 @@ export function descreverCriterios(c: Criterios, etiquetas: Map<string, string>)
     c.aniversarioMes && `Aniversário em ${MESES[c.aniversarioMes - 1]}`,
     c.semContatoDias && `Sem contato há ${c.semContatoDias} dias ou mais`,
     c.motivoPerda && `Perdeu negociação por: ${rotuloDoMotivo(c.motivoPerda)}`,
+    c.viajouPara && `Já viajou para: ${c.viajouPara}`,
     c.passaporteMeses && `Passaporte vence em até ${c.passaporteMeses} ${c.passaporteMeses === 1 ? 'mês' : 'meses'} (ou já venceu)`,
   ].filter((l): l is string => Boolean(l))
   return linhas.length ? linhas : ['Todos os clientes']

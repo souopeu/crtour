@@ -95,3 +95,16 @@ describe('segmentoSchema', () => {
     expect(segmentoSchema.safeParse({ nome: 'x'.repeat(81), mensagem: '' }).success).toBe(false)
   })
 })
+
+describe('viajouPara (R42)', () => {
+  test('read, kept in the URL and described', () => {
+    const c = lerCriterios({ viajouPara: '  Lisboa ', destino: 'Porto' })
+    expect(c).toEqual({ destino: 'Porto', viajouPara: 'Lisboa' })
+    expect(lerCriterios(Object.fromEntries(new URLSearchParams(criteriosParaQuery(c))))).toEqual(c)
+    expect(descreverCriterios(c, new Map())).toEqual(['Destino de interesse: Porto', 'Já viajou para: Lisboa'])
+  })
+  test('empty or too long is ignored', () => {
+    expect(lerCriterios({ viajouPara: '   ' })).toEqual({})
+    expect(lerCriterios({ viajouPara: 'x'.repeat(81) })).toEqual({})
+  })
+})
