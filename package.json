@@ -9,7 +9,10 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "db:test": "supabase test db",
+    "db:reset": "supabase db reset",
+    "db:lint": "supabase db lint"
   },
   "dependencies": {
     "next": "16.4.2",
