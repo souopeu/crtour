@@ -14,7 +14,7 @@ export function EtiquetasCliente({ clienteId, aplicadas, sugestoes }: Props) {
   const erro = estado.campos?.etiqueta?.[0]
 
   return (
-    <section aria-labelledby="etiquetas-titulo" className="max-w-xl">
+    <section aria-labelledby="etiquetas-titulo" className="w-full">
       <h2 id="etiquetas-titulo" className="mb-2 text-lg font-semibold">Etiquetas</h2>
 
       {aplicadas.length === 0 ? (

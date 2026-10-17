@@ -118,3 +118,27 @@ test('import refuses a non-spreadsheet and a sheet without a Nome column', async
   await page.getByRole('button', { name: 'Conferir planilha' }).click()
   await expect(page.getByRole('alert').filter({ hasText: 'coluna "Nome"' })).toBeVisible()
 })
+
+test('import button works with a single file checked once, and a changed file must be checked again', async ({ page }) => {
+  await cadastrar(page, 'import3')
+  await page.goto('/importar')
+
+  const a = await planilha('a.xlsx', [CABECALHO, ['Ana Um', '(11) 99999-0101', '', 'Santos', 'Instagram', '']])
+  const b = await planilha('b.xlsx', [CABECALHO, ['Beto Dois', '(11) 99999-0202', '', 'Santos', 'Site', '']])
+  const importar = page.getByRole('button', { name: 'Importar', exact: true })
+
+  await page.getByLabel(/Planilha/).setInputFiles(a)
+  await page.getByRole('button', { name: 'Conferir planilha' }).click()
+  await expect(page.getByRole('heading', { name: /Conferência de a\.xlsx/ })).toBeVisible()
+  await expect(importar).toBeEnabled() // one file, checked once
+
+  // Picking another file discards the old preview: it must be checked again
+  await page.getByLabel(/Planilha/).setInputFiles(b)
+  await expect(page.getByRole('heading', { name: /Conferência de a\.xlsx/ })).toHaveCount(0)
+  await expect(importar).toBeDisabled()
+
+  await page.getByRole('button', { name: 'Conferir planilha' }).click()
+  await expect(importar).toBeEnabled()
+  await importar.click()
+  await expect(page.getByText('Importação concluída: 1 clientes criados e 0 ignorados.')).toBeVisible()
+})

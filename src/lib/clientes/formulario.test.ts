@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { clienteSchema } from './schema'
 import { VALORES_VAZIOS, valoresDaLinha, valoresDoForm, type LinhaCliente } from './formulario'
 
 const linha: LinhaCliente = {
@@ -10,10 +11,19 @@ const linha: LinhaCliente = {
 describe('valoresDaLinha', () => {
   test('turns a database row into form strings (null -> empty)', () => {
     expect(valoresDaLinha(linha)).toEqual({
-      nome: 'Ana', whatsapp: '5511999990001', email: '', cidade: 'Santos', aniversario: '1990-05-17', origem: 'site',
+      nome: 'Ana', whatsapp: '(11) 99999-0001', email: '', cidade: 'Santos', aniversario: '1990-05-17', origem: 'site',
       destinos: 'Lisboa, Paris', faixaOrcamento: '', qtdPessoas: '4', restricoes: '', passaporteValidade: '', consentimento: 'aceitou',
     })
   })
+  test('shows the WhatsApp the way people type it, and it round-trips through the form schema', () => {
+    const v = valoresDaLinha({ ...linha, whatsapp: '5511999990001' })
+    expect(v.whatsapp).toBe('(11) 99999-0001')
+    expect(clienteSchema.parse({ ...v }).whatsapp).toBe('5511999990001')
+    const fora = valoresDaLinha({ ...linha, whatsapp: '351912345678' })
+    expect(fora.whatsapp).toBe('+351912345678')
+    expect(clienteSchema.parse({ ...fora }).whatsapp).toBe('351912345678')
+  })
+
   test('keeps zero people as "0", not empty', () => {
     expect(valoresDaLinha({ ...linha, qtd_pessoas: 0 }).qtdPessoas).toBe('0')
   })

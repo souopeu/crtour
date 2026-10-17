@@ -27,29 +27,34 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
   const aplicadasIds = new Set(etiquetas.aplicadas.map((e) => e.id))
 
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="mb-4 text-2xl font-bold tracking-tight">{cliente.nome}</h1>
-        <div className="mb-8">
-          <ChamarWhatsapp key={`${cliente.nome}|${cliente.whatsapp}|${cliente.consentimento_whatsapp}`} nome={cliente.nome} whatsapp={cliente.whatsapp} consentimento={cliente.consentimento_whatsapp} />
-        </div>
+    <div className="mx-auto flex max-w-5xl flex-col gap-8">
+      <h1 className="text-2xl font-bold tracking-tight">{cliente.nome}</h1>
+      <ChamarWhatsapp
+        key={`${cliente.nome}|${cliente.whatsapp}|${cliente.consentimento_whatsapp}`}
+        nome={cliente.nome}
+        whatsapp={cliente.whatsapp}
+        consentimento={cliente.consentimento_whatsapp}
+      />
+      <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
         <ClienteForm acao={salvarCliente.bind(null, cliente.id)} inicial={valoresDaLinha(cliente)} rotuloBotao="Salvar alterações" />
+        <div className="flex max-w-xl flex-col gap-8 lg:max-w-none">
+          <EtiquetasCliente
+            clienteId={cliente.id}
+            aplicadas={etiquetas.aplicadas}
+            sugestoes={etiquetas.todas.filter((e) => !aplicadasIds.has(e.id))}
+          />
+          <AnotacoesCliente
+            clienteId={cliente.id}
+            anotacoes={anotacoes.map((a) => ({
+              id: a.id,
+              autor: a.autor_nome,
+              quando: formatarDataHora(a.criada_em),
+              texto: a.texto,
+              podeApagar: a.autor_id === usuario?.id || membro?.papel === 'dono',
+            }))}
+          />
+        </div>
       </div>
-      <EtiquetasCliente
-        clienteId={cliente.id}
-        aplicadas={etiquetas.aplicadas}
-        sugestoes={etiquetas.todas.filter((e) => !aplicadasIds.has(e.id))}
-      />
-      <AnotacoesCliente
-        clienteId={cliente.id}
-        anotacoes={anotacoes.map((a) => ({
-          id: a.id,
-          autor: a.autor_nome,
-          quando: formatarDataHora(a.criada_em),
-          texto: a.texto,
-          podeApagar: a.autor_id === usuario?.id || membro?.papel === 'dono',
-        }))}
-      />
     </div>
   )
 }

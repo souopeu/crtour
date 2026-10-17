@@ -13,7 +13,7 @@ export function AnotacoesCliente({ clienteId, anotacoes }: { clienteId: string; 
   const erro = estado.campos?.texto?.[0]
 
   return (
-    <section aria-labelledby="anotacoes-titulo" className="max-w-xl">
+    <section aria-labelledby="anotacoes-titulo" className="w-full">
       <h2 id="anotacoes-titulo" className="mb-2 text-lg font-semibold">Anotações</h2>
 
       <form key={estado.versao ?? 'inicial'} action={enviar} className="mb-4 flex flex-col gap-2">

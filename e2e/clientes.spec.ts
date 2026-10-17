@@ -37,7 +37,7 @@ test('creates, reopens and edits a client; other agencies cannot open it', async
 
   await page.reload()
   await expect(page.getByLabel('Nome', { exact: true })).toHaveValue('Ana Souza')
-  await expect(page.getByRole('textbox', { name: /WhatsApp/ })).toHaveValue('5511999999999')
+  await expect(page.getByRole('textbox', { name: /WhatsApp/ })).toHaveValue('(11) 99999-9999')
   await expect(page.getByLabel('E-mail', { exact: true })).toHaveValue('ana@mail.com')
   await expect(page.getByLabel('Cidade', { exact: true })).toHaveValue('Santos')
   await expect(page.getByLabel('Aniversário')).toHaveValue('1990-05-17')

@@ -10,22 +10,26 @@ const botao = 'inline-flex min-h-12 items-center justify-center rounded-full px-
 export function FormImportar() {
   const form = useRef<HTMLFormElement>(null)
   const [estado, setEstado] = useState<EstadoImportacao>({})
-  const [arquivoEscolhido, setArquivoEscolhido] = useState('')
   const [pendente, iniciar] = useTransition()
   const previa = estado.previa
-  const podeImportar = Boolean(previa && previa.arquivo === arquivoEscolhido && previa.totalErros === 0 && previa.novas > 0 && !previa.jaImportado)
+  const podeImportar = Boolean(previa && previa.totalErros === 0 && previa.novas > 0 && !previa.jaImportado)
 
   function enviar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null
     const fd = new FormData(e.currentTarget)
-    fd.set('acao', submitter?.value === 'importar' ? 'importar' : 'conferir')
+    const acao = submitter?.value === 'importar' ? 'importar' : 'conferir'
+    fd.set('acao', acao)
+    // Importing something other than what was just checked is refused (the server re-checks anyway).
+    if (acao === 'importar' && (fd.get('arquivo') as File | null)?.name !== previa?.arquivo) {
+      setEstado({ erro: 'Esse arquivo ainda não foi conferido. Clique em "Conferir planilha" primeiro.' })
+      return
+    }
     iniciar(async () => {
       const resultado = await processarPlanilha({}, fd)
       setEstado(resultado)
       if (resultado.ok) {
         form.current?.reset()
-        setArquivoEscolhido('')
       }
     })
   }
@@ -37,7 +41,7 @@ export function FormImportar() {
         <input
           id="arquivo" name="arquivo" type="file"
           accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
-          onChange={(e) => setArquivoEscolhido(e.target.files?.[0]?.name ?? '')}
+          onChange={() => setEstado({})} // a new file invalidates the old preview
           className="min-h-12 text-base"
         />
         <div className="flex flex-wrap gap-3">
