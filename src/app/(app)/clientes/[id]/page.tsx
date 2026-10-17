@@ -8,6 +8,8 @@ import { getMembro } from '@/lib/auth/agencia'
 import { getUsuario } from '@/lib/auth/usuario'
 import { buscarAnotacoes, buscarCliente, buscarEtiquetas, listarViagensDoCliente } from '@/lib/clientes/dados'
 import { separarViagens } from '@/lib/clientes/viagens'
+import { NegociacoesDoCliente } from '@/components/clientes/NegociacoesDoCliente'
+import { listarNegociacoesDoCliente } from '@/lib/negociacoes/dados'
 import { HistoricoDeViagens } from '@/components/clientes/HistoricoDeViagens'
 import { valoresDaLinha } from '@/lib/clientes/formulario'
 import { formatarDataHora, hojeNoBrasil } from '@/lib/formato'
@@ -20,10 +22,11 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
   const cliente = await buscarCliente(id)
   if (!cliente) notFound()
 
-  const [etiquetas, anotacoes, viagens, usuario, membro] = await Promise.all([
+  const [etiquetas, anotacoes, viagens, negociacoes, usuario, membro] = await Promise.all([
     buscarEtiquetas(cliente.id),
     buscarAnotacoes(cliente.id),
     listarViagensDoCliente(cliente.id),
+    listarNegociacoesDoCliente(cliente.id),
     getUsuario(),
     getMembro(),
   ])
@@ -42,6 +45,7 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
       <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
         <ClienteForm acao={salvarCliente.bind(null, cliente.id)} inicial={valoresDaLinha(cliente)} rotuloBotao="Salvar alterações" />
         <div className="flex max-w-xl flex-col gap-8 lg:max-w-none">
+          <NegociacoesDoCliente clienteId={cliente.id} negociacoes={negociacoes} />
           <HistoricoDeViagens futuras={futuras} passadas={passadas} todas={viagens} />
           <EtiquetasCliente
             clienteId={cliente.id}

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { formatarDataBr, formatarDataHora, hojeNoBrasil } from './formato'
+import { diaNoBrasil, formatarDataBr, formatarDataHora, hojeNoBrasil } from './formato'
 
 describe('formatarDataHora', () => {
   test('formats in Brazil time (UTC-3)', () => {
@@ -25,5 +25,13 @@ describe('hojeNoBrasil', () => {
   test('uses the Brazilian calendar day, not UTC', () => {
     expect(hojeNoBrasil(new Date('2026-10-17T02:00:00Z'))).toBe('2026-10-16')
     expect(hojeNoBrasil(new Date('2026-10-17T12:00:00Z'))).toBe('2026-10-17')
+  })
+})
+
+describe('diaNoBrasil', () => {
+  test('turns a timestamp into the Brazilian calendar day', () => {
+    expect(diaNoBrasil('2026-10-17T02:00:00Z')).toBe('2026-10-16')
+    expect(diaNoBrasil('2026-10-17T12:00:00+00:00')).toBe('2026-10-17')
+    expect(diaNoBrasil('lixo')).toBe('')
   })
 })

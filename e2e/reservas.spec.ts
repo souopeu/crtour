@@ -155,7 +155,7 @@ test('undoing an import is refused when an imported client already has a reserva
   await page.goto('/importar')
   await page.getByRole('button', { name: 'Desfazer importação' }).click()
   await page.getByRole('button', { name: 'Apagar mesmo' }).click()
-  await expect(page.getByText('Alguns clientes desta importação já têm reservas e não podem ser apagados.')).toBeVisible()
+  await expect(page.getByText('Alguns clientes desta importação já têm reservas ou negociações e não podem ser apagados.')).toBeVisible()
   await page.goto('/')
   await expect(page.getByText('Cliente Importada')).toBeVisible() // nothing was deleted
 })

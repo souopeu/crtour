@@ -22,3 +22,9 @@ const DIA_BRASIL = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Pau
 export function hojeNoBrasil(agora: Date = new Date()): string {
   return DIA_BRASIL.format(agora)
 }
+
+// Brazilian calendar day (YYYY-MM-DD) of an ISO timestamp; '' when it is not a date.
+export function diaNoBrasil(iso: string): string {
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? '' : DIA_BRASIL.format(d)
+}

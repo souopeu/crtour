@@ -96,7 +96,7 @@ export async function desfazerImportacao(id: string): Promise<EstadoForm> {
     console.error('desfazerImportacao falhou', error.code)
     return {
       erro: error.code === '23503'
-        ? 'Alguns clientes desta importação já têm reservas e não podem ser apagados.'
+        ? 'Alguns clientes desta importação já têm reservas ou negociações e não podem ser apagados.'
         : ERRO_GERAL,
       versao,
     }

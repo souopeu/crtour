@@ -16,6 +16,7 @@ async function Casca({ children }: { children: React.ReactNode }) {
         <span className="text-xl font-extrabold tracking-tight text-destaque">{APP_NAME}</span>
         <div className="flex items-center gap-3 text-sm">
           <Link href="/" className="inline-flex min-h-11 items-center underline">Clientes</Link>
+          <Link href="/funil" className="inline-flex min-h-11 items-center underline">Funil</Link>
           <Link href="/passeios" className="inline-flex min-h-11 items-center underline">Passeios</Link>
           <Link href="/cobrancas" className="inline-flex min-h-11 items-center underline">Cobranças</Link>
           <Link href="/configuracoes" className="inline-flex min-h-11 items-center underline">Configurações</Link>
