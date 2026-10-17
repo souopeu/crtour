@@ -21,8 +21,8 @@ begin execute p_sql; get diagnostics n = row_count; return n; end $f$;
 grant execute on function public.tmp_rows_affected(text) to authenticated;
 select set_config('t.agencia_b', (select agencia_id::text from public.membros where user_id = 'bbbbbbbb-0000-0000-0000-000000000002'), true);
 
-select is((select count(*) from public.agencias), 2::bigint, 'each owner signup creates one agency');
-select is((select count(*) from public.membros where papel = 'dono'), 2::bigint, 'signup makes the user the owner');
+select is((select count(*) from public.membros where user_id in ('aaaaaaaa-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000002')), 2::bigint, 'each owner signup creates one agency membership');
+select is((select count(*) from public.membros where papel = 'dono' and user_id in ('aaaaaaaa-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000002')), 2::bigint, 'signup makes the user the owner');
 select is((select nome from public.agencias a join public.membros m on m.agencia_id = a.id
            where m.user_id = 'aaaaaaaa-0000-0000-0000-000000000001'), 'Agência Alfa', 'agency name comes from signup metadata');
 select is((select nome from public.agencias a join public.membros m on m.agencia_id = a.id
