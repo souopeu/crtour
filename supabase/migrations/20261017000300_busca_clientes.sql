@@ -19,7 +19,7 @@ declare
   v_busca text := btrim(coalesce(p_busca, ''));
   v_digitos text := regexp_replace(btrim(coalesce(p_busca, '')), '\D', '', 'g');
   v_telefone boolean := v_busca <> '' and v_busca ~ '^[0-9\s()+.\-]+$' and length(v_digitos) >= 3;
-  v_termos text[] := '{}';
+  v_termos text[] := array[]::text[];
   v_cidade text := nullif(btrim(coalesce(p_cidade, '')), '');
 begin
   if v_busca <> '' and not v_telefone then
