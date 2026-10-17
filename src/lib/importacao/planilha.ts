@@ -11,7 +11,7 @@ export type ResultadoPlanilha =
 
 const falha = (erro: string): ResultadoPlanilha => ({ ok: false, erro })
 
-const vazia = (v: unknown) => v === null || v === undefined || (typeof v === 'string' && v.trim() === '')
+export const vazia = (v: unknown) => v === null || v === undefined || (typeof v === 'string' && v.trim() === '')
 
 function valorDaCelula(v: ExcelJS.CellValue): unknown {
   if (v === null || v === undefined) return null
@@ -66,21 +66,24 @@ export function tamanhoDescomprimido(zip: Buffer): number {
   return total
 }
 
-async function lerXlsx(buffer: Buffer): Promise<ResultadoPlanilha> {
+export type Tabela = { cabecalhos: string[]; corpo: { numero: number; valores: unknown[] }[] }
+export type ResultadoTabela = ({ ok: true } & Tabela) | { ok: false; erro: string }
+
+async function lerXlsx(buffer: Buffer, aba: string): Promise<ResultadoTabela> {
   if (buffer.subarray(0, 4).toString('latin1') !== 'PK\u0003\u0004') {
-    return falha('Esse arquivo não parece ser uma planilha .xlsx válida.')
+    return { ok: false, erro: 'Esse arquivo não parece ser uma planilha .xlsx válida.' }
   }
   if (tamanhoDescomprimido(buffer) > IMPORTACAO.arquivo.maxDescomprimidoBytes) {
-    return falha('A planilha é grande demais depois de aberta. Remova abas, imagens ou linhas vazias e tente de novo.')
+    return { ok: false, erro: 'A planilha é grande demais depois de aberta. Remova abas, imagens ou linhas vazias e tente de novo.' }
   }
   const wb = new ExcelJS.Workbook()
   try {
     await wb.xlsx.load(buffer as unknown as ArrayBuffer)
   } catch {
-    return falha('Não foi possível abrir a planilha. Salve-a de novo como .xlsx e tente outra vez.')
+    return { ok: false, erro: 'Não foi possível abrir a planilha. Salve-a de novo como .xlsx e tente outra vez.' }
   }
-  const ws = wb.getWorksheet('Clientes') ?? wb.worksheets[0]
-  if (!ws) return falha('A planilha não tem nenhuma aba.')
+  const ws = wb.getWorksheet(aba) ?? wb.worksheets[0]
+  if (!ws) return { ok: false, erro: 'A planilha não tem nenhuma aba.' }
 
   const cabecalhoLinha = ws.getRow(1)
   const largura = Math.max(ws.columnCount, cabecalhoLinha.cellCount)
@@ -90,7 +93,7 @@ async function lerXlsx(buffer: Buffer): Promise<ResultadoPlanilha> {
     const row = ws.getRow(n)
     corpo.push({ numero: n, valores: Array.from({ length: largura }, (_, i) => valorDaCelula(row.getCell(i + 1).value)) })
   }
-  return montar(cabecalhos, corpo)
+  return { ok: true, cabecalhos, corpo }
 }
 
 // Small RFC 4180 parser: quoted fields, doubled quotes, line breaks inside quotes.
@@ -117,19 +120,25 @@ export function lerCsvTexto(texto: string, delimitador: string): string[][] {
   return registros
 }
 
-function lerCsv(buffer: Buffer): ResultadoPlanilha {
+function lerCsv(buffer: Buffer): ResultadoTabela {
   const texto = buffer.toString('utf8').replace(/^﻿/, '')
   const primeira = texto.split(/\r?\n/, 1)[0] ?? ''
   const delimitador = [';', '\t', ','].map((d) => [d, primeira.split(d).length] as const).sort((a, b) => b[1] - a[1])[0][0]
   const [cabecalhos = [], ...corpo] = lerCsvTexto(texto, delimitador)
-  return montar(cabecalhos, corpo.map((valores, i) => ({ numero: i + 2, valores })))
+  return { ok: true, cabecalhos, corpo: corpo.map((valores, i) => ({ numero: i + 2, valores })) }
+}
+
+// Format, size and zip checks shared by every import; `aba` is the preferred sheet name.
+export async function lerTabela(buffer: Buffer, nomeArquivo: string, aba: string): Promise<ResultadoTabela> {
+  if (buffer.length === 0) return { ok: false, erro: 'O arquivo está vazio.' }
+  if (buffer.length > IMPORTACAO.arquivo.maxBytes) return { ok: false, erro: 'O arquivo é maior que 4 MB. Divida a planilha em partes menores.' }
+  const nome = nomeArquivo.toLowerCase()
+  if (nome.endsWith('.xlsx')) return lerXlsx(buffer, aba)
+  if (nome.endsWith('.csv')) return lerCsv(buffer)
+  return { ok: false, erro: 'Use um arquivo .xlsx ou .csv.' }
 }
 
 export async function lerPlanilha(buffer: Buffer, nomeArquivo: string): Promise<ResultadoPlanilha> {
-  if (buffer.length === 0) return falha('O arquivo está vazio.')
-  if (buffer.length > IMPORTACAO.arquivo.maxBytes) return falha('O arquivo é maior que 4 MB. Divida a planilha em partes menores.')
-  const nome = nomeArquivo.toLowerCase()
-  if (nome.endsWith('.xlsx')) return lerXlsx(buffer)
-  if (nome.endsWith('.csv')) return lerCsv(buffer)
-  return falha('Use um arquivo .xlsx ou .csv.')
+  const t = await lerTabela(buffer, nomeArquivo, 'Clientes')
+  return t.ok ? montar(t.cabecalhos, t.corpo) : falha(t.erro)
 }

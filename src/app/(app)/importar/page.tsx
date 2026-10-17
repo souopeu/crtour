@@ -26,6 +26,7 @@ export default function ImportarPage() {
           Traga seus clientes de outra planilha. Você confere tudo antes de importar e pode desfazer depois.
         </p>
         <a href="/importar/modelo" className="mt-3 inline-flex min-h-11 items-center text-primaria underline">Baixar planilha-modelo (.xlsx)</a>
+        <Link href="/importar/reservas" className="ml-4 mt-3 inline-flex min-h-11 items-center text-primaria underline">Importar reservas</Link>
       </div>
       <FormImportar />
       <section aria-labelledby="anteriores-titulo" className="flex flex-col gap-2">
