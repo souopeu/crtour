@@ -6,6 +6,10 @@ const avisoSchema = z.discriminatedUnion('tipo', [
   z.object({
     tipo: z.literal('mensagem'), conta: z.string().min(1).max(200), idExterno: z.string().min(1).max(200),
     de: z.string().regex(/^\d{10,15}$/), nome: z.string().max(200).nullable(), texto: z.string().max(4096).nullable(), em: z.string(),
+    // E7-3 (R82): set by the provider when the message came from a "click to WhatsApp" ad (Meta sends it with the first message).
+    referencia: z.object({
+      anuncioId: z.string().max(100).nullable(), titulo: z.string().max(300).nullable(), url: z.string().max(1000).nullable(), cliqueId: z.string().max(255).nullable(),
+    }).nullable().optional(),
   }),
   z.object({ tipo: z.literal('status'), idExterno: z.string().min(1).max(200), situacao: z.enum(['enviada', 'entregue', 'lida', 'falhou']) }),
 ])
@@ -26,6 +30,11 @@ export function obterProvedorWhatsapp(env: Record<string, string | undefined>, r
   const nome = env.WHATSAPP_PROVEDOR?.trim()
   const fabrica = nome ? registro[nome] : undefined
   return fabrica ? fabrica(env) : null
+}
+
+// The ad data as the database function expects it (p_referencia); null when the message did not come from an ad.
+export function referenciaParaBanco(r: { anuncioId: string | null; titulo: string | null; url: string | null; cliqueId: string | null } | null | undefined) {
+  return r ? { tipo: 'anuncio', anuncio_id: r.anuncioId, titulo: r.titulo, url: r.url, clique_id: r.cliqueId } : null
 }
 
 // Database refusals that retrying will not fix: answer 200 so the provider stops, and flag for a person.

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { chaveDaCampanha, indicadores, lerFormCampanha, linkDaCampanha, periodoDoRelatorio } from './campanhas'
+import { chaveDaCampanha, indicadores, lerFormCampanha, lerFormLink, linkDaCampanha, periodoDoRelatorio } from './campanhas'
 
 const fd = (campos: Record<string, string>) => {
   const f = new FormData()
@@ -56,5 +56,18 @@ describe('periodoDoRelatorio', () => {
   test('an inverted or broken range falls back to the default', () => {
     expect(periodoDoRelatorio({ de: '2026-05-01', ate: '2026-04-01' }, '2026-10-18')).toEqual({ de: '2026-09-18', ate: '2026-10-18' })
     expect(periodoDoRelatorio({ de: 'x' }, '2026-10-18').de).toBe('2026-09-18')
+  })
+})
+
+describe('lerFormLink', () => {
+  const normalizar = (v: string) => (v.replace(/\D/g, '').length >= 10 ? { ok: true, valor: `55${v.replace(/\D/g, '')}` } : { ok: false })
+  test('reads the agency number, message and switch', () => {
+    expect(lerFormLink(fd({ whatsapp: '(11) 99999-0000', mensagem: ' Olá! ', ativo: 'on' }), normalizar))
+      .toEqual({ ok: true, dados: { whatsapp: '5511999990000', mensagem: 'Olá!', ativo: true } })
+  })
+  test('explains each problem', () => {
+    const r = lerFormLink(fd({ whatsapp: '123', mensagem: '' }), normalizar)
+    expect(r.ok).toBe(false)
+    if (!r.ok) expect(Object.keys(r.campos).sort()).toEqual(['mensagem', 'whatsapp'])
   })
 })

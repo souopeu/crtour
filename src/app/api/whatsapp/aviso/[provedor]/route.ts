@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { lerCorpoAte } from '@/lib/http/corpo'
-import { obterProvedorWhatsapp, tratarAvisoWhatsapp } from '@/lib/whatsapp/whatsapp'
+import { obterProvedorWhatsapp, referenciaParaBanco, tratarAvisoWhatsapp } from '@/lib/whatsapp/whatsapp'
 
 const MAX_BYTES = 256 * 1024 // providers batch several events per notice
 
@@ -21,7 +21,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ pro
       if (!url || !chave) return { ok: false, codigo: 'sem_chave_servico' }
       const admin = createClient(url, chave, { auth: { persistSession: false } })
       const { error } = a.tipo === 'mensagem'
-        ? await admin.rpc('whatsapp_receber', { p_provedor: a.provedor, p_conta: a.conta, p_id_externo: a.idExterno, p_de: a.de, p_nome: a.nome, p_texto: a.texto, p_recebida_em: a.em })
+        ? await admin.rpc('whatsapp_receber', { p_provedor: a.provedor, p_conta: a.conta, p_id_externo: a.idExterno, p_de: a.de, p_nome: a.nome, p_texto: a.texto, p_recebida_em: a.em, p_referencia: referenciaParaBanco(a.referencia) })
         : await admin.rpc('whatsapp_status', { p_provedor: a.provedor, p_id_externo: a.idExterno, p_situacao: a.situacao })
       return error ? { ok: false, codigo: error.code ?? 'erro' } : { ok: true }
     },

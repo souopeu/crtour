@@ -44,7 +44,7 @@ select throws_ok(format($$insert into public.campanhas (agencia_id, nome, canal,
 
 -- R79: leads and sales per campaign, matched ignoring case and spaces
 select is((select leads || '/' || vendas || '/' || valor_vendido_centavos || '/' || gasto_centavos from public.resultado_campanhas(current_setting('t.hoje')::date - 30, current_setting('t.hoje')::date) where chave = 'verao 2027'),
-  '2/1/300000/100000', 'two leads, one sale, value and spend of the campaign');
+  '1/1/300000/100000', 'one client (two deals), one sale, value and spend of the campaign');
 select is((select leads from public.resultado_campanhas(current_setting('t.hoje')::date - 30, current_setting('t.hoje')::date) where chave is null), 1::bigint,
   'leads without a campaign come back as "not identified"');
 select is((select leads from public.resultado_campanhas(current_setting('t.hoje')::date + 1, current_setting('t.hoje')::date + 2) where chave = 'verao 2027'), 0::bigint,

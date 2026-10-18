@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { dentroDaJanela, obterProvedorWhatsapp, tratarAvisoWhatsapp, type ProvedorWhatsapp } from './whatsapp'
+import { dentroDaJanela, obterProvedorWhatsapp, referenciaParaBanco, tratarAvisoWhatsapp, type ProvedorWhatsapp } from './whatsapp'
 
 // Fake provider: JSON body, "x-assinatura: ok" header.
 const falso: ProvedorWhatsapp = {
@@ -60,6 +60,25 @@ describe('tratarAvisoWhatsapp', () => {
     expect(await tratarAvisoWhatsapp({ provedor: falso, nomeNaUrl: 'falso', corpo, cabecalhos: assinado, gravar: recusa })).toEqual({ status: 200, conferir: 'P0002' })
     const falha = vi.fn().mockResolvedValue({ ok: false, codigo: '08006' })
     expect(await tratarAvisoWhatsapp({ provedor: falso, nomeNaUrl: 'falso', corpo, cabecalhos: assinado, gravar: falha })).toEqual({ status: 500 })
+  })
+})
+
+describe('ad data on incoming messages (R82)', () => {
+  const doAnuncio = { ...mensagem, referencia: { anuncioId: '120200', titulo: 'Gramado no inverno', url: 'https://fb.me/x', cliqueId: 'ctwa-1' } }
+  test('a message from an ad keeps its ad data', async () => {
+    const gravar = vi.fn().mockResolvedValue({ ok: true })
+    expect(await tratarAvisoWhatsapp({ provedor: falso, nomeNaUrl: 'falso', corpo: JSON.stringify([doAnuncio]), cabecalhos: assinado, gravar })).toEqual({ status: 200 })
+    expect(gravar).toHaveBeenCalledWith({ ...doAnuncio, provedor: 'falso' })
+  })
+  test('oversized ad data is refused before storing', async () => {
+    const gravar = vi.fn()
+    const ruim = { ...doAnuncio, referencia: { ...doAnuncio.referencia, titulo: 'x'.repeat(301) } }
+    expect(await tratarAvisoWhatsapp({ provedor: falso, nomeNaUrl: 'falso', corpo: JSON.stringify([ruim]), cabecalhos: assinado, gravar })).toEqual({ status: 400 })
+    expect(gravar).not.toHaveBeenCalled()
+  })
+  test('the database gets the ad data in its own format, or null', () => {
+    expect(referenciaParaBanco(doAnuncio.referencia)).toEqual({ tipo: 'anuncio', anuncio_id: '120200', titulo: 'Gramado no inverno', url: 'https://fb.me/x', clique_id: 'ctwa-1' })
+    expect(referenciaParaBanco(undefined)).toBeNull()
   })
 })
 

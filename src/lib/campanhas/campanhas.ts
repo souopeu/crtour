@@ -72,3 +72,21 @@ export function periodoDoRelatorio(sp: { de?: string | string[]; ate?: string | 
   if (!dataReal(de) || !dataReal(ate) || de > ate) return padrao
   return { de, ate }
 }
+
+export type FormLink = { whatsapp: string; mensagem: string; ativo: boolean }
+
+// R81: the owner's settings for the Google ad link. The number is normalized like every WhatsApp in the system.
+export function lerFormLink(fd: FormData, normalizar: (v: string) => { ok: boolean; valor?: string | null }):
+  { ok: true; dados: FormLink } | { ok: false; campos: Partial<Record<'whatsapp' | 'mensagem', string>> } {
+  const campos: Partial<Record<'whatsapp' | 'mensagem', string>> = {}
+  const w = normalizar(texto(fd, 'whatsapp'))
+  const mensagem = texto(fd, 'mensagem')
+  if (!w.ok || !w.valor) campos.whatsapp = 'Digite o WhatsApp da agência com DDD, como (11) 99999-0000.'
+  if (mensagem.length < 1 || mensagem.length > MENSAGEM_LINK_MAX) campos.mensagem = 'Escreva a mensagem inicial (até 300 caracteres).'
+  if (Object.keys(campos).length > 0) return { ok: false, campos }
+  return { ok: true, dados: { whatsapp: w.valor!, mensagem, ativo: fd.get('ativo') === 'on' } }
+}
+
+// Google Ads: auto-tagging adds gclid by itself; the campaign tag goes in the final URL suffix.
+export const SUFIXO_GOOGLE = 'utm_source=google&utm_medium=cpc&utm_campaign=nome-da-campanha'
+const MENSAGEM_LINK_MAX = 300

@@ -45,6 +45,9 @@ describe('decidirAcesso', () => {
     // R76: the voucher link opens without a session
     expect(decidirAcesso('/v/AbCdEfGhIjKlMnOpQrStUvWx', '', false)).toEqual({ tipo: 'seguir' })
     expect(decidirAcesso('/v', '', false).tipo).toBe('redirecionar')
+    // R81: the Google ad link opens without a session
+    expect(decidirAcesso('/w/AbCdEfGhIjKlMnOpQrStUvWx', '?gclid=x', false)).toEqual({ tipo: 'seguir' })
+    expect(decidirAcesso('/w', '', false).tipo).toBe('redirecionar')
     // R73: WhatsApp provider notices are server to server, authenticated by signature
     expect(decidirAcesso('/api/whatsapp/aviso/meta', '', false)).toEqual({ tipo: 'seguir' })
     expect(decidirAcesso('/api/whatsapp/aviso', '', false).tipo).toBe('redirecionar')

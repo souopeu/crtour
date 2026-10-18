@@ -22,6 +22,8 @@ import { valoresDaLinha } from '@/lib/clientes/formulario'
 import { formatarDataHora, hojeNoBrasil } from '@/lib/formato'
 import { salvarCliente } from '../actions'
 import { Carregando } from '@/components/Carregando'
+import { DeOndeVeio } from '@/components/clientes/DeOndeVeio'
+import { listarOrigens } from '@/lib/origens/dados'
 
 export const metadata = { title: 'Cliente' }
 
@@ -30,7 +32,7 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
   const cliente = await buscarCliente(id)
   if (!cliente) notFound()
 
-  const [etiquetas, anotacoes, viagens, negociacoes, atividades, ultimaInteracao, responsaveis, usuario, membro, sugestoes] = await Promise.all([
+  const [etiquetas, anotacoes, viagens, negociacoes, atividades, ultimaInteracao, responsaveis, usuario, membro, sugestoes, origens] = await Promise.all([
     buscarEtiquetas(cliente.id),
     buscarAnotacoes(cliente.id),
     listarViagensDoCliente(cliente.id),
@@ -41,6 +43,7 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
     getUsuario(),
     getMembro(),
     listarSugestoes(cliente.id),
+    listarOrigens(cliente.id),
   ])
   const aplicadasIds = new Set(etiquetas.aplicadas.map((e) => e.id))
   const { futuras, passadas } = separarViagens(viagens, hojeNoBrasil())
@@ -70,6 +73,7 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
       <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
         <ClienteForm acao={salvarCliente.bind(null, cliente.id)} inicial={valoresDaLinha(cliente)} rotuloBotao="Salvar alterações" />
         <div className="flex max-w-xl flex-col gap-8 lg:max-w-none">
+          <DeOndeVeio origens={origens} />
           <NegociacoesDoCliente clienteId={cliente.id} negociacoes={negociacoes} />
           <AtividadesCliente
             clienteId={cliente.id}
