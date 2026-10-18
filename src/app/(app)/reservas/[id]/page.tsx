@@ -13,6 +13,8 @@ import { VendidoPor } from '@/components/comissao/VendidoPor'
 import { getMembro } from '@/lib/auth/agencia'
 import { buscarVendedorDaReserva } from '@/lib/comissao/dados'
 import { listarMembros } from '@/lib/negociacoes/dados'
+import { VouchersReserva } from '@/components/vouchers/VouchersReserva'
+import { reservaQuitada } from '@/lib/vouchers/voucher'
 
 export const metadata = { title: 'Reserva' }
 
@@ -98,6 +100,7 @@ async function Conteudo({ params }: Pick<PageProps<'/reservas/[id]'>, 'params'>)
         </section>
 
         <div className="flex flex-col gap-8">
+          {ativa && <VouchersReserva reservaId={reserva.id} quitada={reservaQuitada(reserva)} />}
           {ativa ? (
             <>
               <section aria-labelledby="novo-pagamento-titulo" className="flex flex-col gap-3">
