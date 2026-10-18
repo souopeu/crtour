@@ -5,6 +5,8 @@ import { useEffect, useOptimistic, useRef, useState, useTransition } from 'react
 import { moverNegociacao } from '@/app/(app)/negociacoes/actions'
 import { ETAPAS, MOTIVOS, validarMovimento, type Etapa } from '@/lib/negociacoes/negociacoes'
 import { formatarReais } from '@/lib/passeios/dinheiro'
+import { chip } from '@/components/tela/estilos'
+import { COR_ETAPA } from './coresEtapa'
 
 export type CartaoKanban = {
   id: string; titulo: string; clienteId: string; clienteNome: string; etapa: Etapa; valor: number; previsto: number
@@ -12,11 +14,9 @@ export type CartaoKanban = {
   sugestao?: { para: 'reservado' | 'pago'; texto: string }
 }
 
-// Stage strip: blue (open) to green (won); always labelled with text, never colour alone.
-const COR_ETAPA: Record<Etapa, string> = {
-  interessado: '#1d4ed8', orcamento: '#2563b8', reservado: '#0f7a8a', pago: '#0f7b5f', viajou: '#0f7b5f', pos_venda: '#0f7b5f', perdido: '#b42318',
-}
 const select = 'h-11 w-full rounded-lg border border-controle bg-superficie px-2 text-sm'
+// R62: column header as a stage-coloured strip ending in an arrow; the text always names the stage.
+const SETA = '[clip-path:polygon(0_0,calc(100%-0.75rem)_0,100%_50%,calc(100%-0.75rem)_100%,0_100%)]'
 
 export function KanbanFunil({ cartoes }: { cartoes: CartaoKanban[] }) {
   const [otimistas, mover] = useOptimistic(cartoes, (estado, { id, etapa }: { id: string; etapa: Etapa }) =>
@@ -82,25 +82,24 @@ export function KanbanFunil({ cartoes }: { cartoes: CartaoKanban[] }) {
               data-etapa={etapa.valor}
               onDragOver={(ev) => ev.preventDefault()}
               onDrop={(ev) => { ev.preventDefault(); const id = ev.dataTransfer.getData('text/plain'); if (id) pedirMovimento(id, etapa.valor) }}
-              className="flex w-72 shrink-0 flex-col gap-2 rounded-[--radius-cartao] border border-linha bg-superficie-suave p-2"
-              style={{ borderTop: `4px solid ${COR_ETAPA[etapa.valor]}` }}
+              className="flex w-64 shrink-0 flex-col gap-2 rounded-(--radius-cartao) bg-superficie-suave pb-2"
             >
-              <header className="px-1">
-                <h2 className="text-base font-semibold">{etapa.rotulo} <span className="font-normal text-tinta-suave">({cards.length})</span></h2>
-                <p className="text-xs text-tinta-suave">Valor {formatarReais(totalValor)} · <strong>previsto {formatarReais(totalPrevisto)}</strong></p>
+              <header className={`rounded-t-(--radius-cartao) py-2 pl-3 pr-5 text-etapa-texto ${COR_ETAPA[etapa.valor].fundo} ${SETA}`}>
+                <h2 className="text-sm font-semibold">{etapa.rotulo} <span className="font-normal">({cards.length})</span></h2>
+                <p className="text-xs">Valor {formatarReais(totalValor)} · <strong>previsto {formatarReais(totalPrevisto)}</strong></p>
               </header>
-              {cards.length === 0 && <p className="px-1 py-3 text-xs text-tinta-suave">Solte uma negociação aqui.</p>}
-              <ul className="flex flex-col gap-2">
+              {cards.length === 0 && <p className="mx-2 rounded-lg border border-dashed border-controle px-2 py-4 text-center text-xs text-tinta-suave">Solte uma negociação aqui.</p>}
+              <ul className="flex flex-col gap-2 px-2">
                 {cards.map((c) => (
                   <li
                     key={c.id}
                     draggable
                     onDragStart={(ev) => { ev.dataTransfer.setData('text/plain', c.id); ev.dataTransfer.effectAllowed = 'move' }}
-                    className="flex cursor-grab flex-col gap-1 rounded-lg border border-linha bg-superficie p-3 active:cursor-grabbing"
+                    className="flex cursor-grab flex-col gap-1.5 rounded-lg border border-linha bg-superficie p-2.5 shadow-sm transition-shadow duration-(--duracao-saida) hover:shadow-md active:cursor-grabbing"
                   >
-                    <Link href={`/negociacoes/${c.id}`} className="font-semibold text-primaria underline">{c.titulo}</Link>
-                    <Link href={`/clientes/${c.clienteId}`} className="text-sm underline">{c.clienteNome}</Link>
-                    <p className="text-sm">{formatarReais(c.valor)} · {c.probabilidade}% · <strong>{formatarReais(c.previsto)}</strong></p>
+                    <Link href={`/negociacoes/${c.id}`} className="text-sm font-semibold text-primaria underline">{c.titulo}</Link>
+                    <Link href={`/clientes/${c.clienteId}`} className={`${chip} w-fit`}>{c.clienteNome}</Link>
+                    <p className="text-sm tabular-nums">{formatarReais(c.valor)} · {c.probabilidade}% · <strong>{formatarReais(c.previsto)}</strong></p>
                     {c.saidaRotulo && <p className="text-xs text-tinta-suave">{c.saidaRotulo}</p>}
                     {c.sugestao && c.etapa !== c.sugestao.para && (
                       <div className="flex flex-col gap-1 rounded-lg border border-primaria p-2 text-xs">

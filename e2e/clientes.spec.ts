@@ -23,7 +23,7 @@ test('creates, reopens and edits a client; other agencies cannot open it', async
   await page.getByLabel('Nome', { exact: true }).fill('Ana Souza')
   await page.getByRole('textbox', { name: /WhatsApp/ }).fill('(11) 99999-9999')
   await page.getByLabel('E-mail', { exact: true }).fill('ana@mail.com')
-  await page.getByLabel('Cidade', { exact: true }).fill('Santos')
+  await page.getByRole('textbox', { name: 'Cidade', exact: true }).fill('Santos')
   await page.getByLabel('Aniversário').fill('1990-05-17')
   await page.getByLabel('Como conheceu a agência').selectOption('instagram')
   await page.getByLabel('Destinos de interesse').fill('Lisboa, Fernando de Noronha')
@@ -39,18 +39,18 @@ test('creates, reopens and edits a client; other agencies cannot open it', async
   await expect(page.getByLabel('Nome', { exact: true })).toHaveValue('Ana Souza')
   await expect(page.getByRole('textbox', { name: /WhatsApp/ })).toHaveValue('(11) 99999-9999')
   await expect(page.getByLabel('E-mail', { exact: true })).toHaveValue('ana@mail.com')
-  await expect(page.getByLabel('Cidade', { exact: true })).toHaveValue('Santos')
+  await expect(page.getByRole('textbox', { name: 'Cidade', exact: true })).toHaveValue('Santos')
   await expect(page.getByLabel('Aniversário')).toHaveValue('1990-05-17')
   await expect(page.getByLabel('Como conheceu a agência')).toHaveValue('instagram')
   await expect(page.getByLabel('Destinos de interesse')).toHaveValue('Lisboa, Fernando de Noronha')
   await expect(page.getByLabel('Número de pessoas')).toHaveValue('4')
   await expect(page.getByLabel('Consentimento')).toHaveValue('aceitou')
 
-  await page.getByLabel('Cidade', { exact: true }).fill('Rio de Janeiro')
+  await page.getByRole('textbox', { name: 'Cidade', exact: true }).fill('Rio de Janeiro')
   await page.getByRole('button', { name: 'Salvar alterações' }).click()
   await expect(page.getByText('Alterações salvas.')).toBeVisible()
   await page.reload()
-  await expect(page.getByLabel('Cidade', { exact: true })).toHaveValue('Rio de Janeiro')
+  await expect(page.getByRole('textbox', { name: 'Cidade', exact: true })).toHaveValue('Rio de Janeiro')
 
   await page.getByRole('textbox', { name: /WhatsApp/ }).fill('123')
   await page.getByRole('button', { name: 'Salvar alterações' }).click()
@@ -131,7 +131,7 @@ test('client list: search, filters and empty states', async ({ page }) => {
     await page.goto('/clientes/novo')
     await page.getByLabel('Nome', { exact: true }).fill(nome)
     await page.getByRole('textbox', { name: /WhatsApp/ }).fill(whatsapp)
-    await page.getByLabel('Cidade', { exact: true }).fill(cidade)
+    await page.getByRole('textbox', { name: 'Cidade', exact: true }).fill(cidade)
     await page.getByLabel('Como conheceu a agência').selectOption(origem)
     await page.getByRole('button', { name: 'Salvar cliente' }).click()
     await expect(page.getByRole('heading', { name: nome })).toBeVisible()
@@ -146,7 +146,7 @@ test('client list: search, filters and empty states', async ({ page }) => {
 
   await page.goto('/')
   await expect(page.getByText('Mostrando 1–2 de 2')).toBeVisible()
-  const nomes = page.locator('ul > li > a > span.font-semibold')
+  const nomes = page.getByRole('table', { name: 'Clientes' }).locator('tbody a.font-medium')
   await expect(nomes).toHaveText(['Ana Souza', 'João Silva'])
   await expect(page.getByText('(11) 99999-0001')).toBeVisible()
 
@@ -175,7 +175,7 @@ test('client list: search, filters and empty states', async ({ page }) => {
 
   await page.getByRole('link', { name: 'Limpar filtros' }).click()
   await expect(page).toHaveURL('/')
-  await page.getByLabel('Cidade', { exact: true }).selectOption('Santos')
+  await page.getByRole('combobox', { name: 'Cidade', exact: true }).selectOption('Santos')
   await page.getByRole('button', { name: 'Filtrar' }).click()
   await expect(nomes).toHaveText(['Ana Souza'])
 

@@ -66,7 +66,7 @@ test('companions, printable passenger list, CSV and access control', async ({ pa
   await expect(reserva).toContainText('Todos os lugares desta reserva têm nome.')
 
   await page.goto('/?q=joao')
-  await expect(page.getByRole('link', { name: /João Souza/ })).toContainText('Consentimento não informado')
+  await expect(page.getByRole('row', { name: /João Souza/ })).toContainText('Consentimento não informado')
 
   // Remove and refill
   await page.goto(urlSaida)

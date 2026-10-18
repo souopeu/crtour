@@ -108,9 +108,39 @@ test('funnel: create deals, automatic forecast, stage defaults, history, groupin
   await expect(orcamento).toContainText('30%')
   await expect(page.getByText(/soma.*probabilidade/i)).toHaveCount(0)
 
-  // Grouped by person in charge
-  await page.getByRole('link', { name: 'Tabela por responsável' }).click()
+  // Summary row at the bottom of each group (R61)
+  await expect(orcamento.getByRole('row', { name: /^Total/ })).toContainText('R$ 10.000,00')
+  await expect(orcamento.getByRole('row', { name: /^Total/ })).toContainText('R$ 3.000,00')
+  await expect(page.getByRole('link', { name: '+ Adicionar negociação' }).first()).toBeVisible()
+
+  // Groups fold and unfold
+  const interessado = page.getByRole('button', { name: 'Interessado (1)' })
+  await interessado.click()
+  await expect(interessado).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.getByRole('link', { name: 'Noronha em julho' })).toBeHidden()
+  await interessado.click()
+  await expect(page.getByRole('link', { name: 'Noronha em julho' })).toBeVisible()
+
+  // Grouped by person in charge, with the stage shown as a labelled block
+  await page.getByLabel('Agrupar por').selectOption('responsavel')
+  await page.getByRole('button', { name: 'Aplicar' }).click()
   await expect(grupos).toHaveText(['Pessoa funil (1)', 'Sem responsável (1)'])
+  await expect(page.getByRole('region', { name: /Pessoa funil/ })).toContainText('Orçamento')
+
+  // Toolbar: search and person filter survive switching views (R60)
+  await page.getByLabel('Buscar negociação').fill('lisboa')
+  await page.getByRole('button', { name: 'Aplicar' }).click()
+  await expect(grupos).toHaveText(['Pessoa funil (1)'])
+  await page.getByRole('link', { name: 'Kanban' }).click()
+  await expect(page).toHaveURL(/q=lisboa/)
+  await expect(page.getByRole('link', { name: 'Lisboa em março' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Noronha em julho' })).toHaveCount(0)
+  await expect(page.getByLabel('Buscar negociação')).toHaveValue('lisboa')
+  await page.getByLabel('Buscar negociação').fill('')
+  await page.getByLabel('Pessoa', { exact: true }).selectOption({ label: 'Sem responsável' })
+  await page.getByRole('button', { name: 'Aplicar' }).click()
+  await expect(page.getByRole('link', { name: 'Noronha em julho' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Lisboa em março' })).toHaveCount(0)
 
   // The client sheet lists the deal
   await page.goto(urlAna)

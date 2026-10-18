@@ -59,7 +59,7 @@ test('kanban: move by menu and by drag, totals, lost with reason, resume, win no
   // Survives a reload (it was saved) and matches the table view
   await page.reload()
   await expect(coluna(page, 'Reservado')).toContainText('Noronha em julho')
-  await page.getByRole('link', { name: 'Tabela por etapa' }).click()
+  await page.getByRole('link', { name: 'Tabela', exact: true }).click()
   await expect(page.getByRole('region', { name: /Reservado/ })).toContainText('Noronha em julho')
   await expect(page.getByText('2 negociações · valor R$ 15.000,00 · previsto R$ 6.500,00')).toBeVisible()
   await page.getByRole('link', { name: 'Kanban' }).click()
