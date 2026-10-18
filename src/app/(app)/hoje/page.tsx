@@ -4,12 +4,13 @@ import { alternarAtividade } from '@/app/(app)/atividades/actions'
 import { WhatsappRapido } from '@/components/hoje/WhatsappRapido'
 import { getMembro } from '@/lib/auth/agencia'
 import { rotuloDoTipo } from '@/lib/atividades/atividades'
-import { formatarDataHora, hojeNoBrasil } from '@/lib/formato'
+import { formatarDataBr, formatarDataHora, hojeNoBrasil } from '@/lib/formato'
 import { buscarLimites, listarPendentesAte, listarSemContato, type PendenteLinha } from '@/lib/hoje/dados'
 import { diasDesde, estaParada, lerVisao, limiteSemContato, separarAtividades, textoHaDias } from '@/lib/hoje/hoje'
 import { listarNegociacoes } from '@/lib/negociacoes/dados'
 import { ItemMensagemPasseio } from '@/components/mensagens/ItemMensagemPasseio'
-import { buscarConfigMensagens, filaMensagensPasseio } from '@/lib/mensagens/dados'
+import { registrarAniversario, registrarMensagemPasseio } from '@/app/(app)/hoje/mensagens-actions'
+import { buscarConfigMensagens, filaAniversarios, filaMensagensPasseio } from '@/lib/mensagens/dados'
 import { aplicarModeloPasseio, modeloEfetivo } from '@/lib/mensagens/mensagensPasseio'
 import { rotuloDaEtapa } from '@/lib/negociacoes/negociacoes'
 import { Carregando } from '@/components/Carregando'
@@ -54,14 +55,18 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/hoje'>, 'searchParams
   const hoje = hojeNoBrasil()
   const visao = lerVisao(sp, membro.papel)
   const minhas = visao === 'minhas' ? membro.user_id : undefined
-  const [pendentes, semContato, negociacoes, mensagens, configMsg] = await Promise.all([
+  const [pendentes, semContato, negociacoes, mensagens, configMsg, aniversarios] = await Promise.all([
     listarPendentesAte(limiteSemContato(hoje, 0), minhas), // start of tomorrow = end of today
     listarSemContato(limiteSemContato(hoje, limites.dias_sem_contato)),
     listarNegociacoes(),
     filaMensagensPasseio(hoje, minhas),
     buscarConfigMensagens(),
+    filaAniversarios(hoje),
   ])
-  const modelos = { confirmacao: configMsg.modelo_confirmacao, lembrete: configMsg.modelo_lembrete, avaliacao: configMsg.modelo_avaliacao }
+  const modelos = {
+    confirmacao: configMsg.modelo_confirmacao, lembrete: configMsg.modelo_lembrete, avaliacao: configMsg.modelo_avaliacao,
+    um_ano: configMsg.modelo_um_ano, aniversario: configMsg.modelo_aniversario,
+  }
   const { atrasadas, deHoje } = separarAtividades(pendentes, hoje)
   const paradas = negociacoes
     .filter((n) => estaParada(n.etapa, n.etapa_desde, limites.dias_negociacao_parada, hoje) && (!minhas || n.responsavel_id === minhas))
@@ -98,9 +103,24 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/hoje'>, 'searchParams
         {mensagens.length === 0 ? <EstadoVazio compacto acoes={[{ href: '/passeios', rotulo: 'Ver passeios e reservas' }]}>Nenhuma mensagem de passeio para hoje.</EstadoVazio> : (
           <ul className="flex flex-col gap-2">
             {mensagens.map((m) => (
-              <ItemMensagemPasseio key={`${m.reserva_id}-${m.tipo}`} reservaId={m.reserva_id} clienteId={m.cliente_id} tipo={m.tipo} nome={m.nome}
-                whatsapp={m.whatsapp} consentimento={m.consentimento} passeio={m.passeio} data={m.saida_data}
+              <ItemMensagemPasseio key={`${m.reserva_id}-${m.tipo}`} registrar={registrarMensagemPasseio.bind(null, m.reserva_id, m.tipo)} clienteId={m.cliente_id} tipo={m.tipo} nome={m.nome}
+                whatsapp={m.whatsapp} consentimento={m.consentimento} contexto={`${m.passeio} · ${formatarDataBr(m.saida_data)}`}
                 mensagem={aplicarModeloPasseio(modeloEfetivo(m.tipo, modelos[m.tipo]), { nome: m.nome, passeio: m.passeio, data: m.saida_data, saldoCentavos: m.saldo_centavos })} />
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section aria-labelledby="aniversarios-titulo" className="flex flex-col gap-2">
+        <Titulo id="aniversarios-titulo" total={aniversarios.length}>Aniversários</Titulo>
+        {aniversarios.length === 0 ? (
+          <EstadoVazio compacto acoes={[{ href: '/configuracoes#mensagens-passeio-titulo', rotulo: 'Ajustar a mensagem de aniversário' }]}>Nenhum aniversário para hoje entre quem aceitou mensagens.</EstadoVazio>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {aniversarios.map((a) => (
+              <ItemMensagemPasseio key={`${a.cliente_id}-${a.ano}`} registrar={registrarAniversario.bind(null, a.cliente_id, a.ano)} clienteId={a.cliente_id} tipo="aniversario" nome={a.nome}
+                whatsapp={a.whatsapp} consentimento={a.consentimento} contexto={a.dia === hoje ? 'hoje' : `foi em ${formatarDataBr(a.dia)}`}
+                mensagem={aplicarModeloPasseio(modeloEfetivo('aniversario', modelos.aniversario), { nome: a.nome, passeio: '', data: a.dia, saldoCentavos: 0 })} />
             ))}
           </ul>
         )}

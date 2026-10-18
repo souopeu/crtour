@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { MODELOS_PADRAO, TIPOS_MENSAGEM, aplicarModeloPasseio, configMensagensSchema, modeloEfetivo } from './mensagensPasseio'
+import { MODELOS_PADRAO, TIPOS_MENSAGEM, aplicarModeloPasseio, configMensagensSchema, modeloEfetivo, rotuloDaMensagem } from './mensagensPasseio'
 
 describe('aplicarModeloPasseio', () => {
   test('first name, tour, date and balance', () => {
@@ -18,15 +18,23 @@ describe('modeloEfetivo', () => {
     expect(modeloEfetivo('avaliacao', '  ')).toBe(MODELOS_PADRAO.avaliacao)
   })
   test('every type has a label and a default using the variables', () => {
-    expect(TIPOS_MENSAGEM.map((t) => t.valor)).toEqual(['confirmacao', 'lembrete', 'avaliacao'])
+    expect(TIPOS_MENSAGEM.map((t) => t.valor)).toEqual(['confirmacao', 'lembrete', 'avaliacao', 'um_ano', 'aniversario'])
     for (const t of TIPOS_MENSAGEM) expect(MODELOS_PADRAO[t.valor]).toContain('{nome}')
+  })
+  test('R71, R72: birthday and one-year labels and defaults', () => {
+    expect(rotuloDaMensagem('um_ano')).toBe('1 ano da viagem')
+    expect(rotuloDaMensagem('aniversario')).toBe('Aniversário')
+    expect(aplicarModeloPasseio(MODELOS_PADRAO.um_ano, { nome: 'Ana Souza', passeio: 'Lisboa', data: '2025-10-18', saldoCentavos: 0 })).toContain('Lisboa')
+    expect(aplicarModeloPasseio(MODELOS_PADRAO.aniversario, { nome: 'Ana Souza', passeio: '', data: '', saldoCentavos: 0 })).toMatch(/^Feliz aniversário, Ana!/)
   })
 })
 
 describe('configMensagensSchema', () => {
-  const base = { diasLembrete: '2', diasAvaliacao: '1', confirmacao: '', lembrete: ' Oi {nome} ', avaliacao: '' }
+  const base = { diasLembrete: '2', diasAvaliacao: '1', confirmacao: '', lembrete: ' Oi {nome} ', avaliacao: '', um_ano: '', aniversario: 'Parabéns, {nome}!' }
   test('days and templates; empty template = default (null)', () => {
-    expect(configMensagensSchema.parse(base)).toEqual({ dias_lembrete: 2, dias_avaliacao: 1, modelo_confirmacao: null, modelo_lembrete: 'Oi {nome}', modelo_avaliacao: null })
+    expect(configMensagensSchema.parse(base)).toEqual({
+      dias_lembrete: 2, dias_avaliacao: 1, modelo_confirmacao: null, modelo_lembrete: 'Oi {nome}', modelo_avaliacao: null, modelo_um_ano: null, modelo_aniversario: 'Parabéns, {nome}!',
+    })
   })
   test('limits', () => {
     const r = configMensagensSchema.safeParse({ ...base, diasLembrete: '0', diasAvaliacao: '61', avaliacao: 'x'.repeat(1001) })

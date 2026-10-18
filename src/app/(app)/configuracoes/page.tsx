@@ -49,6 +49,7 @@ async function MensagensPasseio() {
   return <FormMensagensPasseio inicial={{
     diasLembrete: String(c.dias_lembrete), diasAvaliacao: String(c.dias_avaliacao),
     confirmacao: c.modelo_confirmacao ?? '', lembrete: c.modelo_lembrete ?? '', avaliacao: c.modelo_avaliacao ?? '',
+    um_ano: c.modelo_um_ano ?? '', aniversario: c.modelo_aniversario ?? '',
   }} />
 }
 

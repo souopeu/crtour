@@ -36,7 +36,7 @@ export function FormMensagensPasseio({ inicial }: Props) {
           {erro(t.valor)}
         </div>
       ))}
-      <p className="text-sm text-tinta-suave">Use {'{nome}'}, {'{passeio}'}, {'{data}'} e {'{saldo}'}. Em branco, vale o texto de exemplo. Quem pediu para não receber mensagens nunca recebe.</p>
+      <p className="text-sm text-tinta-suave">Use {'{nome}'}, {'{passeio}'}, {'{data}'} e {'{saldo}'} (no aniversário, só {'{nome}'}). Em branco, vale o texto de exemplo. Quem pediu para não receber mensagens nunca recebe; 1 ano da viagem e aniversário vão só para quem aceitou.</p>
       <div><BotaoEnviar>Salvar mensagens</BotaoEnviar></div>
     </form>
   )
