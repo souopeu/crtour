@@ -116,6 +116,7 @@ test('roles: owner invites a seller by link, seller works with limits, owner rem
   await expect(vera.getByLabel('Responsável')).toHaveCount(0)
   await expect(vera.getByText('Pipeline aberto (agora)').locator('..')).toContainText('R$ 7.000,00')
   await expect(vera.getByRole('region', { name: /^Meta de/ })).toHaveCount(0)
+  await expect(vera.getByRole('region', { name: /^Atividades por pessoa/ })).toHaveCount(0) // spec 18, R88: owner only
 
   // Owner removes her: she loses access, the deal stays without a person in charge
   await dono.goto('/configuracoes')

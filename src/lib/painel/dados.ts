@@ -18,3 +18,19 @@ export async function etapasAntesDaPerda(): Promise<Map<string, Etapa>> {
   for (const e of (data ?? []) as { negociacao_id: string; de: Etapa | null }[]) if (!antes.has(e.negociacao_id)) antes.set(e.negociacao_id, e.de ?? 'interessado')
   return antes
 }
+
+export type AtividadesPessoa = {
+  pessoa_id: string | null; nome: string; ligacao: number; whatsapp: number; email: number; reuniao: number; tarefa: number
+  feitas: number; atrasadas: number; ganhas: number
+}
+
+/** Owner-only report (spec 18, R88/R89); null when the call fails or the caller is not the owner. */
+export async function atividadesPorPessoa(mes: string): Promise<AtividadesPessoa[] | null> {
+  const supabase = await criarClienteServidor()
+  const { data, error } = await supabase.rpc('atividades_por_pessoa', { p_mes: mes })
+  if (error) {
+    console.error('atividadesPorPessoa falhou', error.code)
+    return null
+  }
+  return (data ?? []) as AtividadesPessoa[]
+}

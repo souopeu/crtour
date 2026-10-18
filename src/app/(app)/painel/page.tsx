@@ -4,7 +4,7 @@ import { getMembro } from '@/lib/auth/agencia'
 import { hojeNoBrasil } from '@/lib/formato'
 import { listarMembros, listarNegociacoes } from '@/lib/negociacoes/dados'
 import { rotuloDaEtapa, rotuloDoMotivo } from '@/lib/negociacoes/negociacoes'
-import { buscarMeta, etapasAntesDaPerda } from '@/lib/painel/dados'
+import { atividadesPorPessoa, buscarMeta, etapasAntesDaPerda, type AtividadesPessoa } from '@/lib/painel/dados'
 import { margem } from '@/lib/custos/custos'
 import { custosDoMes } from '@/lib/custos/dados'
 import { calcularPainel, lerFiltrosPainel, progressoMeta, rotuloDoMes } from '@/lib/painel/painel'
@@ -20,6 +20,39 @@ const pct = (x: number) => `${Math.round(x * 100)}%`
 const cartao = cartaoPainel
 // Small dashboard tables reuse the framed table look (R61).
 const Tabela = ({ children }: { children: React.ReactNode }) => <div className={caixaTabela}><table className={tabelaPadrao}>{children}</table></div>
+
+const COLUNAS_ATIVIDADE = [['ligacao', 'Ligações'], ['whatsapp', 'WhatsApp'], ['email', 'E-mails'], ['reuniao', 'Reuniões'], ['tarefa', 'Tarefas']] as const
+
+// Spec 18, R88: owner only; the database refuses anyone else (R89).
+function AtividadesPorPessoa({ linhas, rotulo }: { linhas: AtividadesPessoa[] | null; rotulo: string }) {
+  return (
+    <section aria-labelledby="atividades-pessoa-titulo" className="flex flex-col gap-2">
+      <h2 id="atividades-pessoa-titulo" className="text-lg font-semibold">Atividades por pessoa em {rotulo}</h2>
+      {linhas === null ? <p role="alert" className="text-sm">Não foi possível carregar as atividades por pessoa.</p> : (
+        <Tabela>
+          <thead>
+            <tr>
+              <th>Pessoa</th>
+              {COLUNAS_ATIVIDADE.map(([, r]) => <th key={r}>{r}</th>)}
+              <th>Total feitas</th><th>Atrasadas (hoje)</th><th>Ganhas no mês</th>
+            </tr>
+          </thead>
+          <tbody>
+            {linhas.map((l) => (
+              <tr key={l.pessoa_id ?? 'sem'}>
+                <td>{l.nome}</td>
+                {COLUNAS_ATIVIDADE.map(([c]) => <td key={c} className="tabular-nums">{l[c]}</td>)}
+                <td className="font-semibold tabular-nums">{l.feitas}</td>
+                <td className="tabular-nums">{l.atrasadas}</td>
+                <td className="tabular-nums">{l.ganhas}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Tabela>
+      )}
+    </section>
+  )
+}
 
 function Numero({ titulo, valor, detalhe }: { titulo: string; valor: string; detalhe?: string }) {
   return (
@@ -68,7 +101,9 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
   const hoje = hojeNoBrasil()
   // R41: a seller only ever sees her own numbers, whatever the URL says.
   const filtros = ehDono ? lerFiltrosPainel(sp, hoje, membros.map((m) => m.user_id)) : { ...lerFiltrosPainel(sp, hoje, []), responsavel: membro.user_id }
-  const [meta, doMes] = await Promise.all([buscarMeta(filtros.mes), ehDono ? custosDoMes(filtros.mes) : Promise.resolve(null)])
+  const [meta, doMes, porPessoa] = await Promise.all([
+    buscarMeta(filtros.mes), ehDono ? custosDoMes(filtros.mes) : Promise.resolve(null), ehDono ? atividadesPorPessoa(filtros.mes) : Promise.resolve(null),
+  ])
   const p = calcularPainel(
     negociacoes
       .filter((n) => !filtros.responsavel || n.responsavel_id === filtros.responsavel)
@@ -178,6 +213,8 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
           </div>
         </>
       )}
+
+      {ehDono && <AtividadesPorPessoa linhas={porPessoa} rotulo={rotulo} />}
     </>
   )
 }
