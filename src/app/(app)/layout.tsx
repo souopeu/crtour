@@ -1,5 +1,7 @@
 import { cookies } from 'next/headers'
 import { Suspense } from 'react'
+import { BuscaCelular } from '@/components/busca/BuscaCelular'
+import { BuscaGlobal } from '@/components/busca/BuscaGlobal'
 import { MenuCelular } from '@/components/menu/MenuCelular'
 import { MenuLateral } from '@/components/menu/MenuLateral'
 import { sair } from '@/app/(auth)/actions'
@@ -45,14 +47,18 @@ async function Casca({ children }: { children: React.ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex min-h-14 items-center justify-between bg-marca px-4 text-white lg:hidden print:hidden">
           <span className="text-xl font-extrabold tracking-tight text-destaque">{APP_NAME}</span>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-2 text-sm">
+            <BuscaCelular />
             <MenuCelular grupos={grupos} />
             {botaoSair('border border-white/40')}
           </div>
         </header>
-        <div className="hidden min-h-14 items-center justify-end gap-3 border-b border-linha bg-superficie px-4 text-sm lg:flex print:hidden">
-          <span className="text-tinta-suave">{usuario.email}</span>
-          {botaoSair('border border-controle')}
+        <div className="hidden min-h-14 items-center justify-between gap-3 border-b border-linha bg-superficie px-4 text-sm lg:flex print:hidden">
+          <BuscaGlobal className="w-full max-w-md" />
+          <div className="flex items-center gap-3">
+            <span className="text-tinta-suave">{usuario.email}</span>
+            {botaoSair('border border-controle')}
+          </div>
         </div>
         <div className="flex-1 p-4">{children}</div>
       </div>
