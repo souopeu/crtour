@@ -90,14 +90,15 @@ export async function listarSaidasParaSelecao(): Promise<SaidaOpcao[]> {
   return saidas.map((s) => ({ id: s.id, rotulo: `${nome.get(s.passeio_id) ?? 'Passeio'} · ${s.data.split('-').reverse().join('/')}` }))
 }
 
-export type AvisoLinha = { id: string; titulo: string; cliente_nome: string; valor_centavos: number; por_nome: string | null; lido_em: string | null; criado_em: string; negociacao_id: string | null }
+export type AvisoLinha = {
+  tipo: 'negociacao_ganha' | 'lead_formulario'; id: string; titulo: string; cliente_nome: string; valor_centavos: number; por_nome: string | null; lido_em: string | null; criado_em: string; negociacao_id: string | null }
 
 // RLS returns avisos only to the owner, so an empty list also means "not an owner".
 export async function listarAvisos(): Promise<AvisoLinha[]> {
   const supabase = await criarClienteServidor()
   const { data } = await supabase
     .from('avisos')
-    .select('id, titulo, cliente_nome, valor_centavos, por_nome, lido_em, criado_em, negociacao_id')
+    .select('id, tipo, titulo, cliente_nome, valor_centavos, por_nome, lido_em, criado_em, negociacao_id')
     .order('criado_em', { ascending: false })
     .limit(100)
   return (data ?? []) as AvisoLinha[]

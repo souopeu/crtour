@@ -33,5 +33,10 @@ describe('decidirAcesso', () => {
     expect(decidirAcesso('/api/pagamentos/aviso/asaas', '', false)).toEqual({ tipo: 'seguir' })
     expect(decidirAcesso('/api/pagamentos/avisoX', '', false).tipo).toBe('redirecionar')
     expect(decidirAcesso('/api/pagamentos/aviso', '', false).tipo).toBe('redirecionar')
+    // R65: the public lead form opens without a session, logged in or not
+    expect(decidirAcesso('/f/AbCdEfGhIjKlMnOpQrStUvWx', '?o=instagram', false)).toEqual({ tipo: 'seguir' })
+    expect(decidirAcesso('/f/AbCdEfGhIjKlMnOpQrStUvWx', '', true)).toEqual({ tipo: 'seguir' })
+    expect(decidirAcesso('/f', '', false).tipo).toBe('redirecionar')
+    expect(decidirAcesso('/fornecedores', '', false).tipo).toBe('redirecionar')
   })
 })

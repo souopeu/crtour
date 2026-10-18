@@ -57,7 +57,7 @@ test('creates, reopens and edits a client; other agencies cannot open it', async
   await expect(page.getByText('WhatsApp inválido')).toBeVisible()
 
   // Another agency sees "not found" (streamed, so the HTTP status is 200) and none of the data
-  const contexto = await browser.newContext({ baseURL: 'http://localhost:3100' })
+  const contexto = await browser.newContext({ baseURL: test.info().project.use.baseURL })
   const outra = await contexto.newPage()
   await cadastrar(outra, 'outra')
   await outra.goto(url)

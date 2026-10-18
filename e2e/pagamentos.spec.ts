@@ -195,7 +195,7 @@ test('payments, balance, refunds, due dates and the billing list', async ({ page
   for (const nome of [/Baixar reservas/, /Baixar pagamentos/, /Baixar acompanhantes/]) await expect(page.getByRole('link', { name: nome })).toBeVisible()
 
   // Another agency cannot see them
-  const contexto = await browser.newContext({ baseURL: 'http://localhost:3100' })
+  const contexto = await browser.newContext({ baseURL: test.info().project.use.baseURL })
   const outra = await contexto.newPage()
   await cadastrar(outra, 'outra-pagtos')
   await outra.goto(urlAna)

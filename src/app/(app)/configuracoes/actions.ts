@@ -107,3 +107,24 @@ export async function removerMembro(userId: string): Promise<EstadoForm> {
   revalidatePath('/configuracoes')
   return { ok: 'Acesso removido.' }
 }
+
+const formularioSchema = z.object({
+  titulo: z.string().trim().min(1, 'Digite um título.').max(120, 'O título pode ter no máximo 120 caracteres.'),
+  texto: z.string().trim().max(1000, 'O texto pode ter no máximo 1000 caracteres.'),
+})
+
+// R65: the owner turns the public form on or off and edits its texts.
+export async function salvarFormulario(_: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const valores = { titulo: String(fd.get('titulo') ?? ''), texto: String(fd.get('texto') ?? ''), ativo: fd.get('ativo') === 'on' ? 'on' : '' }
+  const r = formularioSchema.safeParse(valores)
+  if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.rpc('salvar_formulario', { p_ativo: valores.ativo === 'on', p_titulo: r.data.titulo, p_texto: r.data.texto })
+  if (error) {
+    console.error('salvarFormulario falhou', error.code)
+    return { erro: error.code === '42501' ? 'Só o dono muda o formulário.' : 'Não foi possível salvar. Tente novamente em instantes.', valores, versao }
+  }
+  revalidatePath('/configuracoes')
+  return { ok: 'Formulário salvo.', valores, versao }
+}

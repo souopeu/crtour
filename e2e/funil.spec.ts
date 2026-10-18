@@ -149,7 +149,7 @@ test('funnel: create deals, automatic forecast, stage defaults, history, groupin
   await expect(negociacoes).toContainText('Orçamento · 30%')
 
   // Another agency cannot open it
-  const contexto = await browser.newContext({ baseURL: 'http://localhost:3100' })
+  const contexto = await browser.newContext({ baseURL: test.info().project.use.baseURL })
   const outra = await contexto.newPage()
   await cadastrar(outra, 'outra-funil')
   await outra.goto(urlNeg)

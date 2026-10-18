@@ -1,3 +1,4 @@
+import { headers } from 'next/headers'
 import { Suspense } from 'react'
 import { FormExcluirConta } from '@/components/FormExcluirConta'
 import { FormLimites } from '@/components/FormLimites'
@@ -8,6 +9,12 @@ import { buscarConfigMensagens } from '@/lib/mensagens/dados'
 import { getMembro } from '@/lib/auth/agencia'
 import { buscarLimites } from '@/lib/hoje/dados'
 import { Carregando } from '@/components/Carregando'
+import { CampoCopiar } from '@/components/formulario/CampoCopiar'
+import { FormFormularioCaptacao } from '@/components/formulario/FormFormularioCaptacao'
+import { QrCode } from '@/components/formulario/QrCode'
+import { urlDoSite } from '@/lib/auth/site'
+import { buscarFormulario } from '@/lib/formulario/dados'
+import { linkDoFormulario } from '@/lib/formulario/formulario'
 
 export const metadata = { title: 'Configurações' }
 
@@ -74,8 +81,39 @@ async function Exportar() {
   )
 }
 
+// R65: public lead form. The owner edits it; everyone sees the links while it is on.
+async function FormularioCaptacao() {
+  const [membro, form, h] = await Promise.all([getMembro(), buscarFormulario(), headers()])
+  const site = urlDoSite(process.env, h.get('origin') ?? (h.get('host') ? `${h.get('x-forwarded-proto') ?? 'http'}://${h.get('host')}` : null))
+  const ehDono = membro?.papel === 'dono'
+  return (
+    <>
+      <p className="max-w-prose text-sm text-tinta-suave">
+        Um link público para a bio do Instagram, anúncios ou o WhatsApp. Quem preencher vira cliente e uma negociação em Interessado, e você recebe um aviso.
+      </p>
+      {ehDono
+        ? <FormFormularioCaptacao inicial={{ titulo: form?.titulo ?? 'Fale com a gente', texto: form?.texto ?? 'Conte para onde quer viajar e a agência entra em contato pelo WhatsApp.', ativo: form?.ativo ?? false }} />
+        : !form?.ativo && <p className="text-sm text-tinta-suave">O formulário está desligado. Só o dono liga.</p>}
+      {form && site && (ehDono || form.ativo) && (
+        <div className="flex flex-col gap-3 border-t border-linha pt-3">
+          {!form.ativo && <p className="text-sm font-medium text-alerta">Desligado: os links abaixo não funcionam até você ligar o formulário.</p>}
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+            <div className="flex flex-1 flex-col gap-3">
+              <CampoCopiar id="link-form" rotulo="Link do formulário" valor={linkDoFormulario(site, form.codigo, null)} />
+              <CampoCopiar id="link-instagram" rotulo="Link para a bio do Instagram" valor={linkDoFormulario(site, form.codigo, 'instagram')} />
+              <CampoCopiar id="link-anuncio" rotulo="Link para anúncios" valor={linkDoFormulario(site, form.codigo, 'anuncio')} />
+            </div>
+            <QrCode texto={linkDoFormulario(site, form.codigo, null)} rotulo="QR code do link do formulário" />
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 const SECOES = [
   { id: 'prazos-titulo', titulo: 'Prazos da tela Hoje', Conteudo: Prazos },
+  { id: 'formulario-titulo', titulo: 'Formulário de captação', Conteudo: FormularioCaptacao },
   { id: 'equipe-titulo', titulo: 'Equipe', Conteudo: SecaoEquipe },
   { id: 'mensagens-passeio-titulo', titulo: 'Mensagens do passeio', Conteudo: MensagensPasseio },
   { id: 'comissao-titulo', titulo: 'Comissão', Conteudo: Comissao },

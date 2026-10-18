@@ -62,7 +62,7 @@ test('tours and departures: create, validate, edit, archive, delete, isolation',
   await expect(page.getByLabel('Situação')).toHaveValue('cancelada')
 
   // Another agency cannot open them
-  const contexto = await browser.newContext({ baseURL: 'http://localhost:3100' })
+  const contexto = await browser.newContext({ baseURL: test.info().project.use.baseURL })
   const outra = await contexto.newPage()
   await cadastrar(outra, 'outra-passeios')
   for (const alvo of [urlPasseio, urlSaida]) {

@@ -116,9 +116,9 @@ test('companions, printable passenger list, CSV and access control', async ({ pa
   expect(acompanhantesCsv).toContain('Ana Souza;Lisboa clássica;10/03/2027;Maria Silva;(11) 98888-0000;Não')
 
   // Access control
-  const anonimo = await request.get(`http://localhost:3100${new URL(urlSaida).pathname}/passageiros/csv`, { maxRedirects: 0 })
+  const anonimo = await request.get(`${test.info().project.use.baseURL}${new URL(urlSaida).pathname}/passageiros/csv`, { maxRedirects: 0 })
   expect([307, 308, 401]).toContain(anonimo.status())
-  const contexto = await browser.newContext({ baseURL: 'http://localhost:3100' })
+  const contexto = await browser.newContext({ baseURL: test.info().project.use.baseURL })
   const outra = await contexto.newPage()
   await cadastrar(outra, 'outra-passag')
   await outra.goto(`${new URL(urlSaida).pathname}/passageiros`)

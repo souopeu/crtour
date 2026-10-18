@@ -18,7 +18,7 @@ async function Lista() {
   const avisos = await listarAvisos()
   const naoLidos = avisos.filter((a) => !a.lido_em).length
   if (avisos.length === 0) {
-    return <EstadoVazio acoes={[{ href: '/funil', rotulo: 'Abrir o funil' }]}>Nenhum aviso ainda. Quando uma negociação for para <strong>Pago</strong>, ela aparece aqui.</EstadoVazio>
+    return <EstadoVazio acoes={[{ href: '/funil', rotulo: 'Abrir o funil' }]}>Nenhum aviso ainda. Vendas que vão para <strong>Pago</strong> e contatos do formulário aparecem aqui.</EstadoVazio>
   }
   return (
     <>
@@ -33,10 +33,16 @@ async function Lista() {
           <li key={a.id} className={`flex flex-col gap-1 rounded-[--radius-cartao] border p-4 ${a.lido_em ? 'border-linha bg-superficie' : 'border-primaria bg-primaria-suave'}`}>
             <p className="font-semibold">
               {!a.lido_em && <span className="mr-2 rounded-full bg-primaria px-2 py-0.5 text-xs font-bold text-white">Novo</span>}
-              Venda fechada: {a.titulo}
+              {a.tipo === 'lead_formulario' ? `Novo contato pelo formulário: ${a.cliente_nome}` : `Venda fechada: ${a.titulo}`}
             </p>
-            <p>{a.cliente_nome} · {formatarReais(a.valor_centavos)}</p>
-            <p className="text-sm text-tinta-suave">Movida para Pago{a.por_nome ? ` por ${a.por_nome}` : ''} em {formatarDataHora(a.criado_em)}</p>
+            {a.tipo === 'lead_formulario' ? (
+              <p className="text-sm text-tinta-suave">{a.titulo} · chegou em {formatarDataHora(a.criado_em)}</p>
+            ) : (
+              <>
+                <p>{a.cliente_nome} · {formatarReais(a.valor_centavos)}</p>
+                <p className="text-sm text-tinta-suave">Movida para Pago{a.por_nome ? ` por ${a.por_nome}` : ''} em {formatarDataHora(a.criado_em)}</p>
+              </>
+            )}
             <div className="flex flex-wrap items-center gap-4">
               {a.negociacao_id && <Link href={`/negociacoes/${a.negociacao_id}`} className="inline-flex min-h-11 items-center text-primaria underline">Ver negociação</Link>}
               {!a.lido_em && (

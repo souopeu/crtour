@@ -116,7 +116,7 @@ test('reservations: seat lock, custom total, cancel, capacity guard, isolation',
   await expect(page.getByText('Esta saída não está aberta para reservas.')).toBeVisible()
 
   // Another agency cannot see it
-  const contexto = await browser.newContext({ baseURL: 'http://localhost:3100' })
+  const contexto = await browser.newContext({ baseURL: test.info().project.use.baseURL })
   const outra = await contexto.newPage()
   await cadastrar(outra, 'outra-reservas')
   await outra.goto(urlSaida)

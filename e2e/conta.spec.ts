@@ -54,7 +54,7 @@ test('export: CSV with the data, formulas neutralized, notes file, login require
   expect(csvNotas).toContain(`"'=HYPERLINK(""http://evil"")"`)
 
   // Without a session the endpoint is closed
-  const anonimo = await request.get('http://localhost:3100/exportar?tipo=clientes', { maxRedirects: 0 })
+  const anonimo = await request.get(`${test.info().project.use.baseURL}/exportar?tipo=clientes`, { maxRedirects: 0 })
   expect([307, 308, 401]).toContain(anonimo.status())
 })
 
