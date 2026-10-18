@@ -5,13 +5,13 @@ import type { PassageiroDaLista, ReservaDaLista } from '@/lib/passageiros/lista'
 import { criarClienteServidor } from '@/lib/supabase/server'
 import { emBlocos } from '@/lib/consultas/emBlocos'
 
-export type PasseioLinha = { id: string; nome: string; destino: string | null; descricao: string | null; arquivado: boolean }
+export type PasseioLinha = { id: string; nome: string; destino: string | null; descricao: string | null; inclui: string | null; nao_inclui: string | null; arquivado: boolean }
 export type SaidaLinha = {
   id: string; passeio_id: string; data: string; capacidade: number; preco_centavos: number
   situacao: 'aberta' | 'encerrada' | 'cancelada'; reservadas: number; livres: number
 }
 
-const COLUNAS_PASSEIO = 'id, nome, destino, descricao, arquivado'
+const COLUNAS_PASSEIO = 'id, nome, destino, descricao, inclui, nao_inclui, arquivado'
 const COLUNAS_SAIDA = 'id, passeio_id, data, capacidade, preco_centavos, situacao, reservadas, livres'
 const uuid = (v: string) => z.uuid().safeParse(v).success
 

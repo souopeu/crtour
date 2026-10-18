@@ -32,6 +32,8 @@ export default defineConfig({
         'src/lib/custos/dados.ts',
         'src/lib/mensagens/dados.ts',
         'src/lib/formulario/dados.ts',
+        'src/lib/propostas/dados.ts',
+        'src/lib/auth/siteDaRequisicao.ts',
       ],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },

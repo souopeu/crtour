@@ -32,7 +32,7 @@ async function Conteudo({ params }: Pick<PageProps<'/passeios/[id]'>, 'params'>)
           <h2 id="dados-titulo" className="text-lg font-semibold">Dados do passeio</h2>
           <PasseioForm
             acao={salvarPasseio.bind(null, passeio.id)}
-            inicial={{ nome: passeio.nome, destino: passeio.destino ?? '', descricao: passeio.descricao ?? '' }}
+            inicial={{ nome: passeio.nome, destino: passeio.destino ?? '', descricao: passeio.descricao ?? '', inclui: passeio.inclui ?? '', nao_inclui: passeio.nao_inclui ?? '' }}
             rotuloBotao="Salvar alterações"
           />
           <form action={alternarArquivado.bind(null, passeio.id, !passeio.arquivado)}>

@@ -1,0 +1,98 @@
+import { expect, test } from '@playwright/test'
+
+test('proposal: frozen values, public link with PDF, WhatsApp send moves to Orçamento, revoke (R69, R70)', async ({ page, browser }) => {
+  await page.goto('/cadastro')
+  await page.getByLabel('Seu nome').fill('Pessoa proposta')
+  await page.getByLabel('Nome da agência').fill('Viagens Alfa')
+  await page.getByLabel('E-mail', { exact: true }).fill(`e2e-proposta-${Date.now()}@teste.dev`)
+  await page.getByLabel('Senha', { exact: true }).fill('senha1234')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Criar conta' }).click()
+  await expect(page).toHaveURL('/')
+
+  await page.goto('/clientes/novo')
+  await page.getByLabel('Nome', { exact: true }).fill('Ana Souza')
+  await page.getByRole('textbox', { name: /WhatsApp/ }).fill('(11) 99999-0001')
+  await page.getByLabel('Consentimento').selectOption('aceitou')
+  await page.getByRole('button', { name: 'Salvar cliente' }).click()
+  await expect(page.getByRole('heading', { name: 'Ana Souza' })).toBeVisible()
+  const urlCliente = page.url()
+
+  await page.goto('/passeios/novo')
+  await page.getByLabel('Nome do passeio').fill('Lisboa clássica')
+  await page.getByLabel('Destino').fill('Lisboa')
+  await page.getByLabel('O que inclui').fill('Aéreo, hotel e traslados')
+  await page.getByLabel('O que não inclui').fill('Refeições')
+  await page.getByRole('button', { name: 'Salvar passeio' }).click()
+  await expect(page.getByRole('heading', { name: 'Lisboa clássica', level: 1 })).toBeVisible()
+  const urlPasseio = page.url()
+  await page.getByLabel('Data da saída').fill('2027-03-10')
+  await page.getByLabel('Vagas (capacidade)').fill('10')
+  await page.getByLabel('Preço por pessoa (R$)').fill('4.500,00')
+  await page.getByRole('button', { name: 'Criar saída' }).click()
+  await expect(page.getByRole('link', { name: /10\/03\/2027/ })).toBeVisible()
+
+  await page.goto(urlCliente)
+  await page.getByRole('link', { name: 'Nova negociação' }).click()
+  await page.getByLabel('Título').fill('Lisboa da Ana')
+  await page.getByLabel('Saída (opcional)').selectOption({ label: 'Lisboa clássica · 10/03/2027' })
+  await page.getByRole('button', { name: 'Criar negociação' }).click()
+  await expect(page.getByRole('heading', { name: 'Lisboa da Ana', level: 1 })).toBeVisible()
+  const urlNegociacao = page.url()
+
+  // R69: create from the deal; the total starts at people × the departure price, and is editable
+  const propostas = page.getByRole('region', { name: 'Propostas' })
+  await expect(propostas.getByLabel('Valor total (R$)')).toHaveValue('4500,00')
+  await propostas.getByLabel('Pessoas').fill('2')
+  await propostas.getByLabel('Valor total (R$)').fill('')
+  await propostas.getByRole('button', { name: 'Criar proposta' }).click()
+  await expect(propostas.getByText('Digite o valor total, como 9.000,00.')).toBeVisible()
+  await propostas.getByLabel('Valor total (R$)').fill('9.000,00')
+  await propostas.getByLabel('Sinal (R$)').fill('2.000,00')
+  await propostas.getByLabel('Saldo até').fill('2027-02-10')
+  await propostas.getByRole('button', { name: 'Criar proposta' }).click()
+  await expect(propostas.getByText('Proposta criada.')).toBeVisible()
+  const link = await propostas.getByLabel('Link da proposta').first().inputValue()
+  expect(link).toMatch(/\/p\/[A-Za-z0-9_-]{24}$/)
+
+  // The client's page: only the frozen proposal, with "Baixar PDF"
+  const contexto = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+  const cliente = await contexto.newPage()
+  await cliente.goto(new URL(link).pathname)
+  await expect(cliente.getByRole('heading', { name: 'Proposta para Ana Souza' })).toBeVisible()
+  const corpo = cliente.getByRole('main')
+  for (const t of ['Viagens Alfa', 'Lisboa clássica', '10/03/2027', '2 pessoas', 'R$ 4.500,00 por pessoa', 'R$ 9.000,00', 'Sinal: R$ 2.000,00', 'Saldo: R$ 7.000,00 até 10/02/2027', 'Aéreo, hotel e traslados', 'Refeições']) {
+    await expect(corpo).toContainText(t)
+  }
+  await expect(cliente.getByRole('navigation', { name: 'Principal' })).toHaveCount(0)
+  await expect(cliente.getByRole('button', { name: 'Baixar PDF' })).toBeVisible()
+  await cliente.emulateMedia({ media: 'print' })
+  await expect(cliente.getByRole('button', { name: 'Baixar PDF' })).toBeHidden()
+  await cliente.emulateMedia({ media: 'screen' })
+
+  // Values are frozen: changing the tour later does not change a sent proposal
+  await page.goto(urlPasseio)
+  await page.getByLabel('O que inclui').fill('Só hotel')
+  await page.getByRole('button', { name: 'Salvar alterações' }).click()
+  await expect(page.getByText('Alterações salvas.')).toBeVisible()
+  await cliente.reload()
+  await expect(cliente.getByRole('main')).toContainText('Aéreo, hotel e traslados')
+
+  // Send through WhatsApp (consent respected), then register it: the deal moves forward to Orçamento
+  await page.goto(urlNegociacao)
+  const enviar = propostas.getByRole('link', { name: 'Enviar pelo WhatsApp' })
+  await expect(enviar).toHaveAttribute('href', new RegExp(`^https://wa\\.me/5511999990001\\?text=.*${encodeURIComponent(new URL(link).pathname).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`))
+  await propostas.getByRole('button', { name: 'Registrar envio' }).click()
+  await expect(propostas.getByText('Envio registrado.')).toBeVisible()
+  await expect(page.getByText(/Orçamento · 30%/)).toBeVisible()
+  await page.goto(urlCliente)
+  await expect(page.getByText('Proposta enviada: Lisboa da Ana').first()).toBeVisible()
+
+  // Revoke: the link stops working
+  await page.goto(urlNegociacao)
+  await propostas.getByRole('button', { name: 'Revogar' }).click()
+  await expect(propostas.getByText('Proposta revogada.')).toBeVisible()
+  await cliente.reload()
+  await expect(cliente.getByText('Proposta indisponível')).toBeVisible()
+  await contexto.close()
+})

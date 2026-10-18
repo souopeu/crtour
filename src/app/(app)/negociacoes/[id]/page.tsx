@@ -10,6 +10,7 @@ import { carregarSugestoes } from '@/lib/negociacoes/sugestoesDados'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
 import { atualizarNegociacao } from '../actions'
 import { Carregando } from '@/components/Carregando'
+import { PropostasNegociacao } from '@/components/propostas/PropostasNegociacao'
 
 export const metadata = { title: 'Negociação' }
 
@@ -37,6 +38,7 @@ async function Conteudo({ params }: Pick<PageProps<'/negociacoes/[id]'>, 'params
         </p>
       </div>
       {sugestao && <SugestaoReserva key={`${sugestao.reservaId}-${sugestao.para}`} negociacaoId={n.id} reservaId={sugestao.reservaId} para={sugestao.para} texto={sugestao.texto} />}
+      <PropostasNegociacao n={n} />
       <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
         <section aria-labelledby="dados-titulo" className="flex flex-col gap-4">
           <h2 id="dados-titulo" className="text-lg font-semibold">Dados da negociação</h2>

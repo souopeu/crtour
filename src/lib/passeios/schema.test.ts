@@ -3,13 +3,18 @@ import { passeioSchema, saidaSchema } from './schema'
 
 describe('passeioSchema', () => {
   test('requires a name and nulls the optional fields', () => {
-    expect(passeioSchema.parse({ nome: '  Lisboa clássica ', destino: '', descricao: '' })).toEqual({ nome: 'Lisboa clássica', destino: null, descricao: null })
+    expect(passeioSchema.parse({ nome: '  Lisboa clássica ', destino: '', descricao: '', inclui: '', nao_inclui: '' }))
+      .toEqual({ nome: 'Lisboa clássica', destino: null, descricao: null, inclui: null, nao_inclui: null })
+  })
+  test('keeps what is and is not included (used by proposals)', () => {
+    expect(passeioSchema.parse({ nome: 'A', destino: '', descricao: '', inclui: ' Aéreo ', nao_inclui: 'Refeições' })).toMatchObject({ inclui: 'Aéreo', nao_inclui: 'Refeições' })
+    expect(passeioSchema.safeParse({ nome: 'A', destino: '', descricao: '', inclui: 'a'.repeat(2001), nao_inclui: '' }).success).toBe(false)
   })
   test.each([
-    ['blank name', { nome: '  ', destino: '', descricao: '' }],
-    ['long name', { nome: 'a'.repeat(121), destino: '', descricao: '' }],
-    ['long destination', { nome: 'A', destino: 'a'.repeat(121), descricao: '' }],
-    ['long description', { nome: 'A', destino: '', descricao: 'a'.repeat(1001) }],
+    ['blank name', { nome: '  ', destino: '', descricao: '', inclui: '', nao_inclui: '' }],
+    ['long name', { nome: 'a'.repeat(121), destino: '', descricao: '', inclui: '', nao_inclui: '' }],
+    ['long destination', { nome: 'A', destino: 'a'.repeat(121), descricao: '', inclui: '', nao_inclui: '' }],
+    ['long description', { nome: 'A', destino: '', descricao: 'a'.repeat(1001), inclui: '', nao_inclui: '' }],
   ])('rejects %s', (_n, dados) => {
     expect(passeioSchema.safeParse(dados).success).toBe(false)
   })

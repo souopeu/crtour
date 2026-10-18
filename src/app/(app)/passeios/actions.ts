@@ -15,7 +15,7 @@ const texto = (fd: FormData, n: string) => String(fd.get(n) ?? '')
 
 export async function salvarPasseio(id: string | null, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
   const versao = crypto.randomUUID()
-  const valores = { nome: texto(fd, 'nome'), destino: texto(fd, 'destino'), descricao: texto(fd, 'descricao') }
+  const valores = { nome: texto(fd, 'nome'), destino: texto(fd, 'destino'), descricao: texto(fd, 'descricao'), inclui: texto(fd, 'inclui'), nao_inclui: texto(fd, 'nao_inclui') }
   const r = passeioSchema.safeParse(valores)
   if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
 

@@ -38,5 +38,9 @@ describe('decidirAcesso', () => {
     expect(decidirAcesso('/f/AbCdEfGhIjKlMnOpQrStUvWx', '', true)).toEqual({ tipo: 'seguir' })
     expect(decidirAcesso('/f', '', false).tipo).toBe('redirecionar')
     expect(decidirAcesso('/fornecedores', '', false).tipo).toBe('redirecionar')
+    // R70: the proposal link opens without a session
+    expect(decidirAcesso('/p/AbCdEfGhIjKlMnOpQrStUvWx', '', false)).toEqual({ tipo: 'seguir' })
+    expect(decidirAcesso('/p', '', false).tipo).toBe('redirecionar')
+    expect(decidirAcesso('/passeios', '', false).tipo).toBe('redirecionar')
   })
 })

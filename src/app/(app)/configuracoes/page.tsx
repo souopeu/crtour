@@ -1,4 +1,3 @@
-import { headers } from 'next/headers'
 import { Suspense } from 'react'
 import { FormExcluirConta } from '@/components/FormExcluirConta'
 import { FormLimites } from '@/components/FormLimites'
@@ -12,7 +11,7 @@ import { Carregando } from '@/components/Carregando'
 import { CampoCopiar } from '@/components/formulario/CampoCopiar'
 import { FormFormularioCaptacao } from '@/components/formulario/FormFormularioCaptacao'
 import { QrCode } from '@/components/formulario/QrCode'
-import { urlDoSite } from '@/lib/auth/site'
+import { siteDaRequisicao } from '@/lib/auth/siteDaRequisicao'
 import { buscarFormulario } from '@/lib/formulario/dados'
 import { linkDoFormulario } from '@/lib/formulario/formulario'
 
@@ -83,8 +82,7 @@ async function Exportar() {
 
 // R65: public lead form. The owner edits it; everyone sees the links while it is on.
 async function FormularioCaptacao() {
-  const [membro, form, h] = await Promise.all([getMembro(), buscarFormulario(), headers()])
-  const site = urlDoSite(process.env, h.get('origin') ?? (h.get('host') ? `${h.get('x-forwarded-proto') ?? 'http'}://${h.get('host')}` : null))
+  const [membro, form, site] = await Promise.all([getMembro(), buscarFormulario(), siteDaRequisicao()])
   const ehDono = membro?.papel === 'dono'
   return (
     <>

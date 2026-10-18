@@ -10,6 +10,8 @@ export const passeioSchema = z.object({
   nome: z.string().trim().min(1, 'Digite o nome do passeio.').max(120, 'O nome pode ter no máximo 120 caracteres.'),
   destino: textoOpcional(120, 'O destino'),
   descricao: textoOpcional(1000, 'A descrição'),
+  inclui: textoOpcional(2000, 'O texto'),
+  nao_inclui: textoOpcional(2000, 'O texto'),
 })
 
 const dataReal = (iso: string) => /^\d{4}-\d{2}-\d{2}$/.test(iso) && new Date(`${iso}T00:00:00Z`).toISOString().slice(0, 10) === iso
