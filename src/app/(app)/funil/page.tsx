@@ -16,6 +16,10 @@ import { agruparNegociacoes, rotuloDaEtapa, type Etapa } from '@/lib/negociacoes
 import { formatarReais } from '@/lib/passeios/dinheiro'
 import { Carregando } from '@/components/Carregando'
 import { EstadoVazio } from '@/components/tela/EstadoVazio'
+import { AvisoCriterioSumido } from '@/components/filtros/AvisoCriterioSumido'
+import { MeusFiltros } from '@/components/filtros/MeusFiltros'
+import { listarFiltrosSalvos } from '@/lib/filtros/dados'
+import { semPessoaInexistente } from '@/lib/filtros/filtrosSalvos'
 
 export const metadata = { title: 'Funil' }
 
@@ -53,8 +57,9 @@ function Barra({ f, membros }: { f: FiltroFunil; membros: { user_id: string; nom
 }
 
 async function Conteudo({ searchParams }: Pick<PageProps<'/funil'>, 'searchParams'>) {
-  const f = lerFiltroFunil(await searchParams)
-  const [todas, membros, saidas, limites, sugestoes] = await Promise.all([listarNegociacoes(), listarMembros(), listarSaidasParaSelecao(), buscarLimites(), carregarSugestoes()])
+  const [todas, membros, saidas, limites, sugestoes, salvos] = await Promise.all([listarNegociacoes(), listarMembros(), listarSaidasParaSelecao(), buscarLimites(), carregarSugestoes(), listarFiltrosSalvos('funil')])
+  // R84: a removed person in the URL (e.g. from a saved filter) is dropped, with a warning
+  const { filtro: f, sumiu } = semPessoaInexistente(lerFiltroFunil(await searchParams), membros.map((m) => m.user_id))
   const negociacoes = filtrarNegociacoes(todas, f)
   const hoje = hojeNoBrasil()
   const rotuloSaida = new Map(saidas.map((s) => [s.id, s.rotulo]))
@@ -75,6 +80,8 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/funil'>, 'searchParam
         { rotulo: 'Tabela', href: hrefFunil({ ...f, visao: 'tabela' }), ativa: f.visao === 'tabela' },
       ]} />
       <Barra f={f} membros={membros} />
+      <MeusFiltros tela="funil" atual={hrefFunil(f).split('?')[1] ?? ''} filtros={salvos} />
+      {sumiu && <AvisoCriterioSumido />}
 
       {todas.length === 0 ? (
         <EstadoVazio acoes={[{ href: '/negociacoes/novo', rotulo: 'Criar a primeira negociação' }, { href: '/', rotulo: 'Escolher um cliente' }]}>

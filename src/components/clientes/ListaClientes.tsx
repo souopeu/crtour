@@ -7,7 +7,7 @@ import { AbasDeVisao } from '@/components/tela/AbasDeVisao'
 import { botaoBarra, campoBarra, rotuloBarra } from '@/components/tela/estilos'
 import { EstadoVazio } from '@/components/tela/EstadoVazio'
 
-type Props = { filtros: Filtros; clientes: ClienteDaLista[]; total: number; etiquetas: EtiquetaLinha[]; cidades: string[] }
+type Props = { filtros: Filtros; clientes: ClienteDaLista[]; total: number; etiquetas: EtiquetaLinha[]; cidades: string[]; abaixoDaBarra?: React.ReactNode }
 
 // Consent as a status block: colour plus the words, never colour alone.
 const BLOCO_CONSENTIMENTO: Record<string, string> = {
@@ -80,7 +80,7 @@ function Cartoes({ clientes }: { clientes: ClienteDaLista[] }) {
   )
 }
 
-export function ListaClientes({ filtros, clientes, total, etiquetas, cidades }: Props) {
+export function ListaClientes({ filtros, clientes, total, etiquetas, cidades, abaixoDaBarra }: Props) {
   const resumo = resumoDaPagina(total, filtros.pagina)
   const temFiltro = Boolean(filtros.q || filtros.etiqueta || filtros.origem || filtros.cidade)
 
@@ -122,6 +122,7 @@ export function ListaClientes({ filtros, clientes, total, etiquetas, cidades }: 
         <button type="submit" className={botaoBarra}>Filtrar</button>
         {temFiltro && <Link href={hrefDaLista({ q: '', etiqueta: null, origem: null, cidade: '', pagina: 1, visao: filtros.visao })} className="inline-flex min-h-10 items-center text-sm text-primaria underline">Limpar filtros</Link>}
       </form>
+      {abaixoDaBarra}
 
       {(total > 0 || temFiltro) && (
         <p aria-live="polite" className="text-sm text-tinta-suave">
