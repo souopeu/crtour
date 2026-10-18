@@ -24,6 +24,13 @@ export default function TermosPage() {
         informa. Esses registros servem de controle interno e não substituem contabilidade, recibo ou nota fiscal.
       </p>
 
+      <p>
+        Inclui ainda o funil de vendas, atividades e lembretes, painel e metas, equipe com convites, comissões, fornecedores e custos,
+        remarketing por segmento, mensagens do passeio e de relacionamento, um formulário público para captar contatos e propostas
+        enviadas por link. As propostas e as mensagens são preparadas pelo sistema, mas os valores, os textos e o envio são decisões da
+        agência.
+      </p>
+
       <h2>2. Conta e acesso</h2>
       <ul>
         <li>Quem cria a conta é o dono da agência e responde pelos usuários que tiverem acesso a ela.</li>
@@ -37,6 +44,8 @@ export default function TermosPage() {
         <li>Cadastre somente dados que você tem o direito de tratar e mantenha o consentimento dos clientes para receber mensagens.</li>
         <li>É proibido usar o sistema para spam, golpes, assédio, para tentar acessar dados de outras agências ou para sobrecarregar o serviço.</li>
         <li>Você é o responsável pelas mensagens que envia pelo WhatsApp e por cumprir as regras do próprio WhatsApp.</li>
+        <li>O formulário público e os links de proposta são da agência: divulgue-os só para captar e atender os seus próprios clientes, e revogue uma proposta enviada por engano.</li>
+        <li>O dono responde pelas pessoas que convidar para a equipe e deve remover o acesso de quem sair da agência.</li>
         <li>
           A capacidade de cada saída, os valores e os pagamentos são informados por você. O sistema impede vender acima da capacidade
           cadastrada e receber acima do saldo, mas conferir se esses dados estão certos é responsabilidade da agência.

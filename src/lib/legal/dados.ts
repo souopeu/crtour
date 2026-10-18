@@ -8,9 +8,11 @@ export const PENDENTES = {
   backups: '[CONFIRMAR: prazo de retenção de backups]',
   eliminacao: '[CONFIRMAR COM ADVOGADO: como atender um pedido de eliminação de um cliente que já tem reserva ou pagamento registrado]',
   responsabilidade: '[PREENCHER: limites de responsabilidade, revisados por advogado]',
+  whatsapp: '[CONFIRMAR: qual provedor da API do WhatsApp (Meta ou parceiro) e onde ele guarda os dados, antes de ligar a integração]',
+  email: '[CONFIRMAR: serviço de envio de e-mails (Resend ou Brevo) antes do lançamento]',
 }
 
-export const VERSAO_TEXTO = '17/10/2026 (rascunho)'
+export const VERSAO_TEXTO = '18/10/2026 (rascunho)'
 
 export function temPendencias(valores: Record<string, string> = PENDENTES): boolean {
   return Object.values(valores).some((v) => v.includes('[PREENCHER') || v.includes('[CONFIRMAR'))
