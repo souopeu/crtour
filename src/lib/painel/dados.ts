@@ -1,4 +1,5 @@
 import 'server-only'
+import { z } from 'zod'
 import { criarClienteServidor } from '@/lib/supabase/server'
 import { NEGOCIACOES } from '@/lib/negociacoes/config'
 import type { Etapa } from '@/lib/negociacoes/negociacoes'
@@ -33,4 +34,14 @@ export async function atividadesPorPessoa(mes: string): Promise<AtividadesPessoa
     return null
   }
   return (data ?? []) as AtividadesPessoa[]
+}
+
+const metasSchema = z.array(z.object({ mes: z.string(), valor_centavos: z.coerce.number() }))
+
+// R97: the goals of several months at once (YYYY-MM → cents); months without a goal are missing.
+export async function buscarMetas(meses: string[]): Promise<Map<string, number>> {
+  const supabase = await criarClienteServidor()
+  const { data, error } = await supabase.from('metas').select('mes, valor_centavos').in('mes', meses.map((m) => `${m}-01`))
+  if (error) console.error('buscarMetas falhou', error.code)
+  return new Map(metasSchema.catch([]).parse(data ?? []).map((x) => [x.mes.slice(0, 7), x.valor_centavos]))
 }

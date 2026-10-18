@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { Carregando } from '@/components/Carregando'
+import { BarraSituacao } from '@/components/campanhas/BarraSituacao'
 import { FormCampanha } from '@/components/campanhas/FormCampanha'
 import { FormLinkWhatsapp } from '@/components/campanhas/FormLinkWhatsapp'
 import { CampoCopiar } from '@/components/formulario/CampoCopiar'
@@ -41,6 +42,7 @@ async function Relatorio({ de, ate }: { de: string; ate: string }) {
                 {l.inicio && ` · ${formatarDataBr(l.inicio)}${l.fim ? ` a ${formatarDataBr(l.fim)}` : ' em diante'}`}
               </p>
             </div>
+            <BarraSituacao vendidos={l.vendas} perdidos={l.perdidos} emAberto={l.em_aberto} />
             <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
               <div><dt className="text-tinta-suave">Leads</dt><dd className="text-lg font-bold tabular-nums">{l.leads}</dd></div>
               <div><dt className="text-tinta-suave">Vendas</dt><dd className="text-lg font-bold tabular-nums">{l.vendas}</dd></div>

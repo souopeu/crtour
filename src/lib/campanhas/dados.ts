@@ -6,7 +6,7 @@ const numero = z.coerce.number()
 const linhaSchema = z.object({
   chave: z.string().nullable(), canal: z.enum(['meta', 'google', 'outro']).nullable(), titulo: z.string().nullable(),
   campanha_id: z.uuid().nullable(), nome: z.string().nullable(), inicio: z.string().nullable(), fim: z.string().nullable(),
-  gasto_centavos: numero, leads: numero, vendas: numero, valor_vendido_centavos: numero,
+  gasto_centavos: numero, leads: numero, vendas: numero, valor_vendido_centavos: numero, perdidos: numero, em_aberto: numero,
 })
 export type LinhaResultado = z.infer<typeof linhaSchema>
 

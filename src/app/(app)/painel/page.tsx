@@ -1,13 +1,17 @@
 import { Suspense } from 'react'
+import { BarraLinha } from '@/components/painel/BarraLinha'
 import { FormMeta } from '@/components/painel/FormMeta'
+import { GraficoVendas } from '@/components/painel/GraficoVendas'
 import { getMembro } from '@/lib/auth/agencia'
 import { hojeNoBrasil } from '@/lib/formato'
 import { listarMembros, listarNegociacoes } from '@/lib/negociacoes/dados'
 import { rotuloDaEtapa, rotuloDoMotivo } from '@/lib/negociacoes/negociacoes'
-import { atividadesPorPessoa, buscarMeta, etapasAntesDaPerda, type AtividadesPessoa } from '@/lib/painel/dados'
+import { PAINEL } from '@/lib/painel/config'
+import { atividadesPorPessoa, buscarMeta, buscarMetas, etapasAntesDaPerda, type AtividadesPessoa } from '@/lib/painel/dados'
+import { mesesAte } from '@/lib/graficos/graficos'
 import { margem } from '@/lib/custos/custos'
 import { custosDoMes } from '@/lib/custos/dados'
-import { calcularPainel, lerFiltrosPainel, progressoMeta, rotuloDoMes } from '@/lib/painel/painel'
+import { calcularPainel, lerFiltrosPainel, progressoMeta, rotuloDoMes, serieMensal, type NegPainel } from '@/lib/painel/painel'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
 import { Carregando } from '@/components/Carregando'
 import { EstadoVazio } from '@/components/tela/EstadoVazio'
@@ -101,18 +105,23 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
   const hoje = hojeNoBrasil()
   // R41: a seller only ever sees her own numbers, whatever the URL says.
   const filtros = ehDono ? lerFiltrosPainel(sp, hoje, membros.map((m) => m.user_id)) : { ...lerFiltrosPainel(sp, hoje, []), responsavel: membro.user_id }
-  const [meta, doMes, porPessoa] = await Promise.all([
+  // The goal belongs to the whole agency, so the chart shows it only in the owner's whole-agency view (same as the goal card).
+  const comMeta = ehDono && !filtros.responsavel
+  const mesesGrafico = mesesAte(filtros.mes, PAINEL.MESES_GRAFICO)
+  const [meta, doMes, porPessoa, metas] = await Promise.all([
     buscarMeta(filtros.mes), ehDono ? custosDoMes(filtros.mes) : Promise.resolve(null), ehDono ? atividadesPorPessoa(filtros.mes) : Promise.resolve(null),
+    comMeta ? buscarMetas(mesesGrafico) : Promise.resolve(new Map<string, number>()),
   ])
-  const p = calcularPainel(
-    negociacoes
-      .filter((n) => !filtros.responsavel || n.responsavel_id === filtros.responsavel)
-      .map((n) => ({
-        etapa: n.etapa, valor: n.valor_centavos, previsto: n.valor_previsto_centavos, responsavelId: n.responsavel_id, fechadoEm: n.fechado_em,
-        etapaDesde: n.etapa_desde, motivo: n.motivo_perda, dataEsperada: n.data_fechamento_esperada, etapaAntesDaPerda: antes.get(n.id) ?? null,
-      })),
-    filtros.mes, hoje,
-  )
+  const negs: NegPainel[] = negociacoes
+    .filter((n) => !filtros.responsavel || n.responsavel_id === filtros.responsavel)
+    .map((n) => ({
+      etapa: n.etapa, valor: n.valor_centavos, previsto: n.valor_previsto_centavos, responsavelId: n.responsavel_id, fechadoEm: n.fechado_em,
+      etapaDesde: n.etapa_desde, motivo: n.motivo_perda, dataEsperada: n.data_fechamento_esperada, etapaAntesDaPerda: antes.get(n.id) ?? null,
+    }))
+  const p = calcularPainel(negs, filtros.mes, hoje)
+  const serie = serieMensal(negs, filtros.mes, PAINEL.MESES_GRAFICO).map((m) => ({ ...m, meta: metas.get(m.mes) ?? null }))
+  const maxEtapa = Math.max(0, ...p.porEtapa.map((e) => e.valor))
+  const maxFunil = Math.max(0, ...p.funil.map((f) => f.chegaram))
   const rotulo = rotuloDoMes(filtros.mes)
 
   return (
@@ -158,6 +167,8 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
             <Numero titulo="Pipeline aberto (agora)" valor={formatarReais(p.pipeline.valor)} detalhe={`${p.pipeline.quantidade} em aberto · previsto ${formatarReais(p.pipeline.previsto)}`} />
           </div>
 
+          <GraficoVendas meses={serie} escolhido={filtros.mes} />
+
           <div className="grid gap-6 lg:grid-cols-2">
           <section aria-labelledby="etapas-titulo" className="flex flex-col gap-2">
             <h2 id="etapas-titulo" className="text-lg font-semibold">Por etapa (agora, igual ao kanban)</h2>
@@ -165,7 +176,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
               <thead><tr><th>Etapa</th><th>Qtde.</th><th>Valor</th><th>Previsto</th></tr></thead>
               <tbody>
                 {p.porEtapa.map((e) => (
-                  <tr key={e.etapa}><td><span className={blocoEtapa(e.etapa)}>{rotuloDaEtapa(e.etapa)}</span></td><td>{e.quantidade}</td><td>{formatarReais(e.valor)}</td><td>{formatarReais(e.previsto)}</td></tr>
+                  <tr key={e.etapa}><td><span className={blocoEtapa(e.etapa)}>{rotuloDaEtapa(e.etapa)}</span></td><td>{e.quantidade}</td><td>{formatarReais(e.valor)}<BarraLinha valor={e.valor} maximo={maxEtapa} /></td><td>{formatarReais(e.previsto)}</td></tr>
                 ))}
               </tbody>
             </Tabela>
@@ -177,7 +188,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
               <thead><tr><th>Etapa</th><th>Chegaram</th><th>Queda</th></tr></thead>
               <tbody>
                 {p.funil.map((f) => (
-                  <tr key={f.etapa}><td>{rotuloDaEtapa(f.etapa)}</td><td>{f.chegaram}</td><td>{f.queda === null ? '—' : pct(f.queda)}</td></tr>
+                  <tr key={f.etapa}><td>{rotuloDaEtapa(f.etapa)}</td><td>{f.chegaram}<BarraLinha valor={f.chegaram} maximo={maxFunil} /></td><td>{f.queda === null ? '—' : pct(f.queda)}</td></tr>
                 ))}
               </tbody>
             </Tabela>

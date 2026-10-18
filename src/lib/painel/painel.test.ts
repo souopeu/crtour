@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { calcularPainel, lerFiltrosPainel, metaSchema, progressoMeta, rotuloDoMes, type NegPainel } from './painel'
+import { calcularPainel, serieMensal, lerFiltrosPainel, metaSchema, progressoMeta, rotuloDoMes, type NegPainel } from './painel'
 
 const n = (p: Partial<NegPainel>): NegPainel => ({
   etapa: 'interessado', valor: 0, previsto: 0, responsavelId: null, fechadoEm: null, etapaDesde: '2026-10-01T15:00:00Z',
@@ -107,4 +107,19 @@ describe('metaSchema', () => {
 
 test('rotuloDoMes', () => {
   expect(rotuloDoMes('2026-03')).toBe('março de 2026')
+})
+
+describe('serieMensal', () => {
+  const s = serieMensal(DADOS, '2026-10', 3)
+  test('one entry per month, oldest first, ending at the chosen month', () => {
+    expect(s.map((x) => x.mes)).toEqual(['2026-08', '2026-09', '2026-10'])
+  })
+  test('sold = won and closed in the month; lost = lost in the month (same rules as the cards)', () => {
+    expect(s[2]).toEqual({ mes: '2026-10', vendido: 1_000_000, perdido: 170_000 })
+    expect(s[1]).toEqual({ mes: '2026-09', vendido: 999_000, perdido: 0 })
+    expect(s[0]).toEqual({ mes: '2026-08', vendido: 0, perdido: 5_000 })
+  })
+  test('the chosen month matches the revenue card', () => {
+    expect(s[2].vendido).toBe(calcularPainel(DADOS, '2026-10', '2026-10-17').receita.valor)
+  })
 })

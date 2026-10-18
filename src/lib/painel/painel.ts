@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { diaNoBrasil } from '@/lib/formato'
 import { ETAPAS, ehGanha, type Etapa, type Motivo } from '@/lib/negociacoes/negociacoes'
+import { mesesAte } from '@/lib/graficos/graficos'
 import { reaisParaCentavos } from '@/lib/passeios/dinheiro'
 import { MESES } from '@/lib/segmentos/segmentos'
 
@@ -60,6 +61,15 @@ export function calcularPainel(negs: NegPainel[], mes: string, hoje: string) {
   }
 }
 export type Painel = ReturnType<typeof calcularPainel>
+
+// R97: sold and lost value per month, for the chart. Same rules as the cards: won by closing date, lost by the day it was lost.
+export function serieMensal(negs: NegPainel[], mes: string, quantos: number) {
+  return mesesAte(mes, quantos).map((m) => ({
+    mes: m,
+    vendido: soma(negs.filter((x) => ehGanha(x.etapa) && doMes(x.fechadoEm, m)), 'valor'),
+    perdido: soma(negs.filter((x) => x.etapa === 'perdido' && doMes(x.etapaDesde, m)), 'valor'),
+  }))
+}
 
 const um = (v: string | string[] | undefined) => (typeof v === 'string' ? v : '')
 

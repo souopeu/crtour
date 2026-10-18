@@ -83,6 +83,17 @@ test('painel: numbers match known data, monthly goal, period and person filters'
   await expect(page.getByRole('region', { name: /Perdas por motivo/ })).toContainText('Achou caro1R$ 2.000,00')
   await expect(page.getByRole('region', { name: /Previsão por mês/ })).toContainText('Sem data1R$ 500,00')
 
+  // R97: six months, the chosen one with what was sold and lost; no goal column without a goal
+  const grafico = page.getByRole('region', { name: 'Vendas nos últimos 6 meses' })
+  await expect(grafico.getByRole('row')).toHaveCount(7)
+  await expect(grafico.getByRole('row').last()).toContainText('R$ 10.000,00R$ 2.000,00')
+  await expect(grafico.getByRole('columnheader', { name: 'Meta' })).toHaveCount(0)
+
+  // R96: Ana arrived with no campaign; her one client is sold
+  await page.goto('/campanhas')
+  await expect(page.getByRole('list', { name: 'Resultado por campanha' })).toContainText('1 vendido0 perdidos0 em aberto')
+  await page.goto('/painel')
+
   // Monthly goal: only effective revenue counts
   await meta.getByLabel(/Meta de/).fill('abc')
   await meta.getByRole('button', { name: 'Salvar meta' }).click()
@@ -92,6 +103,7 @@ test('painel: numbers match known data, monthly goal, period and person filters'
   await expect(meta).toContainText('R$ 10.000,00 de R$ 40.000,00 (25%)')
   await expect(meta).toContainText('Faltam R$ 30.000,00.')
   await expect(meta.getByRole('meter')).toHaveAttribute('aria-valuetext', '25% da meta')
+  await expect(grafico.getByRole('row').last()).toContainText('R$ 40.000,00')
 
   // Person filter: only Lisboa is theirs
   await page.getByLabel('Responsável').selectOption({ label: 'Pessoa painel' })
@@ -99,6 +111,8 @@ test('painel: numbers match known data, monthly goal, period and person filters'
   await expect(page.getByText('Conversão no mês').locator('..')).toContainText('100%')
   await expect(page.getByText('Pipeline aberto (agora)').locator('..')).toContainText('R$ 0,00')
   await expect(page.getByText(/A meta é da agência toda/)).toBeVisible()
+  await expect(grafico.getByRole('row').last()).toContainText('R$ 10.000,00R$ 0,00')
+  await expect(grafico.getByRole('columnheader', { name: 'Meta' })).toHaveCount(0)
 
   // Previous month: nothing closed there, and no goal yet
   await page.goto(`/painel?mes=${mesAnterior()}`)
