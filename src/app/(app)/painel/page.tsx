@@ -11,12 +11,15 @@ import { calcularPainel, lerFiltrosPainel, progressoMeta, rotuloDoMes } from '@/
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
 import { Carregando } from '@/components/Carregando'
 import { EstadoVazio } from '@/components/tela/EstadoVazio'
+import { blocoEtapa } from '@/components/negociacoes/coresEtapa'
+import { botaoBarra, caixaTabela, campoBarra, cartaoPainel, rotuloBarra, tabelaPadrao } from '@/components/tela/estilos'
 
 export const metadata = { title: 'Painel' }
 
 const pct = (x: number) => `${Math.round(x * 100)}%`
-const cartao = 'flex flex-col gap-1 rounded-[--radius-cartao] border border-linha bg-superficie p-4'
-const tabela = 'w-full border-collapse text-sm [&_td]:border-t [&_td]:border-linha [&_td]:px-2 [&_td]:py-2 [&_th]:px-2 [&_th]:py-2 [&_th]:text-left'
+const cartao = cartaoPainel
+// Small dashboard tables reuse the framed table look (R61).
+const Tabela = ({ children }: { children: React.ReactNode }) => <div className={caixaTabela}><table className={tabelaPadrao}>{children}</table></div>
 
 function Numero({ titulo, valor, detalhe }: { titulo: string; valor: string; detalhe?: string }) {
   return (
@@ -81,17 +84,17 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
     <>
       <form method="get" aria-label="Filtros do painel" className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1">
-          <label htmlFor="mes" className="text-sm font-medium">Mês</label>
-          <input id="mes" name="mes" type="month" defaultValue={filtros.mes} className="h-12 rounded-xl border border-controle bg-superficie px-3 text-base" />
+          <label htmlFor="mes" className={rotuloBarra}>Mês</label>
+          <input id="mes" name="mes" type="month" defaultValue={filtros.mes} className={campoBarra} />
         </div>
         {ehDono && <div className="flex flex-col gap-1">
-          <label htmlFor="responsavel" className="text-sm font-medium">Responsável</label>
-          <select id="responsavel" name="responsavel" defaultValue={filtros.responsavel ?? ''} className="h-12 rounded-xl border border-controle bg-superficie px-3 text-base">
+          <label htmlFor="responsavel" className={rotuloBarra}>Responsável</label>
+          <select id="responsavel" name="responsavel" defaultValue={filtros.responsavel ?? ''} className={campoBarra}>
             <option value="">Toda a agência</option>
             {membros.map((m) => <option key={m.user_id} value={m.user_id}>{m.nome}</option>)}
           </select>
         </div>}
-        <button type="submit" className="min-h-12 rounded-full bg-destaque px-6 font-semibold text-destaque-texto">Ver</button>
+        <button type="submit" className={botaoBarra}>Ver</button>
       </form>
 
       {doMes && !filtros.responsavel && doMes.saidas > 0 && (() => {
@@ -113,52 +116,53 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
             <Meta mes={filtros.mes} meta={meta} efetivo={p.receita.valor} />
           )}
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Numero titulo={`Receita efetiva em ${rotulo}`} valor={formatarReais(p.receita.valor)} detalhe={`${p.receita.quantidade} ${p.receita.quantidade === 1 ? 'venda' : 'vendas'} em Pago ou depois`} />
             <Numero titulo="Ticket médio" valor={p.receita.ticketMedio === null ? '—' : formatarReais(p.receita.ticketMedio)} />
             <Numero titulo="Conversão no mês" valor={p.conversao.taxa === null ? '—' : pct(p.conversao.taxa)} detalhe={`${p.conversao.ganhas} ganhas · ${p.conversao.perdidas} perdidas`} />
             <Numero titulo="Pipeline aberto (agora)" valor={formatarReais(p.pipeline.valor)} detalhe={`${p.pipeline.quantidade} em aberto · previsto ${formatarReais(p.pipeline.previsto)}`} />
           </div>
 
+          <div className="grid gap-6 lg:grid-cols-2">
           <section aria-labelledby="etapas-titulo" className="flex flex-col gap-2">
             <h2 id="etapas-titulo" className="text-lg font-semibold">Por etapa (agora, igual ao kanban)</h2>
-            <table className={tabela}>
+            <Tabela>
               <thead><tr><th>Etapa</th><th>Qtde.</th><th>Valor</th><th>Previsto</th></tr></thead>
               <tbody>
                 {p.porEtapa.map((e) => (
-                  <tr key={e.etapa}><td>{rotuloDaEtapa(e.etapa)}</td><td>{e.quantidade}</td><td>{formatarReais(e.valor)}</td><td>{formatarReais(e.previsto)}</td></tr>
+                  <tr key={e.etapa}><td><span className={blocoEtapa(e.etapa)}>{rotuloDaEtapa(e.etapa)}</span></td><td>{e.quantidade}</td><td>{formatarReais(e.valor)}</td><td>{formatarReais(e.previsto)}</td></tr>
                 ))}
               </tbody>
-            </table>
+            </Tabela>
           </section>
 
           <section aria-labelledby="funil-titulo" className="flex flex-col gap-2">
             <h2 id="funil-titulo" className="text-lg font-semibold">Funil (todas as negociações até hoje)</h2>
-            <table className={tabela}>
+            <Tabela>
               <thead><tr><th>Etapa</th><th>Chegaram</th><th>Queda</th></tr></thead>
               <tbody>
                 {p.funil.map((f) => (
                   <tr key={f.etapa}><td>{rotuloDaEtapa(f.etapa)}</td><td>{f.chegaram}</td><td>{f.queda === null ? '—' : pct(f.queda)}</td></tr>
                 ))}
               </tbody>
-            </table>
+            </Tabela>
             <p className="text-sm text-tinta-suave">Perdidas contam até a etapa em que estavam quando foram perdidas.</p>
           </section>
 
           <section aria-labelledby="perdas-titulo" className="flex flex-col gap-2">
             <h2 id="perdas-titulo" className="text-lg font-semibold">Perdas por motivo em {rotulo}</h2>
             {p.perdas.length === 0 ? <p className="text-sm text-tinta-suave">Nenhuma perda neste mês.</p> : (
-              <table className={tabela}>
+              <Tabela>
                 <thead><tr><th>Motivo</th><th>Qtde.</th><th>Valor</th></tr></thead>
                 <tbody>{p.perdas.map((x) => <tr key={x.motivo}><td>{rotuloDoMotivo(x.motivo)}</td><td>{x.quantidade}</td><td>{formatarReais(x.valor)}</td></tr>)}</tbody>
-              </table>
+              </Tabela>
             )}
           </section>
 
           <section aria-labelledby="previsao-titulo" className="flex flex-col gap-2">
             <h2 id="previsao-titulo" className="text-lg font-semibold">Previsão por mês (data esperada de fechamento)</h2>
             {p.previsao.length === 0 ? <p className="text-sm text-tinta-suave">Nenhuma negociação em aberto.</p> : (
-              <table className={tabela}>
+              <Tabela>
                 <thead><tr><th>Mês</th><th>Qtde.</th><th>Previsto</th></tr></thead>
                 <tbody>
                   {p.previsao.map((x) => (
@@ -168,9 +172,10 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Tabela>
             )}
           </section>
+          </div>
         </>
       )}
     </>
@@ -179,7 +184,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
 
 export default function PainelPage({ searchParams }: PageProps<'/painel'>) {
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
+    <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <h1 className="text-2xl font-bold tracking-tight">Painel</h1>
       <Suspense fallback={<Carregando altura="h-64" />}>
         <Conteudo searchParams={searchParams} />

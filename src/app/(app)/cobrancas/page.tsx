@@ -7,6 +7,7 @@ import { listarCobrancas } from '@/lib/pagamentos/dados'
 import { formatarReais } from '@/lib/passeios/dinheiro'
 import { Carregando } from '@/components/Carregando'
 import { EstadoVazio } from '@/components/tela/EstadoVazio'
+import { AbasDeVisao } from '@/components/tela/AbasDeVisao'
 
 export const metadata = { title: 'Cobranças' }
 
@@ -31,25 +32,16 @@ async function Lista({ searchParams }: Pick<PageProps<'/cobrancas'>, 'searchPara
 
   return (
     <>
-      <nav aria-label="Filtros" className="flex flex-wrap gap-2">
-        {FILTROS_COBRANCA.map((f) => (
-          <Link
-            key={f}
-            href={f === 'todas' ? '/cobrancas' : `/cobrancas?filtro=${f}`}
-            aria-current={f === filtro ? 'page' : undefined}
-            className={`inline-flex min-h-11 items-center rounded-full border px-4 ${f === filtro ? 'border-primaria bg-primaria text-white' : 'border-linha bg-superficie'}`}
-          >
-            {ROTULO[f]}
-          </Link>
-        ))}
-      </nav>
-      <p aria-live="polite" className="text-tinta-suave">
+      <AbasDeVisao rotulo="Filtros das cobranças" abas={FILTROS_COBRANCA.map((f) => (
+        { rotulo: ROTULO[f], href: f === 'todas' ? '/cobrancas' : `/cobrancas?filtro=${f}`, ativa: f === filtro }
+      ))} />
+      <p aria-live="polite" className="text-sm text-tinta-suave">
         {cobrancas.length === 0 ? 'Nada a receber neste filtro.' : <>{cobrancas.length} {cobrancas.length === 1 ? 'reserva' : 'reservas'} · <strong>{formatarReais(totalEmAberto)}</strong> a receber</>}
       </p>
       {cobrancas.length === 0 && (
         <EstadoVazio compacto acoes={[{ href: '/passeios', rotulo: 'Ver passeios' }]}>As cobranças aparecem quando uma reserva tem saldo em aberto.</EstadoVazio>
       )}
-      <ul className="flex flex-col gap-3">
+      <ul className="grid gap-3 lg:grid-cols-2">
         {cobrancas.map((c) => {
           const venc = textoVencimento(c.vencimento, hoje)
           const botao = estadoDoBotao(c.clienteWhatsapp, c.consentimento)
@@ -57,7 +49,7 @@ async function Lista({ searchParams }: Pick<PageProps<'/cobrancas'>, 'searchPara
             ? linkWhatsapp(c.clienteWhatsapp, mensagemCobranca({ nome: c.clienteNome, saldoCentavos: c.saldo, vencimento: c.vencimento, passeio: c.passeio, dataSaida: c.saidaData }))
             : null
           return (
-            <li key={c.reservaId} className="flex flex-col gap-2 rounded-[--radius-cartao] border border-linha bg-superficie p-4">
+            <li key={c.reservaId} className={`flex flex-col gap-2 rounded-(--radius-cartao) border border-l-4 border-linha bg-superficie p-4 ${venc.vencida ? 'border-l-despesa' : 'border-l-primaria'}`}>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <Link href={`/clientes/${c.clienteId}`} className="text-lg font-semibold text-primaria underline">{c.clienteNome}</Link>
                 <span className={venc.vencida ? 'font-semibold text-despesa' : 'text-tinta-suave'}>{venc.texto}</span>
@@ -90,9 +82,11 @@ async function Lista({ searchParams }: Pick<PageProps<'/cobrancas'>, 'searchPara
 
 export default function CobrancasPage({ searchParams }: PageProps<'/cobrancas'>) {
   return (
-    <section className="mx-auto flex max-w-3xl flex-col gap-4">
-      <h1 className="text-2xl font-bold tracking-tight">Cobranças</h1>
-      <p className="text-tinta-suave">Reservas ativas com saldo a receber, das mais urgentes para as menos.</p>
+    <section className="mx-auto flex max-w-6xl flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-bold tracking-tight">Cobranças</h1>
+        <p className="text-sm text-tinta-suave">Reservas ativas com saldo a receber, das mais urgentes para as menos.</p>
+      </div>
       <Suspense fallback={<Carregando altura="h-40" />}>
         <Lista searchParams={searchParams} />
       </Suspense>

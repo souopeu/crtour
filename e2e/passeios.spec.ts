@@ -77,7 +77,7 @@ test('tours and departures: create, validate, edit, archive, delete, isolation',
   await expect(page.getByText('Arquivado', { exact: true })).toBeVisible()
   await page.goto('/passeios')
   await expect(page.getByText('Você ainda não tem passeios.')).toBeVisible()
-  await page.getByRole('link', { name: 'Ver arquivados' }).click()
+  await page.getByRole('navigation', { name: 'Visões dos passeios' }).getByRole('link', { name: 'Arquivados' }).click()
   await expect(page.getByRole('link', { name: /Lisboa clássica/ })).toBeVisible()
   await page.getByRole('link', { name: /Lisboa clássica/ }).click()
   await page.getByRole('button', { name: 'Desarquivar passeio' }).click()

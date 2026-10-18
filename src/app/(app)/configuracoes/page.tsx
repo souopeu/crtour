@@ -74,52 +74,39 @@ async function Exportar() {
   )
 }
 
+const SECOES = [
+  { id: 'prazos-titulo', titulo: 'Prazos da tela Hoje', Conteudo: Prazos },
+  { id: 'equipe-titulo', titulo: 'Equipe', Conteudo: SecaoEquipe },
+  { id: 'mensagens-passeio-titulo', titulo: 'Mensagens do passeio', Conteudo: MensagensPasseio },
+  { id: 'comissao-titulo', titulo: 'Comissão', Conteudo: Comissao },
+  { id: 'exportar-titulo', titulo: 'Exportar seus dados', Conteudo: Exportar },
+  { id: 'excluir-titulo', titulo: 'Excluir conta', Conteudo: ExcluirConta },
+]
+
+// E5-4: one card per setting, with an in-page index beside them on wide screens.
 export default function ConfiguracoesPage() {
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-8">
+    <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
-
-      <section aria-labelledby="prazos-titulo" className="flex flex-col gap-2">
-        <h2 id="prazos-titulo" className="text-lg font-semibold">Prazos da tela Hoje</h2>
-        <Suspense fallback={<Carregando altura="h-24" />}>
-          <Prazos />
-        </Suspense>
-      </section>
-
-      <section aria-labelledby="equipe-titulo" className="flex flex-col gap-3">
-        <h2 id="equipe-titulo" className="text-lg font-semibold">Equipe</h2>
-        <Suspense fallback={<Carregando altura="h-24" />}>
-          <SecaoEquipe />
-        </Suspense>
-      </section>
-
-      <section aria-labelledby="mensagens-passeio-titulo" className="flex flex-col gap-3">
-        <h2 id="mensagens-passeio-titulo" className="text-lg font-semibold">Mensagens do passeio</h2>
-        <Suspense fallback={<Carregando altura="h-24" />}>
-          <MensagensPasseio />
-        </Suspense>
-      </section>
-
-      <section aria-labelledby="comissao-titulo" className="flex flex-col gap-3">
-        <h2 id="comissao-titulo" className="text-lg font-semibold">Comissão</h2>
-        <Suspense fallback={<Carregando altura="h-24" />}>
-          <Comissao />
-        </Suspense>
-      </section>
-
-      <section aria-labelledby="exportar-titulo" className="flex flex-col gap-2">
-        <h2 id="exportar-titulo" className="text-lg font-semibold">Exportar seus dados</h2>
-        <Suspense fallback={<Carregando altura="h-24" />}>
-          <Exportar />
-        </Suspense>
-      </section>
-
-      <section aria-labelledby="excluir-titulo" className="flex flex-col gap-3">
-        <h2 id="excluir-titulo" className="text-lg font-semibold">Excluir conta</h2>
-        <Suspense fallback={<Carregando altura="h-24" />}>
-          <ExcluirConta />
-        </Suspense>
-      </section>
+      <div className="grid gap-6 lg:grid-cols-[13rem_1fr]">
+        <nav aria-label="Nesta página" className="lg:sticky lg:top-4 lg:self-start">
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 lg:flex-col">
+            {SECOES.map((x) => (
+              <li key={x.id}><a href={`#${x.id}`} className="inline-flex min-h-11 items-center text-sm text-tinta-suave hover:text-primaria hover:underline">{x.titulo}</a></li>
+            ))}
+          </ul>
+        </nav>
+        <div className="flex flex-col gap-4">
+          {SECOES.map(({ id, titulo, Conteudo }) => (
+            <section key={id} aria-labelledby={id} className={`flex scroll-mt-4 flex-col gap-3 rounded-(--radius-cartao) border border-linha bg-superficie p-5 ${id === 'excluir-titulo' ? 'border-l-4 border-l-despesa' : ''}`}>
+              <h2 id={id} className="text-lg font-semibold">{titulo}</h2>
+              <Suspense fallback={<Carregando altura="h-24" />}>
+                <Conteudo />
+              </Suspense>
+            </section>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
