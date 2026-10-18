@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
-import { lerCorpoAte, obterProvedor, tratarAviso } from '@/lib/pagamento-online/pagamentoOnline'
+import { lerCorpoAte } from '@/lib/http/corpo'
+import { obterProvedor, tratarAviso } from '@/lib/pagamento-online/pagamentoOnline'
 
 const MAX_BYTES = 64 * 1024 // provider notices are small
 
