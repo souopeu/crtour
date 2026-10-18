@@ -7,12 +7,15 @@ import { getMembro } from '@/lib/auth/agencia'
 import { rotuloDoTipo } from '@/lib/custos/custos'
 import { listarFornecedores } from '@/lib/custos/dados'
 import { apagarFornecedor } from './actions'
+import { EstadoVazio } from '@/components/tela/EstadoVazio'
 
 export const metadata = { title: 'Fornecedores' }
 
 async function Lista() {
   const [fornecedores, membro] = await Promise.all([listarFornecedores(), getMembro()])
-  if (fornecedores.length === 0) return <p className="text-sm text-tinta-suave">Nenhum fornecedor ainda. Cadastre ônibus, hotéis, guias e quem mais entra nos custos das saídas.</p>
+  if (fornecedores.length === 0) {
+    return <EstadoVazio compacto acoes={[{ href: '#novo-fornecedor', rotulo: 'Cadastrar o primeiro fornecedor' }]}>Nenhum fornecedor ainda. Cadastre ônibus, hotéis, guias e quem mais entra nos custos das saídas.</EstadoVazio>
+  }
   return (
     <ul aria-label="Fornecedores" className="flex flex-col gap-2">
       {fornecedores.map((f) => (

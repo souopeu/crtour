@@ -13,6 +13,7 @@ import { buscarConfigMensagens, filaMensagensPasseio } from '@/lib/mensagens/dad
 import { aplicarModeloPasseio, modeloEfetivo } from '@/lib/mensagens/mensagensPasseio'
 import { rotuloDaEtapa } from '@/lib/negociacoes/negociacoes'
 import { Carregando } from '@/components/Carregando'
+import { EstadoVazio } from '@/components/tela/EstadoVazio'
 
 export const metadata = { title: 'Hoje' }
 
@@ -89,12 +90,12 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/hoje'>, 'searchParams
 
       <section aria-labelledby="dehoje-titulo" className="flex flex-col gap-2">
         <Titulo id="dehoje-titulo" total={deHoje.length}>Para hoje</Titulo>
-        {deHoje.length === 0 ? <p className={vazio}>Nenhuma atividade marcada para hoje.</p> : <ListaAtividades itens={deHoje} hoje={hoje} atrasadas={false} />}
+        {deHoje.length === 0 ? <EstadoVazio compacto acoes={[{ href: '/', rotulo: 'Agendar pela ficha de um cliente' }]}>Nenhuma atividade marcada para hoje.</EstadoVazio> : <ListaAtividades itens={deHoje} hoje={hoje} atrasadas={false} />}
       </section>
 
       <section aria-labelledby="mensagens-titulo" className="flex flex-col gap-2">
         <Titulo id="mensagens-titulo" total={mensagens.length}>Mensagens do passeio</Titulo>
-        {mensagens.length === 0 ? <p className={vazio}>Nenhuma mensagem de passeio para hoje.</p> : (
+        {mensagens.length === 0 ? <EstadoVazio compacto acoes={[{ href: '/passeios', rotulo: 'Ver passeios e reservas' }]}>Nenhuma mensagem de passeio para hoje.</EstadoVazio> : (
           <ul className="flex flex-col gap-2">
             {mensagens.map((m) => (
               <ItemMensagemPasseio key={`${m.reserva_id}-${m.tipo}`} reservaId={m.reserva_id} clienteId={m.cliente_id} tipo={m.tipo} nome={m.nome}

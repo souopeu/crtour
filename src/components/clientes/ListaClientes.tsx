@@ -5,6 +5,7 @@ import { ROTULO_CONSENTIMENTO, ROTULO_ORIGEM, formatarWhatsapp } from '@/lib/cli
 import { ouTraco } from '@/lib/formato'
 import { AbasDeVisao } from '@/components/tela/AbasDeVisao'
 import { botaoBarra, campoBarra, rotuloBarra } from '@/components/tela/estilos'
+import { EstadoVazio } from '@/components/tela/EstadoVazio'
 
 type Props = { filtros: Filtros; clientes: ClienteDaLista[]; total: number; etiquetas: EtiquetaLinha[]; cidades: string[] }
 
@@ -122,17 +123,19 @@ export function ListaClientes({ filtros, clientes, total, etiquetas, cidades }: 
         {temFiltro && <Link href={hrefDaLista({ q: '', etiqueta: null, origem: null, cidade: '', pagina: 1, visao: filtros.visao })} className="inline-flex min-h-10 items-center text-sm text-primaria underline">Limpar filtros</Link>}
       </form>
 
-      <p aria-live="polite" className="text-sm text-tinta-suave">
-        {total === 0 ? 'Nenhum cliente encontrado.' : `Mostrando ${resumo.de}–${resumo.ate} de ${total}`}
-      </p>
+      {(total > 0 || temFiltro) && (
+        <p aria-live="polite" className="text-sm text-tinta-suave">
+          {total === 0 ? 'Nenhum cliente encontrado.' : `Mostrando ${resumo.de}–${resumo.ate} de ${total}`}
+        </p>
+      )}
 
-      {clientes.length === 0 ? (
+      {clientes.length === 0 && !temFiltro && filtros.pagina === 1 ? (
+        <EstadoVazio acoes={[{ href: '/clientes/novo', rotulo: 'Cadastrar o primeiro cliente' }, { href: '/importar', rotulo: 'Importar uma planilha' }]}>
+          Você ainda não tem clientes. Cadastre um por um ou traga a planilha que você já usa.
+        </EstadoVazio>
+      ) : clientes.length === 0 ? (
         <p className="rounded-(--radius-cartao) border border-linha bg-superficie p-4">
-          {temFiltro
-            ? 'Nenhum cliente combina com esses filtros. Tente outra busca ou limpe os filtros.'
-            : filtros.pagina > 1
-              ? 'Não há clientes nesta página.'
-              : 'Você ainda não tem clientes. Cadastre o primeiro em "Novo cliente" ou importe uma planilha.'}
+          {temFiltro ? 'Nenhum cliente combina com esses filtros. Tente outra busca ou limpe os filtros.' : 'Não há clientes nesta página.'}
         </p>
       ) : filtros.visao === 'tabela' ? <Tabela clientes={clientes} total={total} /> : <Cartoes clientes={clientes} />}
 

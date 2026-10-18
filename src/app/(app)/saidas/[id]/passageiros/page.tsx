@@ -6,6 +6,7 @@ import { formatarDataBr, ouTraco } from '@/lib/formato'
 import { buscarSaida, listarPassageirosDaSaida } from '@/lib/passeios/dados'
 import { montarLista } from '@/lib/passageiros/lista'
 import { Carregando } from '@/components/Carregando'
+import { EstadoVazio } from '@/components/tela/EstadoVazio'
 
 export const metadata = { title: 'Lista de passageiros' }
 
@@ -36,7 +37,7 @@ async function Conteudo({ params }: Pick<PageProps<'/saidas/[id]/passageiros'>, 
       </div>
 
       {linhas.length === 0 ? (
-        <p className="rounded-[--radius-cartao] border border-linha bg-superficie p-4">Esta saída ainda não tem reservas ativas.</p>
+        <EstadoVazio acoes={[{ href: `/saidas/${saida.id}`, rotulo: 'Reservar nesta saída' }]}>Esta saída ainda não tem reservas ativas.</EstadoVazio>
       ) : (
         <table className="w-full border-collapse text-left text-base">
           <thead>

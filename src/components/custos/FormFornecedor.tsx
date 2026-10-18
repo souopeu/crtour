@@ -14,7 +14,7 @@ export function FormFornecedor() {
   const v = estado.valores ?? {}
   const erro = (n: string) => estado.campos?.[n]?.[0]
   return (
-    <form key={estado.versao ?? 'inicial'} action={enviar} aria-label="Novo fornecedor" className="grid gap-3 rounded-[--radius-cartao] border border-linha bg-superficie p-4 sm:grid-cols-3">
+    <form key={estado.versao ?? 'inicial'} id="novo-fornecedor" action={enviar} aria-label="Novo fornecedor" className="grid gap-3 rounded-[--radius-cartao] border border-linha bg-superficie p-4 sm:grid-cols-3">
       <div className="sm:col-span-3"><Mensagem estado={estado} /></div>
       <div className="flex flex-col gap-1">
         <label htmlFor="forn-nome" className="text-sm font-medium">Nome</label>

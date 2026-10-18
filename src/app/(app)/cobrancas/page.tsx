@@ -6,6 +6,7 @@ import { FILTROS_COBRANCA, diasAte, mensagemCobranca, type FiltroCobranca } from
 import { listarCobrancas } from '@/lib/pagamentos/dados'
 import { formatarReais } from '@/lib/passeios/dinheiro'
 import { Carregando } from '@/components/Carregando'
+import { EstadoVazio } from '@/components/tela/EstadoVazio'
 
 export const metadata = { title: 'Cobranças' }
 
@@ -45,6 +46,9 @@ async function Lista({ searchParams }: Pick<PageProps<'/cobrancas'>, 'searchPara
       <p aria-live="polite" className="text-tinta-suave">
         {cobrancas.length === 0 ? 'Nada a receber neste filtro.' : <>{cobrancas.length} {cobrancas.length === 1 ? 'reserva' : 'reservas'} · <strong>{formatarReais(totalEmAberto)}</strong> a receber</>}
       </p>
+      {cobrancas.length === 0 && (
+        <EstadoVazio compacto acoes={[{ href: '/passeios', rotulo: 'Ver passeios' }]}>As cobranças aparecem quando uma reserva tem saldo em aberto.</EstadoVazio>
+      )}
       <ul className="flex flex-col gap-3">
         {cobrancas.map((c) => {
           const venc = textoVencimento(c.vencimento, hoje)

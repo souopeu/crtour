@@ -7,6 +7,7 @@ import { buscarConfigComissao, listarComissoes } from '@/lib/comissao/dados'
 import { formatarDataBr, hojeNoBrasil } from '@/lib/formato'
 import { lerFiltrosPainel, rotuloDoMes } from '@/lib/painel/painel'
 import { formatarReais } from '@/lib/passeios/dinheiro'
+import { EstadoVazio } from '@/components/tela/EstadoVazio'
 
 export const metadata = { title: 'Comissões' }
 const tabela = 'w-full border-collapse text-sm [&_td]:border-t [&_td]:border-linha [&_td]:px-2 [&_td]:py-2 [&_th]:px-2 [&_th]:py-2 [&_th]:text-left'
@@ -21,7 +22,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/comissoes'>, 'searchP
   const total = linhas.reduce((s, l) => s + l.comissao_centavos, 0)
 
   if (!config.regra) {
-    return <p className="rounded-[--radius-cartao] border border-linha bg-superficie p-4">A agência ainda não usa comissão. {ehDono ? <>Escolha a regra em <Link href="/configuracoes" className="text-primaria underline">Configurações</Link>.</> : 'Fale com o dono da agência.'}</p>
+    return <EstadoVazio acoes={ehDono ? [{ href: '/configuracoes', rotulo: 'Configurações' }] : []}>A agência ainda não usa comissão. {ehDono ? 'Escolha a regra em Configurações.' : 'Fale com o dono da agência.'}</EstadoVazio>
   }
   return (
     <>

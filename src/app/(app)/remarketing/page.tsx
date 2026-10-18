@@ -4,6 +4,7 @@ import { listarEtiquetas } from '@/lib/clientes/dados'
 import { listarSegmentos } from '@/lib/segmentos/dados'
 import { descreverCriterios } from '@/lib/segmentos/segmentos'
 import { Carregando } from '@/components/Carregando'
+import { EstadoVazio } from '@/components/tela/EstadoVazio'
 
 export const metadata = { title: 'Remarketing' }
 
@@ -11,7 +12,7 @@ async function Lista() {
   const [segmentos, etiquetas] = await Promise.all([listarSegmentos(), listarEtiquetas()])
   const nomes = new Map(etiquetas.map((e) => [e.id, e.nome]))
   if (segmentos.length === 0) {
-    return <p className="rounded-[--radius-cartao] border border-linha bg-superficie p-4">Nenhum segmento ainda. Crie o primeiro escolhendo quem quer chamar (destino, aniversário, sem contato…).</p>
+    return <EstadoVazio acoes={[{ href: '/remarketing/novo', rotulo: 'Criar o primeiro segmento' }]}>Nenhum segmento ainda. Escolha quem quer chamar (destino, aniversário, sem contato…) e o sistema monta a fila.</EstadoVazio>
   }
   return (
     <ul className="flex flex-col gap-2">

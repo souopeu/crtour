@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { Suspense } from 'react'
 import { FormMeta } from '@/components/painel/FormMeta'
 import { getMembro } from '@/lib/auth/agencia'
@@ -11,6 +10,7 @@ import { custosDoMes } from '@/lib/custos/dados'
 import { calcularPainel, lerFiltrosPainel, progressoMeta, rotuloDoMes } from '@/lib/painel/painel'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
 import { Carregando } from '@/components/Carregando'
+import { EstadoVazio } from '@/components/tela/EstadoVazio'
 
 export const metadata = { title: 'Painel' }
 
@@ -102,7 +102,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
       })()}
 
       {p.vazio ? (
-        <p className={cartao}>Ainda não há negociações{filtros.responsavel ? ' deste responsável' : ''}. Crie em <Link href="/funil" className="text-primaria underline">Funil</Link> ou pela ficha de um cliente; o painel se monta sozinho a partir delas.</p>
+        <EstadoVazio acoes={[{ href: '/funil', rotulo: 'Abrir o funil' }]}>Ainda não há negociações{filtros.responsavel ? ' deste responsável' : ''}. O painel se monta sozinho a partir delas: crie no funil ou pela ficha de um cliente.</EstadoVazio>
       ) : (
         <>
           {!ehDono ? (

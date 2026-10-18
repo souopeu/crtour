@@ -15,6 +15,7 @@ import { filtrarNegociacoes, hrefFunil, lerFiltroFunil, type FiltroFunil } from 
 import { agruparNegociacoes, rotuloDaEtapa, type Etapa } from '@/lib/negociacoes/negociacoes'
 import { formatarReais } from '@/lib/passeios/dinheiro'
 import { Carregando } from '@/components/Carregando'
+import { EstadoVazio } from '@/components/tela/EstadoVazio'
 
 export const metadata = { title: 'Funil' }
 
@@ -76,9 +77,9 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/funil'>, 'searchParam
       <Barra f={f} membros={membros} />
 
       {todas.length === 0 ? (
-        <p className="rounded-(--radius-cartao) border border-linha bg-superficie p-4">
-          Nenhuma negociação ainda. Crie a primeira em &quot;Nova negociação&quot; ou pela ficha de um cliente.
-        </p>
+        <EstadoVazio acoes={[{ href: '/negociacoes/novo', rotulo: 'Criar a primeira negociação' }, { href: '/', rotulo: 'Escolher um cliente' }]}>
+          Nenhuma negociação ainda. Cada venda em andamento vira um cartão aqui; crie uma agora ou pela ficha de um cliente.
+        </EstadoVazio>
       ) : negociacoes.length === 0 ? (
         <p className="rounded-(--radius-cartao) border border-linha bg-superficie p-4">
           Nenhuma negociação combina com a busca ou a pessoa escolhida. <Link href={hrefFunil({ ...f, q: '', pessoa: null })} className="text-primaria underline">Limpar filtros</Link>

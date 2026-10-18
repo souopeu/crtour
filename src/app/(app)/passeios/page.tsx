@@ -3,6 +3,7 @@ import { Suspense } from 'react'
 import { formatarDataBr } from '@/lib/formato'
 import { listarPasseios } from '@/lib/passeios/dados'
 import { Carregando } from '@/components/Carregando'
+import { EstadoVazio } from '@/components/tela/EstadoVazio'
 
 export const metadata = { title: 'Passeios' }
 
@@ -17,9 +18,9 @@ async function Lista({ searchParams }: Pick<PageProps<'/passeios'>, 'searchParam
           : <Link href="/passeios?arquivados=1" className="min-h-11 inline-flex items-center text-primaria underline">Ver arquivados</Link>}
       </div>
       {passeios.length === 0 ? (
-        <p className="rounded-[--radius-cartao] border border-linha bg-superficie p-4">
-          {arquivados ? 'Nenhum passeio arquivado.' : 'Você ainda não tem passeios. Crie o primeiro em "Novo passeio".'}
-        </p>
+        arquivados
+          ? <p className="rounded-(--radius-cartao) border border-linha bg-superficie p-4">Nenhum passeio arquivado.</p>
+          : <EstadoVazio acoes={[{ href: '/passeios/novo', rotulo: 'Criar o primeiro passeio' }]}>Você ainda não tem passeios. Crie o passeio e depois as saídas com data e vagas.</EstadoVazio>
       ) : (
         <ul className="flex flex-col gap-2">
           {passeios.map((p) => (

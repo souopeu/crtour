@@ -6,6 +6,7 @@ import { listarAvisos } from '@/lib/negociacoes/dados'
 import { formatarReais } from '@/lib/passeios/dinheiro'
 import { marcarAvisoLido, marcarTodosLidos } from './actions'
 import { Carregando } from '@/components/Carregando'
+import { EstadoVazio } from '@/components/tela/EstadoVazio'
 
 export const metadata = { title: 'Avisos' }
 
@@ -17,7 +18,7 @@ async function Lista() {
   const avisos = await listarAvisos()
   const naoLidos = avisos.filter((a) => !a.lido_em).length
   if (avisos.length === 0) {
-    return <p className="rounded-[--radius-cartao] border border-linha bg-superficie p-4">Nenhum aviso ainda. Quando uma negociação for para <strong>Pago</strong>, ela aparece aqui.</p>
+    return <EstadoVazio acoes={[{ href: '/funil', rotulo: 'Abrir o funil' }]}>Nenhum aviso ainda. Quando uma negociação for para <strong>Pago</strong>, ela aparece aqui.</EstadoVazio>
   }
   return (
     <>
