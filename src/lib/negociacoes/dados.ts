@@ -1,7 +1,9 @@
 import 'server-only'
 import { z } from 'zod'
 import { criarClienteServidor } from '@/lib/supabase/server'
-import type { Etapa, Motivo } from './negociacoes'
+import { NEGOCIACOES } from './config'
+import { ETAPAS_ABERTAS, type Etapa, type Motivo } from './negociacoes'
+import { emBlocos } from '@/lib/consultas/emBlocos'
 
 export type NegociacaoLinha = {
   id: string; cliente_id: string; cliente_nome: string; titulo: string; valor_centavos: number; etapa: Etapa
@@ -24,7 +26,7 @@ async function completar(linhas: Omit<NegociacaoLinha, 'cliente_nome' | 'respons
   if (linhas.length === 0) return []
   const supabase = await criarClienteServidor()
   const [clientes, membros] = await Promise.all([
-    supabase.from('clientes').select('id, nome').in('id', [...new Set(linhas.map((l) => l.cliente_id))]),
+    emBlocos([...new Set(linhas.map((l) => l.cliente_id))], (b) => supabase.from('clientes').select('id, nome').in('id', b)),
     listarMembros(),
   ])
   const nomeCliente = new Map(((clientes.data ?? []) as { id: string; nome: string }[]).map((c) => [c.id, c.nome]))
@@ -36,10 +38,17 @@ async function completar(linhas: Omit<NegociacaoLinha, 'cliente_nome' | 'respons
   }))
 }
 
+// Every open deal, plus the most recently moved closed ones; a single capped list used to drop old open deals.
 export async function listarNegociacoes(): Promise<NegociacaoLinha[]> {
   const supabase = await criarClienteServidor()
-  const { data } = await supabase.from('negociacoes').select(COLUNAS).order('criado_em', { ascending: false }).limit(2000)
-  return completar((data ?? []) as Omit<NegociacaoLinha, 'cliente_nome' | 'responsavel_nome'>[])
+  const abertas = `(${ETAPAS_ABERTAS.join(',')})`
+  const [a, f] = await Promise.all([
+    supabase.from('negociacoes').select(`${COLUNAS}, criado_em`).in('etapa', ETAPAS_ABERTAS).order('criado_em', { ascending: false }).limit(NEGOCIACOES.MAX_ABERTAS),
+    supabase.from('negociacoes').select(`${COLUNAS}, criado_em`).not('etapa', 'in', abertas).order('etapa_desde', { ascending: false }).limit(NEGOCIACOES.MAX_FECHADAS),
+  ])
+  if (a.error || f.error) console.error('listarNegociacoes falhou', (a.error ?? f.error)?.code)
+  const linhas = [...(a.data ?? []), ...(f.data ?? [])] as (Omit<NegociacaoLinha, 'cliente_nome' | 'responsavel_nome'> & { criado_em: string })[]
+  return completar(linhas.sort((x, y) => y.criado_em.localeCompare(x.criado_em)))
 }
 
 export async function listarNegociacoesDoCliente(clienteId: string): Promise<NegociacaoLinha[]> {
@@ -76,7 +85,7 @@ export async function listarSaidasParaSelecao(): Promise<SaidaOpcao[]> {
   const { data } = await supabase.from('saidas').select('id, data, passeio_id').neq('situacao', 'cancelada').order('data', { ascending: false }).limit(200)
   const saidas = (data ?? []) as { id: string; data: string; passeio_id: string }[]
   if (saidas.length === 0) return []
-  const { data: passeios } = await supabase.from('passeios').select('id, nome').in('id', [...new Set(saidas.map((s) => s.passeio_id))])
+  const { data: passeios } = await emBlocos([...new Set(saidas.map((s) => s.passeio_id))], (b) => supabase.from('passeios').select('id, nome').in('id', b))
   const nome = new Map(((passeios ?? []) as { id: string; nome: string }[]).map((p) => [p.id, p.nome]))
   return saidas.map((s) => ({ id: s.id, rotulo: `${nome.get(s.passeio_id) ?? 'Passeio'} · ${s.data.split('-').reverse().join('/')}` }))
 }

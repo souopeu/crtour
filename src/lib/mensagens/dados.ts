@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { criarClienteServidor } from '@/lib/supabase/server'
 import { MENSAGENS_PASSEIO } from './config'
 import type { TipoMensagem } from './mensagensPasseio'
+import { emBlocos } from '@/lib/consultas/emBlocos'
 
 const configSchema = z.object({
   dias_lembrete: z.number(), dias_avaliacao: z.number(),
@@ -31,11 +32,11 @@ export async function filaMensagensPasseio(hoje: string, somenteDe?: string): Pr
   const itens = z.array(filaSchema).catch([]).parse(data ?? []).filter((i) => !somenteDe || i.vendedor_id === somenteDe)
   if (itens.length === 0) return []
   const [clientes, saidas] = await Promise.all([
-    supabase.from('clientes').select('id, nome, whatsapp, consentimento_whatsapp').in('id', [...new Set(itens.map((i) => i.cliente_id))]),
-    supabase.from('saidas').select('id, passeio_id').in('id', [...new Set(itens.map((i) => i.saida_id))]),
+    emBlocos([...new Set(itens.map((i) => i.cliente_id))], (b) => supabase.from('clientes').select('id, nome, whatsapp, consentimento_whatsapp').in('id', b)),
+    emBlocos([...new Set(itens.map((i) => i.saida_id))], (b) => supabase.from('saidas').select('id, passeio_id').in('id', b)),
   ])
   const s = z.array(z.object({ id: z.uuid(), passeio_id: z.uuid() })).catch([]).parse(saidas.data ?? [])
-  const passeios = await supabase.from('passeios').select('id, nome').in('id', [...new Set(s.map((x) => x.passeio_id))])
+  const passeios = await emBlocos([...new Set(s.map((x) => x.passeio_id))], (b) => supabase.from('passeios').select('id, nome').in('id', b))
   const cli = new Map(z.array(z.object({ id: z.uuid(), nome: z.string(), whatsapp: z.string().nullable(), consentimento_whatsapp: z.string() })).catch([]).parse(clientes.data ?? []).map((c) => [c.id, c]))
   const passeioDaSaida = new Map(s.map((x) => [x.id, x.passeio_id]))
   const nomePasseio = new Map(z.array(z.object({ id: z.uuid(), nome: z.string() })).catch([]).parse(passeios.data ?? []).map((p) => [p.id, p.nome]))

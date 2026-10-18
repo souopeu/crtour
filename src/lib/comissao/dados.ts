@@ -2,6 +2,7 @@ import 'server-only'
 import { z } from 'zod'
 import { criarClienteServidor } from '@/lib/supabase/server'
 import type { Regra } from './comissao'
+import { emBlocos } from '@/lib/consultas/emBlocos'
 
 const num = z.union([z.number(), z.string()]).transform(Number) // numeric columns may come as text
 const membroSchema = z.object({ user_id: z.uuid(), nome: z.string(), papel: z.enum(['dono', 'vendedor']), comissao_percentual: num })
@@ -33,11 +34,11 @@ export async function listarComissoes(mes: string): Promise<LinhaComissao[]> {
   const linhas = z.array(linhaSchema).catch([]).parse(data ?? [])
   if (linhas.length === 0) return []
   const [clientes, saidas] = await Promise.all([
-    supabase.from('clientes').select('id, nome').in('id', [...new Set(linhas.map((l) => l.cliente_id))]),
-    supabase.from('saidas').select('id, data, passeio_id').in('id', [...new Set(linhas.map((l) => l.saida_id))]),
+    emBlocos([...new Set(linhas.map((l) => l.cliente_id))], (b) => supabase.from('clientes').select('id, nome').in('id', b)),
+    emBlocos([...new Set(linhas.map((l) => l.saida_id))], (b) => supabase.from('saidas').select('id, data, passeio_id').in('id', b)),
   ])
   const s = z.array(z.object({ id: z.uuid(), data: z.string(), passeio_id: z.uuid() })).catch([]).parse(saidas.data ?? [])
-  const passeios = await supabase.from('passeios').select('id, nome').in('id', [...new Set(s.map((x) => x.passeio_id))])
+  const passeios = await emBlocos([...new Set(s.map((x) => x.passeio_id))], (b) => supabase.from('passeios').select('id, nome').in('id', b))
   const nomeCliente = new Map(z.array(z.object({ id: z.uuid(), nome: z.string() })).catch([]).parse(clientes.data ?? []).map((c) => [c.id, c.nome]))
   const nomePasseio = new Map(z.array(z.object({ id: z.uuid(), nome: z.string() })).catch([]).parse(passeios.data ?? []).map((p) => [p.id, p.nome]))
   const saida = new Map(s.map((x) => [x.id, x]))

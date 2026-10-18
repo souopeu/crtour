@@ -2,6 +2,7 @@ import 'server-only'
 import { listarMembros } from '@/lib/negociacoes/dados'
 import { criarClienteServidor } from '@/lib/supabase/server'
 import type { TipoAtividade } from '@/lib/atividades/atividades'
+import { emBlocos } from '@/lib/consultas/emBlocos'
 
 export type Limites = { dias_sem_contato: number; dias_negociacao_parada: number }
 export type ClienteContato = { id: string; nome: string; whatsapp: string | null; consentimento_whatsapp: string }
@@ -36,7 +37,7 @@ export async function listarPendentesAte(ate: string, somenteDe?: string): Promi
   if (linhas.length === 0) return []
 
   const [clientes, membros] = await Promise.all([
-    supabase.from('clientes').select('id, nome, whatsapp, consentimento_whatsapp').in('id', [...new Set(linhas.map((l) => l.cliente_id))]),
+    emBlocos([...new Set(linhas.map((l) => l.cliente_id))], (b) => supabase.from('clientes').select('id, nome, whatsapp, consentimento_whatsapp').in('id', b)),
     listarMembros(),
   ])
   const cliente = new Map(((clientes.data ?? []) as ClienteContato[]).map((c) => [c.id, c]))

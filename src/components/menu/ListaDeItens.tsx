@@ -17,6 +17,7 @@ export function ListaDeItens({ grupos, caminho, recolhido = false }: { grupos: G
               <Link
                 href={item.href}
                 aria-current={ativo ? 'page' : undefined}
+                title={recolhido ? item.rotulo : undefined}
                 className={`relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm hover:bg-superficie-suave aria-[current=page]:bg-primaria-suave aria-[current=page]:font-semibold aria-[current=page]:text-primaria ${recolhido ? 'justify-center' : ''}`}
               >
                 <IconeMenu nome={item.icone} />

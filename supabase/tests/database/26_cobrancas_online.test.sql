@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(16);
+select plan(18);
 
 insert into auth.users (id, email, raw_user_meta_data) values
   ('aaaaaaaa-0000-0000-0000-000000000001', 'a@test.dev', '{"agencia_nome":"Alfa","nome":"Dona Ana"}'),
@@ -16,15 +16,21 @@ insert into public.reservas (id, agencia_id, saida_id, cliente_id, qtd_pessoas, 
 
 select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-0000-0000-0000-000000000001","role":"authenticated"}', true);
 set local role authenticated;
--- R57: a member creates a pending charge, never above the balance
-select throws_ok($$select public.criar_cobranca_online('a7000000-0000-0000-0000-000000000001', 100001, 'falso', 'x1', 'https://pague.exemplo/x1', null)$$, 'CR007', null, 'charge above the balance is refused');
-select throws_ok($$select public.criar_cobranca_online('a7000000-0000-0000-0000-000000000001', 1000, 'falso', 'x1', 'http://inseguro/x1', null)$$, '23514', null, 'payment link must be https');
-select set_config('t.c1', public.criar_cobranca_online('a7000000-0000-0000-0000-000000000001', 60000, 'falso', 'x1', 'https://pague.exemplo/x1', null)::text, true);
-select is((select situacao::text || '|' || valor_centavos from public.cobrancas_online), 'pendente|60000', 'pending charge created');
+-- R57: only the server creates a charge (after the provider answered), so nobody can attach an arbitrary link by hand
+select throws_ok($$select public.criar_cobranca_online('aaaaaaaa-0000-0000-0000-000000000001', 'a7000000-0000-0000-0000-000000000001', 1000, 'falso', 'x0', 'https://pague.exemplo/x0', null)$$, '42501', null, 'a logged-in user cannot create a charge directly');
 -- A logged-in user can never mark it paid
 select throws_ok($$select public.confirmar_cobranca_online('falso', 'x1', 60000, 'pix', now())$$, '42501', null, 'users cannot confirm payments (only the server, with the provider notice)');
 select throws_ok($$update public.cobrancas_online set situacao = 'paga'$$, '42501', null, 'nor change the charge by hand');
 reset role;
+
+-- The server creates it on behalf of a member of the reservation's agency, never above the balance
+set local role service_role;
+select throws_ok($$select public.criar_cobranca_online('bbbbbbbb-0000-0000-0000-000000000002', 'a7000000-0000-0000-0000-000000000001', 1000, 'falso', 'x1', 'https://pague.exemplo/x1', null)$$, '42501', null, 'not on behalf of someone outside the agency');
+select throws_ok($$select public.criar_cobranca_online('aaaaaaaa-0000-0000-0000-000000000001', 'a7000000-0000-0000-0000-000000000001', 100001, 'falso', 'x1', 'https://pague.exemplo/x1', null)$$, 'CR007', null, 'charge above the balance is refused');
+select throws_ok($$select public.criar_cobranca_online('aaaaaaaa-0000-0000-0000-000000000001', 'a7000000-0000-0000-0000-000000000001', 1000, 'falso', 'x1', 'http://inseguro/x1', null)$$, '23514', null, 'payment link must be https');
+select set_config('t.c1', public.criar_cobranca_online('aaaaaaaa-0000-0000-0000-000000000001', 'a7000000-0000-0000-0000-000000000001', 60000, 'falso', 'x1', 'https://pague.exemplo/x1', null)::text, true);
+reset role;
+select is((select situacao::text || '|' || valor_centavos || '|' || criado_por from public.cobrancas_online), 'pendente|60000|aaaaaaaa-0000-0000-0000-000000000001', 'pending charge created, credited to the member');
 
 -- The server confirms (provider notice). Idempotent: same notice twice = one payment.
 select set_config('t.p1', public.confirmar_cobranca_online('falso', 'x1', 60000, 'pix', '2026-10-15 13:00-03')::text, true);
@@ -35,10 +41,12 @@ select is((select situacao::text || '|' || (pagamento_id::text = current_setting
 select throws_ok($$select public.confirmar_cobranca_online('falso', 'nao-existe', 100, 'pix', now())$$, 'P0002', null, 'unknown charge');
 
 -- Over the balance is refused even when the provider says it was paid
+set local role service_role;
+select set_config('t.c2', public.criar_cobranca_online('aaaaaaaa-0000-0000-0000-000000000001', 'a7000000-0000-0000-0000-000000000001', 40000, 'falso', 'x2', 'https://pague.exemplo/x2', null)::text, true);
+select set_config('t.c3', public.criar_cobranca_online('aaaaaaaa-0000-0000-0000-000000000001', 'a7000000-0000-0000-0000-000000000001', 40000, 'falso', 'x3', 'https://pague.exemplo/x3', null)::text, true);
+reset role;
 select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-0000-0000-0000-000000000001","role":"authenticated"}', true);
 set local role authenticated;
-select set_config('t.c2', public.criar_cobranca_online('a7000000-0000-0000-0000-000000000001', 40000, 'falso', 'x2', 'https://pague.exemplo/x2', null)::text, true);
-select set_config('t.c3', public.criar_cobranca_online('a7000000-0000-0000-0000-000000000001', 40000, 'falso', 'x3', 'https://pague.exemplo/x3', null)::text, true);
 select lives_ok(format('select public.cancelar_cobranca_online(%L)', current_setting('t.c3')), 'member cancels a pending charge');
 reset role;
 select throws_ok($$select public.confirmar_cobranca_online('falso', 'x2', 50000, 'cartao', now())$$, 'CR007', null, 'paid amount above the balance is refused');

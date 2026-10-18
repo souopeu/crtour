@@ -1,6 +1,7 @@
 import 'server-only'
 import { z } from 'zod'
 import { criarClienteServidor } from '@/lib/supabase/server'
+import { emBlocos } from '@/lib/consultas/emBlocos'
 
 const fornecedorSchema = z.object({ id: z.uuid(), nome: z.string(), tipo: z.enum(['transporte', 'hospedagem', 'guia', 'ingresso', 'alimentacao', 'outro']), contato: z.string().nullable() })
 const custoSchema = z.object({
@@ -19,7 +20,7 @@ export async function listarFornecedores(): Promise<Fornecedor[]> {
 async function custosDas(saidas: string[]): Promise<Custo[]> {
   if (saidas.length === 0) return []
   const supabase = await criarClienteServidor()
-  const { data } = await supabase.from('custos_saida').select('id, saida_id, fornecedor_id, descricao, valor_centavos, vencimento, pago_em').in('saida_id', saidas).order('criado_em')
+  const { data } = await emBlocos(saidas, (b) => supabase.from('custos_saida').select('id, saida_id, fornecedor_id, descricao, valor_centavos, vencimento, pago_em').in('saida_id', b).order('criado_em'))
   return z.array(custoSchema).catch([]).parse(data ?? [])
 }
 
@@ -27,7 +28,7 @@ async function custosDas(saidas: string[]): Promise<Custo[]> {
 async function receitaDas(saidas: string[]): Promise<Map<string, number>> {
   if (saidas.length === 0) return new Map()
   const supabase = await criarClienteServidor()
-  const { data } = await supabase.from('reservas').select('saida_id, valor_total_centavos').in('saida_id', saidas).eq('situacao', 'ativa')
+  const { data } = await emBlocos(saidas, (b) => supabase.from('reservas').select('saida_id, valor_total_centavos').in('saida_id', b).eq('situacao', 'ativa'))
   const linhas = z.array(z.object({ saida_id: z.uuid(), valor_total_centavos: z.number() })).catch([]).parse(data ?? [])
   const mapa = new Map<string, number>()
   for (const l of linhas) mapa.set(l.saida_id, (mapa.get(l.saida_id) ?? 0) + l.valor_total_centavos)

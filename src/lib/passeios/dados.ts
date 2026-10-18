@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { hojeNoBrasil } from '@/lib/formato'
 import type { PassageiroDaLista, ReservaDaLista } from '@/lib/passageiros/lista'
 import { criarClienteServidor } from '@/lib/supabase/server'
+import { emBlocos } from '@/lib/consultas/emBlocos'
 
 export type PasseioLinha = { id: string; nome: string; destino: string | null; descricao: string | null; arquivado: boolean }
 export type SaidaLinha = {
@@ -73,16 +74,16 @@ export async function listarReservas(saidaId: string): Promise<ReservaLinha[]> {
   const ids = [...new Set(reservas.map((r) => r.cliente_id))]
   const nomes = new Map<string, string>()
   if (ids.length > 0) {
-    const { data: clientes } = await supabase.from('clientes').select('id, nome').in('id', ids)
+    const { data: clientes } = await emBlocos(ids, (b) => supabase.from('clientes').select('id, nome').in('id', b))
     for (const c of (clientes ?? []) as { id: string; nome: string }[]) nomes.set(c.id, c.nome)
   }
   const porReserva = new Map<string, PassageiroLinha[]>()
   if (reservas.length > 0) {
-    const { data: ps } = await supabase
+    const { data: ps } = await emBlocos(reservas.map((r) => r.id), (b) => supabase
       .from('passageiros')
       .select('id, reserva_id, nome, whatsapp')
-      .in('reserva_id', reservas.map((r) => r.id))
-      .order('criado_em')
+      .in('reserva_id', b)
+      .order('criado_em'))
     for (const p of (ps ?? []) as (PassageiroLinha & { reserva_id: string })[]) {
       porReserva.set(p.reserva_id, [...(porReserva.get(p.reserva_id) ?? []), { id: p.id, nome: p.nome, whatsapp: p.whatsapp }])
     }
@@ -116,8 +117,8 @@ export async function listarPassageirosDaSaida(saidaId: string): Promise<{ reser
   if (base.length === 0) return { reservas: [], passageiros: [] }
 
   const [clientes, ps] = await Promise.all([
-    supabase.from('clientes').select('id, nome, whatsapp').in('id', [...new Set(base.map((r) => r.cliente_id))]),
-    supabase.from('passageiros').select('reserva_id, nome, whatsapp').in('reserva_id', base.map((r) => r.id)).order('criado_em'),
+    emBlocos([...new Set(base.map((r) => r.cliente_id))], (b) => supabase.from('clientes').select('id, nome, whatsapp').in('id', b)),
+    emBlocos(base.map((r) => r.id), (b) => supabase.from('passageiros').select('reserva_id, nome, whatsapp').in('reserva_id', b).order('criado_em')),
   ])
   const porCliente = new Map(((clientes.data ?? []) as { id: string; nome: string; whatsapp: string | null }[]).map((c) => [c.id, c]))
   return {

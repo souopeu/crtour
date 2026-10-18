@@ -2,6 +2,7 @@ import 'server-only'
 import { listarMembros } from '@/lib/negociacoes/dados'
 import { criarClienteServidor } from '@/lib/supabase/server'
 import type { StatusAtividade, TipoAtividade } from './atividades'
+import { emBlocos } from '@/lib/consultas/emBlocos'
 
 export type AtividadeLinha = {
   id: string; tipo: TipoAtividade; titulo: string; quando: string; status: StatusAtividade; feito_em: string | null
@@ -23,7 +24,7 @@ export async function listarAtividadesDoCliente(clienteId: string): Promise<Ativ
   const ids = [...new Set(linhas.map((l) => l.negociacao_id).filter(Boolean) as string[])]
   const [membros, negociacoes] = await Promise.all([
     listarMembros(),
-    ids.length ? supabase.from('negociacoes').select('id, titulo').in('id', ids) : Promise.resolve({ data: [] }),
+    emBlocos(ids, (b) => supabase.from('negociacoes').select('id, titulo').in('id', b)),
   ])
   const nomeMembro = new Map(membros.map((m) => [m.user_id, m.nome]))
   const tituloNegociacao = new Map(((negociacoes.data ?? []) as { id: string; titulo: string }[]).map((n) => [n.id, n.titulo]))

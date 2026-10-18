@@ -3,6 +3,7 @@ import { z } from 'zod'
 import type { FiltroCobranca } from './cobranca'
 import { passaFiltro } from './cobranca'
 import { criarClienteServidor } from '@/lib/supabase/server'
+import { emBlocos } from '@/lib/consultas/emBlocos'
 
 export type ReservaDetalhe = {
   id: string; saida_id: string; cliente_id: string; cliente_nome: string; qtd_pessoas: number
@@ -71,12 +72,12 @@ export async function listarCobrancas(filtro: FiltroCobranca, hoje: string): Pro
   if (reservas.length === 0) return []
 
   const [clientes, saidas] = await Promise.all([
-    supabase.from('clientes').select('id, nome, whatsapp, consentimento_whatsapp').in('id', [...new Set(reservas.map((r) => r.cliente_id))]),
-    supabase.from('saidas').select('id, data, passeio_id').in('id', [...new Set(reservas.map((r) => r.saida_id))]),
+    emBlocos([...new Set(reservas.map((r) => r.cliente_id))], (b) => supabase.from('clientes').select('id, nome, whatsapp, consentimento_whatsapp').in('id', b)),
+    emBlocos([...new Set(reservas.map((r) => r.saida_id))], (b) => supabase.from('saidas').select('id, data, passeio_id').in('id', b)),
   ])
   const porCliente = new Map(((clientes.data ?? []) as { id: string; nome: string; whatsapp: string | null; consentimento_whatsapp: string }[]).map((c) => [c.id, c]))
   const saidasLinhas = (saidas.data ?? []) as { id: string; data: string; passeio_id: string }[]
-  const passeios = await supabase.from('passeios').select('id, nome').in('id', [...new Set(saidasLinhas.map((s) => s.passeio_id))])
+  const passeios = await emBlocos([...new Set(saidasLinhas.map((s) => s.passeio_id))], (b) => supabase.from('passeios').select('id, nome').in('id', b))
   const nomePasseio = new Map(((passeios.data ?? []) as { id: string; nome: string }[]).map((p) => [p.id, p.nome]))
   const porSaida = new Map(saidasLinhas.map((s) => [s.id, s]))
 

@@ -36,6 +36,7 @@ export const PROBABILIDADE_PADRAO: Record<Etapa, number> = {
 
 export const rotuloDaEtapa = (etapa: Etapa) => ETAPAS.find((e) => e.valor === etapa)?.rotulo ?? etapa
 export const ehGanha = (etapa: Etapa) => etapa === 'pago' || etapa === 'viajou' || etapa === 'pos_venda'
+export const ETAPAS_ABERTAS: Etapa[] = VALORES_ETAPA.filter((e) => !ehGanha(e) && e !== 'perdido')
 
 const uuidOuNulo = (mensagem: string) =>
   z.string().trim().refine((v) => v === '' || z.uuid().safeParse(v).success, mensagem).transform((v) => (v === '' ? null : v))

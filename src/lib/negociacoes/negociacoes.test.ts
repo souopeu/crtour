@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
-  ETAPAS, MOTIVOS, PROBABILIDADE_PADRAO, agruparNegociacoes, ehGanha, negociacaoSchema, rotuloDaEtapa, rotuloDoMotivo, validarMovimento,
+  ETAPAS, ETAPAS_ABERTAS, MOTIVOS, PROBABILIDADE_PADRAO, agruparNegociacoes, ehGanha, negociacaoSchema, rotuloDaEtapa, rotuloDoMotivo, validarMovimento,
 } from './negociacoes'
 
 const uuid = 'a4000000-0000-4000-8000-000000000001'
@@ -17,6 +17,7 @@ describe('etapas', () => {
   test('won stages start at "pago"', () => {
     expect(['interessado', 'orcamento', 'reservado', 'perdido'].some((e) => ehGanha(e as never))).toBe(false)
     expect(['pago', 'viajou', 'pos_venda'].every((e) => ehGanha(e as never))).toBe(true)
+    expect(ETAPAS_ABERTAS).toEqual(['interessado', 'orcamento', 'reservado'])
   })
   test('loss reasons are fixed and labelled', () => {
     expect(MOTIVOS.map((m) => m.valor)).toEqual(['achou_caro', 'mudou_data', 'fechou_com_outro', 'sem_resposta', 'desistiu', 'outro'])

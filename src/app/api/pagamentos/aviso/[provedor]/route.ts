@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { obterProvedor, tratarAviso } from '@/lib/pagamento-online/pagamentoOnline'
+import { lerCorpoAte, obterProvedor, tratarAviso } from '@/lib/pagamento-online/pagamentoOnline'
 
 const MAX_BYTES = 64 * 1024 // provider notices are small
 
@@ -10,9 +10,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ pro
   const provedor = obterProvedor(process.env)
   if (!provedor) return new Response(null, { status: 404 })
   if (Number(request.headers.get('content-length') ?? 0) > MAX_BYTES) return new Response(null, { status: 413 })
+  const corpo = await lerCorpoAte(request, MAX_BYTES) // the header can be missing (chunked body)
+  if (corpo === null) return new Response(null, { status: 413 })
 
   const r = await tratarAviso({
-    provedor, nomeNaUrl, corpo: await request.text(), cabecalhos: request.headers,
+    provedor, nomeNaUrl, corpo, cabecalhos: request.headers,
     confirmar: async (d) => {
       const url = process.env.NEXT_PUBLIC_SUPABASE_URL
       const chave = process.env.SUPABASE_SERVICE_ROLE_KEY

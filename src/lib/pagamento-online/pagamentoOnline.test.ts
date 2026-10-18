@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { obterProvedor, tratarAviso, type ProvedorPagamento } from './pagamentoOnline'
+import { lerCorpoAte, obterProvedor, tratarAviso, type ProvedorPagamento } from './pagamentoOnline'
 
 // Fake provider: the notice body is JSON and the "signature" header must be "ok".
 const falso: ProvedorPagamento = {
@@ -62,5 +62,25 @@ describe('tratarAviso', () => {
     const confirmar = vi.fn()
     expect(await tratarAviso({ provedor: falso, nomeNaUrl: 'falso', corpo: '{', cabecalhos: assinado, confirmar })).toEqual({ status: 400 })
     expect(confirmar).not.toHaveBeenCalled()
+  })
+})
+
+describe('lerCorpoAte', () => {
+  const emPartes = (partes: string[]) => new Request('https://x.dev', {
+    method: 'POST',
+    body: new ReadableStream({ start(c) { for (const p of partes) c.enqueue(new TextEncoder().encode(p)); c.close() } }),
+    duplex: 'half',
+  } as RequestInit)
+
+  test('reads a small body', async () => {
+    expect(await lerCorpoAte(emPartes(['{"a":', '1}']), 64)).toBe('{"a":1}')
+  })
+
+  test('stops a body without content-length as soon as it passes the limit', async () => {
+    expect(await lerCorpoAte(emPartes(['x'.repeat(40), 'y'.repeat(40)]), 64)).toBeNull()
+  })
+
+  test('an empty request is an empty body', async () => {
+    expect(await lerCorpoAte(new Request('https://x.dev', { method: 'POST' }), 64)).toBe('')
   })
 })

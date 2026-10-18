@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { criarClienteServidor } from '@/lib/supabase/server'
 import { listarSaidasParaSelecao } from './dados'
 import { sugerirEtapas, type Sugestao } from './sugestoesReserva'
+import { emBlocos } from '@/lib/consultas/emBlocos'
 
 const ETAPAS_COM_SUGESTAO = ['interessado', 'orcamento', 'reservado'] as const
 const negSchema = z.object({ id: z.uuid(), cliente_id: z.uuid(), saida_id: z.uuid(), etapa: z.enum(ETAPAS_COM_SUGESTAO) })
@@ -24,8 +25,8 @@ export async function carregarSugestoes(negociacaoId?: string): Promise<Map<stri
 
   const clientes = [...new Set(negs.map((n) => n.cliente_id))]
   const [reservas, dispensas, saidas] = await Promise.all([
-    supabase.from('v_reservas_saldo').select('id, cliente_id, saida_id, situacao, valor_total_centavos, saldo_centavos, criada_em').in('cliente_id', clientes).eq('situacao', 'ativa'),
-    supabase.from('sugestoes_dispensadas').select('negociacao_id, reserva_id, para').in('negociacao_id', negs.map((n) => n.id)),
+    emBlocos(clientes, (b) => supabase.from('v_reservas_saldo').select('id, cliente_id, saida_id, situacao, valor_total_centavos, saldo_centavos, criada_em').in('cliente_id', b).eq('situacao', 'ativa')),
+    emBlocos(negs.map((n) => n.id), (b) => supabase.from('sugestoes_dispensadas').select('negociacao_id, reserva_id, para').in('negociacao_id', b)),
     listarSaidasParaSelecao(),
   ])
   const res = z.array(resSchema).catch([]).parse(reservas.data ?? [])

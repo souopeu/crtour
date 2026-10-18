@@ -5,6 +5,7 @@ import { POR_PAGINA, type Filtros } from './filtros'
 import type { LinhaCliente } from './formulario'
 import { sugestaoSchema, type Sugestao } from './sugestoes'
 import type { Viagem } from './viagens'
+import { emBlocos } from '@/lib/consultas/emBlocos'
 
 export const COLUNAS_CLIENTE =
   'nome, whatsapp, email, cidade, aniversario, origem, destinos_interesse, faixa_orcamento, qtd_pessoas, restricoes, passaporte_validade, consentimento_whatsapp'
@@ -111,15 +112,15 @@ export async function listarViagensDoCliente(clienteId: string): Promise<Viagem[
 
   let outras: { id: string; saida_id: string; qtd_pessoas: number; situacao: 'ativa' | 'cancelada' }[] = []
   if (comoAcompanhante.length > 0) {
-    const { data } = await supabase.from('v_reservas_saldo').select('id, saida_id, qtd_pessoas, situacao').in('id', comoAcompanhante)
+    const { data } = await emBlocos(comoAcompanhante, (b) => supabase.from('v_reservas_saldo').select('id, saida_id, qtd_pessoas, situacao').in('id', b))
     outras = (data ?? []) as typeof outras
   }
   const todas = [...proprias, ...outras]
   if (todas.length === 0) return []
 
-  const { data: saidas } = await supabase.from('saidas').select('id, data, passeio_id').in('id', [...new Set(todas.map((r) => r.saida_id))])
+  const { data: saidas } = await emBlocos([...new Set(todas.map((r) => r.saida_id))], (b) => supabase.from('saidas').select('id, data, passeio_id').in('id', b))
   const saidasLinhas = (saidas ?? []) as { id: string; data: string; passeio_id: string }[]
-  const { data: passeios } = await supabase.from('passeios').select('id, nome').in('id', [...new Set(saidasLinhas.map((s) => s.passeio_id))])
+  const { data: passeios } = await emBlocos([...new Set(saidasLinhas.map((s) => s.passeio_id))], (b) => supabase.from('passeios').select('id, nome').in('id', b))
   const nomePasseio = new Map(((passeios ?? []) as { id: string; nome: string }[]).map((p) => [p.id, p.nome]))
   const porSaida = new Map(saidasLinhas.map((s) => [s.id, s]))
 
