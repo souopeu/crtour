@@ -21,3 +21,10 @@ export async function atualizar(tabela: 'clientes' | 'negociacoes' | 'saidas', i
   const { error } = await admin().from(tabela).update(campos).eq('id', id)
   if (error) throw new Error(`atualizar ${tabela}: ${error.message}`)
 }
+
+// Files left in a folder of the private receipts bucket (spec 18, R95).
+export async function arquivosNaPasta(pasta: string): Promise<string[]> {
+  const { data, error } = await admin().storage.from('comprovantes').list(pasta)
+  if (error) throw new Error(`arquivosNaPasta: ${error.message}`)
+  return (data ?? []).map((f) => f.name)
+}

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { getAgenciaId } from '@/lib/auth/agencia'
+import { getAgenciaId, getMembro } from '@/lib/auth/agencia'
 import { urlDoSite } from '@/lib/auth/site'
 import { conviteSchema, gerarToken, hashToken, linkDoConvite } from '@/lib/equipe/equipe'
 import { getUsuario } from '@/lib/auth/usuario'
@@ -28,6 +28,19 @@ export async function excluirConta(_: EstadoForm, fd: FormData): Promise<EstadoF
   // Re-check the password: a stolen session alone must not be able to wipe the account.
   const { error: erroSenha } = await supabase.auth.signInWithPassword({ email: usuario.email, password: senha })
   if (erroSenha) return { campos: { senha: ['Senha incorreta.'] }, versao }
+
+  // Spec 18, R95: receipts are files, not rows, so they go first, while this session can still reach them.
+  // Owner check here too, so a seller's attempt never removes files before the database refuses her.
+  if ((await getMembro())?.papel !== 'dono') return { erro: 'Só o dono da agência pode excluir a conta.', versao }
+  const { data: comprovantes } = await supabase.from('comprovantes').select('caminho')
+  const caminhos = (comprovantes ?? []).map((c) => c.caminho as string)
+  for (let i = 0; i < caminhos.length; i += 100) {
+    const { error: erroArquivos } = await supabase.storage.from('comprovantes').remove(caminhos.slice(i, i + 100))
+    if (erroArquivos) {
+      console.error('excluirConta: comprovantes não apagados', erroArquivos.message)
+      return { erro: 'Não foi possível excluir a conta. Tente novamente em instantes.', versao }
+    }
+  }
 
   const { error } = await supabase.rpc('excluir_minha_conta')
   if (error) {

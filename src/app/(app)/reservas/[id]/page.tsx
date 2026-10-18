@@ -15,6 +15,8 @@ import { buscarVendedorDaReserva } from '@/lib/comissao/dados'
 import { listarMembros } from '@/lib/negociacoes/dados'
 import { VouchersReserva } from '@/components/vouchers/VouchersReserva'
 import { reservaQuitada } from '@/lib/vouchers/voucher'
+import { Comprovante } from '@/components/comprovantes/Comprovante'
+import { pagamentosComComprovante } from '@/lib/comprovantes/dados'
 
 export const metadata = { title: 'Reserva' }
 
@@ -34,6 +36,7 @@ async function Conteudo({ params }: Pick<PageProps<'/reservas/[id]'>, 'params'>)
   const reserva = await buscarReserva(id)
   if (!reserva) notFound()
   const [pagamentos, vendedorId, membros, membro] = await Promise.all([listarPagamentos(reserva.id), buscarVendedorDaReserva(reserva.id), listarMembros(), getMembro()])
+  const comComprovante = await pagamentosComComprovante(pagamentos.map((p) => p.id))
   const hoje = hojeNoBrasil()
   const ativa = reserva.situacao === 'ativa'
   const situacao = situacaoCobranca(reserva.saldo_centavos, reserva.vencimento_saldo, hoje)
@@ -84,6 +87,7 @@ async function Conteudo({ params }: Pick<PageProps<'/reservas/[id]'>, 'params'>)
                   </div>
                   {p.observacao && <p className="text-sm">{p.observacao}</p>}
                   {p.estornado && <p className="text-sm text-despesa">Estornado</p>}
+                  <Comprovante reservaId={reserva.id} pagamentoId={p.id} temComprovante={comComprovante.has(p.id)} />
                   {p.tipo !== 'estorno' && !p.estornado && (
                     <ConfirmarExclusao
                       acao={estornarPagamento.bind(null, reserva.id, p.id)}
