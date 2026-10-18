@@ -20,6 +20,8 @@ import { AvisoCriterioSumido } from '@/components/filtros/AvisoCriterioSumido'
 import { MeusFiltros } from '@/components/filtros/MeusFiltros'
 import { listarFiltrosSalvos } from '@/lib/filtros/dados'
 import { semPessoaInexistente } from '@/lib/filtros/filtrosSalvos'
+import { NEGOCIACOES } from '@/lib/negociacoes/config'
+import { ganhasRecentes } from '@/lib/negociacoes/fechadas'
 
 export const metadata = { title: 'Funil' }
 
@@ -62,6 +64,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/funil'>, 'searchParam
   const { filtro: f, sumiu } = semPessoaInexistente(lerFiltroFunil(await searchParams), membros.map((m) => m.user_id))
   const negociacoes = filtrarNegociacoes(todas, f)
   const hoje = hojeNoBrasil()
+  const ganhas = ganhasRecentes(negociacoes, hoje) // follows the toolbar filters, like the other totals
   const rotuloSaida = new Map(saidas.map((s) => [s.id, s.rotulo]))
   const grupos = agruparNegociacoes(
     negociacoes.map((n) => ({ id: n.id, etapa: n.etapa, valor: n.valor_centavos, previsto: n.valor_previsto_centavos, responsavelId: n.responsavel_id, responsavelNome: n.responsavel_nome })),
@@ -82,6 +85,12 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/funil'>, 'searchParam
       <Barra f={f} membros={membros} />
       <MeusFiltros tela="funil" atual={hrefFunil(f).split('?')[1] ?? ''} filtros={salvos} />
       {sumiu && <AvisoCriterioSumido />}
+      {todas.length > 0 && (
+        <p className="text-sm text-tinta-suave">
+          Fechadas nos últimos {NEGOCIACOES.DIAS_GANHAS_RECENTES} dias:{' '}
+          <strong className="text-tinta">{ganhas.quantidade} {ganhas.quantidade === 1 ? 'negociação' : 'negociações'} · {formatarReais(ganhas.valor)}</strong>
+        </p>
+      )}
 
       {todas.length === 0 ? (
         <EstadoVazio acoes={[{ href: '/negociacoes/novo', rotulo: 'Criar a primeira negociação' }, { href: '/', rotulo: 'Escolher um cliente' }]}>

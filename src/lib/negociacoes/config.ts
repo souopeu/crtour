@@ -5,4 +5,6 @@ export const NEGOCIACOES = {
   // Closed deals only feed history on the dashboard: the most recently moved ones are enough.
   MAX_FECHADAS: 2000,
   MAX_EVENTOS_PERDA: 5000,
+  // "Fechadas nos últimos 30 dias" at the top of the funnel (Capsule idea, rotina passo 2).
+  DIAS_GANHAS_RECENTES: 30,
 } as const
