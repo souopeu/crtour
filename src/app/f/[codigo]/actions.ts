@@ -1,7 +1,7 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { hashVisitante, lerEnvio, lerOrigemDoLink } from '@/lib/formulario/formulario'
+import { hashVisitante, lerEnvio, lerOrigemDoLink, PARAMETROS_DO_LINK } from '@/lib/formulario/formulario'
 import type { EstadoForm } from '@/lib/forms'
 import { criarClientePublico } from '@/lib/supabase/publico'
 
@@ -20,13 +20,14 @@ export async function enviarFormulario(_: EstadoForm, fd: FormData): Promise<Est
     if (r.robo) return { ok: OK, versao } // never tell a robot it was caught
     return { campos: Object.fromEntries(Object.entries(r.campos).map(([k, v]) => [k, [v]])), valores, versao }
   }
-  const origem = lerOrigemDoLink({ o: texto(fd, 'o'), utm_source: texto(fd, 'utm_source'), utm_campaign: texto(fd, 'utm_campaign') })
+  const origem = lerOrigemDoLink(Object.fromEntries(PARAMETROS_DO_LINK.map((k) => [k, texto(fd, k)])))
   const h = await headers()
   const ip = h.get('x-forwarded-for')?.split(',')[0]?.trim() || h.get('x-real-ip') || 'desconhecido'
   const { error } = await criarClientePublico().rpc('enviar_formulario_publico', {
     p_codigo: codigo, p_visitante: hashVisitante(ip, codigo), p_nome: r.dados.nome, p_whatsapp: r.dados.whatsapp,
     p_destino: r.dados.destino, p_pessoas: r.dados.pessoas, p_data: r.dados.data, p_mensagem: r.dados.mensagem,
     p_aceita: r.dados.aceita, p_origem: origem.origem, p_utm_fonte: origem.utmFonte, p_utm_campanha: origem.utmCampanha,
+    p_extras: { utm_midia: origem.utmMidia, utm_termo: origem.utmTermo, utm_conteudo: origem.utmConteudo, gclid: origem.gclid, fbclid: origem.fbclid },
   })
   if (error?.code === 'P0002') return { erro: 'Este formulário não está disponível.', versao }
   if (error?.code === 'CR016') return { erro: 'Recebemos muitos envios agora. Tente de novo mais tarde.', valores, versao }

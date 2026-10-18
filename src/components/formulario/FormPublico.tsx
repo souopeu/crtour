@@ -19,7 +19,7 @@ function Campo({ id, rotulo, erro, children }: { id: string; rotulo: string; err
   )
 }
 
-type Props = { codigo: string; origem: { o: string; utm_source: string; utm_campaign: string } }
+type Props = { codigo: string; origem: Record<string, string> }
 
 export function FormPublico({ codigo, origem }: Props) {
   const [estado, enviar] = useActionState<EstadoForm, FormData>(enviarFormulario, {})

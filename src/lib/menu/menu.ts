@@ -1,5 +1,5 @@
 export type IconeMenu =
-  | 'hoje' | 'funil' | 'clientes' | 'remarketing' | 'passeios' | 'calendario' | 'fornecedores'
+  | 'hoje' | 'funil' | 'clientes' | 'remarketing' | 'campanhas' | 'passeios' | 'calendario' | 'fornecedores'
   | 'cobrancas' | 'comissoes' | 'painel' | 'avisos' | 'configuracoes'
 
 export type ItemMenu = {
@@ -27,6 +27,7 @@ export function montarMenu(papel: PapelMenu, avisosNovos: number): GrupoMenu[] {
         item('/funil', 'Funil', 'funil', ['/negociacoes']),
         item('/', 'Clientes', 'clientes', ['/clientes', '/importar']),
         item('/remarketing', 'Remarketing', 'remarketing'),
+        item('/campanhas', 'Campanhas', 'campanhas'),
       ],
     },
     {

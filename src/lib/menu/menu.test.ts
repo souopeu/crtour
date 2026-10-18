@@ -10,7 +10,7 @@ describe('montarMenu', () => {
     const menu = montarMenu('dono', 0)
     expect(menu.map((g) => g.titulo)).toEqual([undefined, 'Vendas', 'Operação', 'Gestão'])
     expect(menu[0].itens.map((i) => i.rotulo)).toEqual(['Hoje'])
-    expect(menu[1].itens.map((i) => i.rotulo)).toEqual(['Funil', 'Clientes', 'Remarketing'])
+    expect(menu[1].itens.map((i) => i.rotulo)).toEqual(['Funil', 'Clientes', 'Remarketing', 'Campanhas'])
     expect(menu[2].itens.map((i) => i.rotulo)).toEqual(['Passeios', 'Calendário', 'Fornecedores', 'Cobranças', 'Comissões'])
     expect(menu[3].itens.map((i) => i.rotulo)).toEqual(['Painel', 'Avisos', 'Configurações'])
   })

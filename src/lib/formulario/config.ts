@@ -5,5 +5,6 @@ export const FORMULARIO = {
   MENSAGEM_MAX: 1000,
   PESSOAS_MAX: 500,
   UTM_MAX: 100,
+  CLIQUE_MAX: 255, // gclid / fbclid
   CAMPO_ISCA: 'site', // hidden from people; robots fill it
 } as const

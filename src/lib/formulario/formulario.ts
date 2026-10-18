@@ -39,13 +39,25 @@ type Parametros = Record<string, string | string[] | undefined>
 const um = (v: string | string[] | undefined) => (typeof v === 'string' ? v.trim() : '')
 const tag = (v: string | string[] | undefined) => opcional(um(v).slice(0, FORMULARIO.UTM_MAX))
 
-// R66: the link says where the visitor came from (?o=instagram) and which campaign (utm_*). Unknown origin = site.
+// Query parameters of the form link that say where the visitor came from (R66, R77).
+export const PARAMETROS_DO_LINK = ['o', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid'] as const
+const clique = (v: string | string[] | undefined) => opcional(um(v).slice(0, FORMULARIO.CLIQUE_MAX))
+
+// R66, R77: the link says where the visitor came from (?o=instagram), which campaign (utm_*) and the ad click
+// (gclid from Google, fbclid from Meta). Unknown origin = site, or anúncio when an ad click id is present.
 export function lerOrigemDoLink(p: Parametros) {
   const o = um(p.o)
+  const gclid = clique(p.gclid)
+  const fbclid = clique(p.fbclid)
   return {
-    origem: (ORIGENS as readonly string[]).includes(o) ? o : 'site',
+    origem: (ORIGENS as readonly string[]).includes(o) ? o : gclid || fbclid ? 'anuncio' : 'site',
     utmFonte: tag(p.utm_source),
     utmCampanha: tag(p.utm_campaign),
+    utmMidia: tag(p.utm_medium),
+    utmTermo: tag(p.utm_term),
+    utmConteudo: tag(p.utm_content),
+    gclid,
+    fbclid,
   }
 }
 

@@ -34,13 +34,19 @@ describe('lerEnvio', () => {
 
 describe('lerOrigemDoLink', () => {
   test('R66: known origin and campaign tags from the link', () => {
-    expect(lerOrigemDoLink({ o: 'instagram', utm_source: 'ig', utm_campaign: 'verao' })).toEqual({ origem: 'instagram', utmFonte: 'ig', utmCampanha: 'verao' })
+    expect(lerOrigemDoLink({ o: 'instagram', utm_source: 'ig', utm_campaign: 'verao' })).toMatchObject({ origem: 'instagram', utmFonte: 'ig', utmCampanha: 'verao' })
   })
   test('no or unknown origin is "site"; tags are trimmed and capped', () => {
-    expect(lerOrigemDoLink({})).toEqual({ origem: 'site', utmFonte: null, utmCampanha: null })
+    expect(lerOrigemDoLink({})).toEqual({ origem: 'site', utmFonte: null, utmCampanha: null, utmMidia: null, utmTermo: null, utmConteudo: null, gclid: null, fbclid: null })
     expect(lerOrigemDoLink({ o: 'tv', utm_source: ` ${'a'.repeat(150)} ` }).origem).toBe('site')
     expect(lerOrigemDoLink({ utm_source: 'a'.repeat(150) }).utmFonte).toHaveLength(100)
     expect(lerOrigemDoLink({ o: ['instagram', 'x'] }).origem).toBe('site')
+  })
+  test('R77: ad click ids and the other tags; a click without origin counts as an ad', () => {
+    const r = lerOrigemDoLink({ gclid: ' Cj0KCQ ', utm_medium: 'cpc', utm_term: 'passeio', utm_content: 'video' })
+    expect(r).toMatchObject({ origem: 'anuncio', gclid: 'Cj0KCQ', utmMidia: 'cpc', utmTermo: 'passeio', utmConteudo: 'video', fbclid: null })
+    expect(lerOrigemDoLink({ o: 'instagram', fbclid: 'x' }).origem).toBe('instagram')
+    expect(lerOrigemDoLink({ fbclid: 'f'.repeat(300) }).fbclid).toHaveLength(255)
   })
 })
 

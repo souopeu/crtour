@@ -3,11 +3,12 @@ import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 import { FormPublico } from '@/components/formulario/FormPublico'
 import { Carregando } from '@/components/Carregando'
+import { PARAMETROS_DO_LINK } from '@/lib/formulario/formulario'
 import { criarClientePublico } from '@/lib/supabase/publico'
 
 export const metadata: Metadata = { title: 'Fale com a agência', robots: { index: false, follow: false } }
 
-const um = (v: string | string[] | undefined) => (typeof v === 'string' ? v.slice(0, 100) : '')
+const um = (v: string | string[] | undefined) => (typeof v === 'string' ? v.slice(0, 255) : '')
 
 async function Conteudo({ params, searchParams }: PageProps<'/f/[codigo]'>) {
   const [{ codigo }, sp] = await Promise.all([params, searchParams])
@@ -20,7 +21,7 @@ async function Conteudo({ params, searchParams }: PageProps<'/f/[codigo]'>) {
       <p className="text-sm font-semibold uppercase tracking-wide text-primaria">{form.agencia}</p>
       <h1 className="text-2xl font-bold tracking-tight">{form.titulo}</h1>
       {form.texto && <p className="whitespace-pre-line text-tinta-suave">{form.texto}</p>}
-      <FormPublico codigo={codigo} origem={{ o: um(sp.o), utm_source: um(sp.utm_source), utm_campaign: um(sp.utm_campaign) }} />
+      <FormPublico codigo={codigo} origem={Object.fromEntries(PARAMETROS_DO_LINK.map((k) => [k, um(sp[k])]))} />
     </>
   )
 }
