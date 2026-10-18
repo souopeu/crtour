@@ -1,0 +1,19 @@
+// Values still to be filled in by the owner before any real use. While one of them keeps a
+// "[PREENCHER" / "[CONFIRMAR" marker, the legal pages show a "draft" warning.
+export const PENDENTES = {
+  controlador: '[PREENCHER: nome ou razão social e CPF/CNPJ do responsável pelo crTOUR]',
+  contato: '[PREENCHER: e-mail de contato e do encarregado de dados]',
+  foro: '[PREENCHER: comarca do foro]',
+  regiao: '[CONFIRMAR: país e região dos servidores do banco de dados]',
+  backups: '[CONFIRMAR: prazo de retenção de backups]',
+  eliminacao: '[CONFIRMAR COM ADVOGADO: como atender um pedido de eliminação de um cliente que já tem reserva ou pagamento registrado]',
+  responsabilidade: '[PREENCHER: limites de responsabilidade, revisados por advogado]',
+  whatsapp: '[CONFIRMAR: qual provedor da API do WhatsApp (Meta ou parceiro) e onde ele guarda os dados, antes de ligar a integração]',
+  email: '[CONFIRMAR: serviço de envio de e-mails (Resend ou Brevo) antes do lançamento]',
+}
+
+export const VERSAO_TEXTO = '18/10/2026 (rascunho)'
+
+export function temPendencias(valores: Record<string, string> = PENDENTES): boolean {
+  return Object.values(valores).some((v) => v.includes('[PREENCHER') || v.includes('[CONFIRMAR'))
+}
