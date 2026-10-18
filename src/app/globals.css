@@ -12,6 +12,7 @@
   --tinta-suave: #556078;
   --linha: #e2e7f1;
   --controle: #727a8d;
+  --marca: #1d4ed8;
   --primaria: #1d4ed8;
   --primaria-suave: #e3ecff;
   --destaque: #facc15;
@@ -22,6 +23,24 @@
   --despesa-suave: #fde8e6;
   --alerta: #8b4a00;
   --alerta-suave: #fff0d6;
+  --lateral-largura: 15rem;
+  --lateral-recolhida: 4.25rem;
+  --linha-tabela: 2.25rem;
+  --etapa-texto: #11141c;
+  --etapa-interessado: #a5b4fc;
+  --etapa-orcamento: #93c5fd;
+  --etapa-reservado: #67e8f9;
+  --etapa-pago: #86efac;
+  --etapa-viajou: #4ade80;
+  --etapa-pos-venda: #d9f99d;
+  --etapa-perdido: #cbd5e1;
+  --etapa-interessado-borda: #4f46e5;
+  --etapa-orcamento-borda: #2563eb;
+  --etapa-reservado-borda: #0e7490;
+  --etapa-pago-borda: #15803d;
+  --etapa-viajou-borda: #166534;
+  --etapa-pos-venda-borda: #4d7c0f;
+  --etapa-perdido-borda: #64748b;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -41,6 +60,13 @@
     --despesa-suave: #3a1f1c;
     --alerta: #f0b25a;
     --alerta-suave: #3b2c12;
+    --etapa-interessado-borda: #818cf8;
+    --etapa-orcamento-borda: #60a5fa;
+    --etapa-reservado-borda: #22d3ee;
+    --etapa-pago-borda: #4ade80;
+    --etapa-viajou-borda: #22c55e;
+    --etapa-pos-venda-borda: #a3e635;
+    --etapa-perdido-borda: #94a3b8;
   }
 }
 
@@ -52,6 +78,7 @@
   --color-tinta-suave: var(--tinta-suave);
   --color-linha: var(--linha);
   --color-controle: var(--controle);
+  --color-marca: var(--marca);
   --color-primaria: var(--primaria);
   --color-primaria-suave: var(--primaria-suave);
   --color-destaque: var(--destaque);
@@ -62,6 +89,21 @@
   --color-despesa-suave: var(--despesa-suave);
   --color-alerta: var(--alerta);
   --color-alerta-suave: var(--alerta-suave);
+  --color-etapa-texto: var(--etapa-texto);
+  --color-etapa-interessado: var(--etapa-interessado);
+  --color-etapa-interessado-borda: var(--etapa-interessado-borda);
+  --color-etapa-orcamento: var(--etapa-orcamento);
+  --color-etapa-orcamento-borda: var(--etapa-orcamento-borda);
+  --color-etapa-reservado: var(--etapa-reservado);
+  --color-etapa-reservado-borda: var(--etapa-reservado-borda);
+  --color-etapa-pago: var(--etapa-pago);
+  --color-etapa-pago-borda: var(--etapa-pago-borda);
+  --color-etapa-viajou: var(--etapa-viajou);
+  --color-etapa-viajou-borda: var(--etapa-viajou-borda);
+  --color-etapa-pos-venda: var(--etapa-pos-venda);
+  --color-etapa-pos-venda-borda: var(--etapa-pos-venda-borda);
+  --color-etapa-perdido: var(--etapa-perdido);
+  --color-etapa-perdido-borda: var(--etapa-perdido-borda);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --radius-cartao: 1rem;
 }

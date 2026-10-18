@@ -36,7 +36,7 @@ test('suppliers, costs per departure, margin on the departure and on the panel',
 
   // Suppliers
   await page.goto('/passeios')
-  await page.getByRole('link', { name: 'Fornecedores' }).click()
+  await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Fornecedores' }).click()
   await expect(page.getByText(/Nenhum fornecedor ainda/)).toBeVisible()
   const novo = page.getByRole('form', { name: 'Novo fornecedor' })
   await novo.getByRole('button', { name: 'Cadastrar fornecedor' }).click()
