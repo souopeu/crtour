@@ -31,6 +31,13 @@ describe('montarMenu', () => {
     expect(new Set(todos).size).toBe(todos.length)
   })
 
+  it('shows Atendimento with the unread count only when WhatsApp is connected (R107)', () => {
+    expect(hrefs(montarMenu('vendedor', 0))).not.toContain('/atendimento')
+    const vendas = montarMenu('vendedor', 0, 4)[1].itens
+    expect(vendas[0]).toMatchObject({ href: '/atendimento', rotulo: 'Atendimento', novos: 4 })
+    expect(montarMenu('dono', 0, 0)[1].itens[0].novos).toBe(0)
+  })
+
   it('gives each entry an icon so the collapsed menu still shows something', () => {
     for (const item of montarMenu('dono', 0).flatMap((g) => g.itens)) expect(item.icone).toBeTruthy()
   })

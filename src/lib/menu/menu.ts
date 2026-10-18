@@ -1,5 +1,5 @@
 export type IconeMenu =
-  | 'hoje' | 'funil' | 'clientes' | 'remarketing' | 'campanhas' | 'passeios' | 'calendario' | 'fornecedores'
+  | 'hoje' | 'atendimento' | 'funil' | 'clientes' | 'remarketing' | 'campanhas' | 'passeios' | 'calendario' | 'fornecedores'
   | 'cobrancas' | 'comissoes' | 'painel' | 'avisos' | 'configuracoes'
 
 export type ItemMenu = {
@@ -18,12 +18,14 @@ export type PapelMenu = 'dono' | 'vendedor'
 const item = (href: string, rotulo: string, icone: IconeMenu, alcance: readonly string[] = [], novos?: number): ItemMenu =>
   ({ href, rotulo, icone, alcance: [href, ...alcance], novos })
 
-export function montarMenu(papel: PapelMenu, avisosNovos: number): GrupoMenu[] {
+// `atendimento` is the unread count of the WhatsApp inbox, or null when the agency has no number connected (R107: no entry at all).
+export function montarMenu(papel: PapelMenu, avisosNovos: number, atendimento: number | null = null): GrupoMenu[] {
   return [
     { itens: [item('/hoje', 'Hoje', 'hoje')] },
     {
       titulo: 'Vendas',
       itens: [
+        ...(atendimento === null ? [] : [item('/atendimento', 'Atendimento', 'atendimento', [], atendimento)]),
         item('/funil', 'Funil', 'funil', ['/negociacoes']),
         item('/', 'Clientes', 'clientes', ['/clientes', '/importar']),
         item('/remarketing', 'Remarketing', 'remarketing'),

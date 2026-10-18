@@ -27,7 +27,7 @@ export const MOTIVOS: { valor: Motivo; rotulo: string }[] = [
 ]
 export const rotuloDoMotivo = (m: Motivo) => MOTIVOS.find((x) => x.valor === m)?.rotulo ?? m
 const VALORES_MOTIVO = MOTIVOS.map((m) => m.valor) as [Motivo, ...Motivo[]]
-const VALORES_ETAPA = ETAPAS.map((e) => e.valor) as [Etapa, ...Etapa[]]
+export const VALORES_ETAPA = ETAPAS.map((e) => e.valor) as [Etapa, ...Etapa[]]
 
 // Mirror of private.probabilidade_padrao in the database (the database is the source of truth).
 export const PROBABILIDADE_PADRAO: Record<Etapa, number> = {

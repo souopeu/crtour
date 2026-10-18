@@ -3,6 +3,7 @@ import type { IconeMenu as Nome } from '@/lib/menu/menu'
 // Own simple outline icons (24x24, 1.75 stroke), so no icon library is needed.
 const DESENHOS: Record<Nome | 'recolher', React.ReactNode> = {
   hoje: <><rect x="3" y="4.5" width="18" height="16.5" rx="2" /><path d="M3 10h18M8 2.5v4M16 2.5v4M9 15.5l2 2 4-4" /></>,
+  atendimento: <path d="M4 5h16v11H9l-4 3.5V16H4z" />,
   funil: <path d="M3 4h18l-7 8.5V19l-4 2v-8.5z" />,
   clientes: <><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" /><circle cx="17" cy="9" r="2.5" /><path d="M17 14c2.8 0 4.5 1.9 4.5 4.5" /></>,
   remarketing: <><path d="M3 10v4h3l8 5V5L6 10z" /><path d="M17.5 9a4 4 0 0 1 0 6" /></>,
