@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { dentroDaJanela, obterProvedorWhatsapp, referenciaParaBanco, tratarAvisoWhatsapp, type ProvedorWhatsapp } from './whatsapp'
+import { chamadaDoAviso, dentroDaJanela, obterProvedorWhatsapp, referenciaParaBanco, tratarAvisoWhatsapp, type ProvedorWhatsapp } from './whatsapp'
 
 // Fake provider: JSON body, "x-assinatura: ok" header.
 const falso: ProvedorWhatsapp = {
@@ -20,7 +20,8 @@ describe('obterProvedorWhatsapp', () => {
   test('no provider configured: the feature does not exist', () => {
     expect(obterProvedorWhatsapp({}, registro)).toBeNull()
     expect(obterProvedorWhatsapp({ WHATSAPP_PROVEDOR: 'nao-existe' }, registro)).toBeNull()
-    expect(obterProvedorWhatsapp({ WHATSAPP_PROVEDOR: 'falso' })).toBeNull() // the real registry is empty
+    expect(obterProvedorWhatsapp({ WHATSAPP_PROVEDOR: 'falso' })).toBeNull() // the real registry has no fake (only meta)
+    expect(obterProvedorWhatsapp({ WHATSAPP_PROVEDOR: 'meta' })?.nome).toBe('meta')
   })
   test('known provider sends text and templates', async () => {
     const p = obterProvedorWhatsapp({ WHATSAPP_PROVEDOR: 'falso' }, registro)!
@@ -88,5 +89,16 @@ describe('dentroDaJanela', () => {
     expect(dentroDaJanela('2026-10-17T12:00:01Z', agora)).toBe(true)
     expect(dentroDaJanela('2026-10-17T11:59:59Z', agora)).toBe(false)
     expect(dentroDaJanela(null, agora)).toBe(false)
+  })
+})
+
+describe('chamadaDoAviso', () => {
+  test('each notice goes to its database function', () => {
+    expect(chamadaDoAviso({ tipo: 'eco', conta: 'PN-1', idExterno: 'e1', para: '5511999990001', texto: 'Oi', em: 'x', provedor: 'meta' })).toEqual({
+      funcao: 'whatsapp_registrar_eco', args: { p_provedor: 'meta', p_conta: 'PN-1', p_id_externo: 'e1', p_para: '5511999990001', p_texto: 'Oi', p_enviada_em: 'x' },
+    })
+    const h = chamadaDoAviso({ tipo: 'historico', conta: 'PN-1', provedor: 'meta', conversas: [{ numero: '5511999990002', mensagens: [{ id: 'h1', doCliente: true, texto: 'Oi', em: 'x' }] }] })
+    expect(h).toEqual({ funcao: 'whatsapp_importar_historico', args: { p_provedor: 'meta', p_conta: 'PN-1', p_conversas: [{ numero: '5511999990002', nome: null, mensagens: [{ id: 'h1', do_cliente: true, texto: 'Oi', em: 'x' }] }] } })
+    expect(chamadaDoAviso({ tipo: 'status', idExterno: 'e1', situacao: 'lida', provedor: 'meta' }).funcao).toBe('whatsapp_status')
   })
 })

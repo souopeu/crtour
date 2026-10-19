@@ -5,7 +5,7 @@ import { AtualizarSozinho } from '@/components/atendimento/AtualizarSozinho'
 import { ConversaAberta } from '@/components/atendimento/ConversaAberta'
 import { ListaConversas } from '@/components/atendimento/ListaConversas'
 import { lerFiltrosAtendimento, regraDeEnvio } from '@/lib/atendimento/atendimento'
-import { buscarConversa, contarConversas, listarConversas, temCanalWhatsapp } from '@/lib/atendimento/dados'
+import { buscarConversa, canalWhatsapp, contarConversas, listarConversas } from '@/lib/atendimento/dados'
 import { getMembro } from '@/lib/auth/agencia'
 import { listarEtiquetas } from '@/lib/clientes/dados'
 import { listarMembros } from '@/lib/negociacoes/dados'
@@ -28,7 +28,7 @@ function SemWhatsapp() {
 }
 
 async function Conteudo({ searchParams }: Pick<PageProps<'/atendimento'>, 'searchParams'>) {
-  const [sp, membro, canal] = await Promise.all([searchParams, getMembro(), temCanalWhatsapp()])
+  const [sp, membro, canal] = await Promise.all([searchParams, getMembro(), canalWhatsapp()])
   if (!membro) return null
   if (!canal) return <SemWhatsapp />
   const ehDono = membro.papel === 'dono'
@@ -37,7 +37,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/atendimento'>, 'searc
     listarConversas(filtros), contarConversas(), listarEtiquetas(), listarMembros(), filtros.conversa ? buscarConversa(filtros.conversa) : Promise.resolve(null),
   ])
   const agora = new Date()
-  const regra = conversa && regraDeEnvio({ temProvedor: provedorDeEnvio(process.env) !== null, consentimento: conversa.consentimento, ultimaRecebidaEm: conversa.ultimaRecebidaEm, agora })
+  const regra = conversa && regraDeEnvio({ somenteLeitura: canal.modo === 'leitura', temProvedor: provedorDeEnvio(process.env, canal.provedor) !== null, consentimento: conversa.consentimento, ultimaRecebidaEm: conversa.ultimaRecebidaEm, agora })
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
       <AtualizarSozinho />

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { provedorMeta } from './meta'
 
 // E5-8 (R73): WhatsApp provider seam. With no provider configured the feature does not exist: no screen changes
 // and the notice route answers 404. Plugging Meta's Cloud API or a BSP = adding it to PROVEDORES_WHATSAPP (E5-9).
@@ -12,6 +13,16 @@ const avisoSchema = z.discriminatedUnion('tipo', [
     }).nullable().optional(),
   }),
   z.object({ tipo: z.literal('status'), idExterno: z.string().min(1).max(200), situacao: z.enum(['enviada', 'entregue', 'lida', 'falhou']) }),
+  // Spec 21, R112: what the agency sent from the WhatsApp Business app (coexistence).
+  z.object({ tipo: z.literal('eco'), conta: z.string().min(1).max(200), idExterno: z.string().min(1).max(200), para: z.string().regex(/^\d{10,15}$/), texto: z.string().max(4096), em: z.string() }),
+  // Spec 21, R113: the last 180 days, sent once after connecting.
+  z.object({
+    tipo: z.literal('historico'), conta: z.string().min(1).max(200),
+    conversas: z.array(z.object({
+      numero: z.string().regex(/^\d{10,15}$/),
+      mensagens: z.array(z.object({ id: z.string().min(1).max(200), doCliente: z.boolean(), texto: z.string().max(4096), em: z.string() })),
+    })),
+  }),
 ])
 export type AvisoWhatsapp = z.infer<typeof avisoSchema>
 
@@ -24,7 +35,7 @@ export interface ProvedorWhatsapp {
 }
 
 type Fabrica = (env: Record<string, string | undefined>) => ProvedorWhatsapp
-export const PROVEDORES_WHATSAPP: Record<string, Fabrica> = {} // none yet
+export const PROVEDORES_WHATSAPP: Record<string, Fabrica> = { meta: provedorMeta } // spec 21: Meta's official Cloud API
 
 export function obterProvedorWhatsapp(env: Record<string, string | undefined>, registro: Record<string, Fabrica> = PROVEDORES_WHATSAPP): ProvedorWhatsapp | null {
   const nome = env.WHATSAPP_PROVEDOR?.trim()
@@ -65,4 +76,24 @@ const JANELA_MS = 24 * 60 * 60 * 1000
 // Free text is allowed only within 24 h of the client's last message; outside it, only approved templates.
 export function dentroDaJanela(ultimaRecebidaEm: string | null, agora: Date = new Date()): boolean {
   return ultimaRecebidaEm !== null && agora.getTime() - Date.parse(ultimaRecebidaEm) <= JANELA_MS
+}
+
+// Which database function stores each notice, with its arguments (the route calls it with the service key).
+export function chamadaDoAviso(a: AvisoWhatsapp & { provedor: string }): { funcao: string; args: Record<string, unknown> } {
+  switch (a.tipo) {
+    case 'mensagem':
+      return { funcao: 'whatsapp_receber', args: { p_provedor: a.provedor, p_conta: a.conta, p_id_externo: a.idExterno, p_de: a.de, p_nome: a.nome, p_texto: a.texto, p_recebida_em: a.em, p_referencia: referenciaParaBanco(a.referencia) } }
+    case 'status':
+      return { funcao: 'whatsapp_status', args: { p_provedor: a.provedor, p_id_externo: a.idExterno, p_situacao: a.situacao } }
+    case 'eco':
+      return { funcao: 'whatsapp_registrar_eco', args: { p_provedor: a.provedor, p_conta: a.conta, p_id_externo: a.idExterno, p_para: a.para, p_texto: a.texto, p_enviada_em: a.em } }
+    case 'historico':
+      return {
+        funcao: 'whatsapp_importar_historico',
+        args: {
+          p_provedor: a.provedor, p_conta: a.conta,
+          p_conversas: a.conversas.map((c) => ({ numero: c.numero, nome: null, mensagens: c.mensagens.map((m) => ({ id: m.id, do_cliente: m.doCliente, texto: m.texto, em: m.em })) })),
+        },
+      }
+  }
 }

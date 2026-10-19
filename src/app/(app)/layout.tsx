@@ -11,7 +11,7 @@ import { exigirUsuario } from '@/lib/auth/usuario'
 import { COOKIE_LATERAL, VALOR_RECOLHIDA } from '@/lib/menu/config'
 import { montarMenu } from '@/lib/menu/menu'
 import { contarAvisosNaoLidos } from '@/lib/negociacoes/dados'
-import { contarConversas, temCanalWhatsapp } from '@/lib/atendimento/dados'
+import { canalWhatsapp, contarConversas } from '@/lib/atendimento/dados'
 
 function Carregando() {
   return <div aria-busy="true" aria-label="Carregando" className="min-h-screen bg-papel" />
@@ -36,7 +36,7 @@ async function Casca({ children }: { children: React.ReactNode }) {
   if (!membro) return <SemAgencia email={usuario.email ?? ''} />
   // R107: the inbox entry exists only with a WhatsApp number connected; its badge counts conversations with unread messages.
   const [avisosNovos, canal, contagem] = await Promise.all([
-    membro.papel === 'dono' ? contarAvisosNaoLidos() : Promise.resolve(0), temCanalWhatsapp(), contarConversas(),
+    membro.papel === 'dono' ? contarAvisosNaoLidos() : Promise.resolve(0), canalWhatsapp(), contarConversas(),
   ])
   const atendimento = canal ? [...contagem.entries()].filter(([aba]) => aba !== 'arquivadas').reduce((s, [, n]) => s + n, 0) : null
   const grupos = montarMenu(membro.papel, avisosNovos, atendimento)

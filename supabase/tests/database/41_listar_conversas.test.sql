@@ -19,7 +19,7 @@ insert into public.clientes (id, agencia_id, nome, whatsapp) values
 insert into public.etiquetas (id, agencia_id, nome, cor) values ('e1000000-0000-0000-0000-000000000001', current_setting('t.alfa')::uuid, 'Europa', '#0f7b5f');
 insert into public.cliente_etiquetas (cliente_id, etiqueta_id, agencia_id) values ('a1000000-0000-0000-0000-000000000001', 'e1000000-0000-0000-0000-000000000001', current_setting('t.alfa')::uuid);
 insert into public.negociacoes (agencia_id, cliente_id, titulo, etapa) values (current_setting('t.alfa')::uuid, 'a1000000-0000-0000-0000-000000000001', 'Lisboa', 'orcamento');
-insert into public.canais_whatsapp (agencia_id, provedor, conta) values (current_setting('t.alfa')::uuid, 'falso', 'num-alfa');
+insert into public.canais_whatsapp (agencia_id, provedor, conta, modo) values (current_setting('t.alfa')::uuid, 'falso', 'num-alfa', 'envio');
 
 set local role service_role;
 select public.whatsapp_receber('falso', 'num-alfa', 'w' || i, '551199999000' || i, null, 'Oi ' || i, now() - make_interval(mins => 10 - i)) from generate_series(1, 4) i;

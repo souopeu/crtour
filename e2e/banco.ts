@@ -30,12 +30,14 @@ export async function arquivosNaPasta(pasta: string): Promise<string[]> {
 }
 
 // Spec 19, Fatia 2: connects a fake WhatsApp number to the agency (looked up by its unique name) and returns the account id.
-export async function ligarWhatsappFalso(nomeAgencia: string): Promise<string> {
+// Spec 21: `provedor: 'meta'` makes a read-only channel like the official connection would (conta = phone number id).
+export async function ligarWhatsappFalso(nomeAgencia: string, opcoes: { provedor?: 'falso' | 'meta'; modo?: 'leitura' | 'envio' } = {}): Promise<string> {
   const db = admin()
   const { data: ag, error } = await db.from('agencias').select('id').eq('nome', nomeAgencia).single()
   if (error) throw new Error(`ligarWhatsappFalso: ${error.message}`)
-  const conta = `num-${ag.id.slice(0, 8)}`
-  const r = await db.from('canais_whatsapp').insert({ agencia_id: ag.id, provedor: 'falso', conta })
+  const provedor = opcoes.provedor ?? 'falso'
+  const conta = `${provedor === 'meta' ? 'PN' : 'num'}-${ag.id.slice(0, 8)}`
+  const r = await db.from('canais_whatsapp').insert({ agencia_id: ag.id, provedor, conta, modo: opcoes.modo ?? (provedor === 'meta' ? 'leitura' : 'envio') })
   if (r.error) throw new Error(`ligarWhatsappFalso: ${r.error.message}`)
   return conta
 }

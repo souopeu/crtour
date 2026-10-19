@@ -87,12 +87,13 @@ describe('hrefAtendimento', () => {
 })
 
 describe('regraDeEnvio', () => {
-  const base = { temProvedor: true, consentimento: 'aceitou' as const, ultimaRecebidaEm: '2026-10-18T10:00:00-03:00', agora: AGORA }
+  const base = { somenteLeitura: false, temProvedor: true, consentimento: 'aceitou' as const, ultimaRecebidaEm: '2026-10-18T10:00:00-03:00', agora: AGORA }
   test('inside the 24 h window, with consent and a provider: free text', () => {
     expect(regraDeEnvio(base)).toEqual({ ok: true })
     expect(regraDeEnvio({ ...base, consentimento: 'nao_informado' })).toEqual({ ok: true }) // the client wrote first
   })
   test('each block says why', () => {
+    expect(regraDeEnvio({ ...base, somenteLeitura: true })).toEqual({ ok: false, motivo: 'Responda pelo WhatsApp do celular. A resposta aparece aqui em alguns segundos.' })
     expect(regraDeEnvio({ ...base, temProvedor: false })).toEqual({ ok: false, motivo: 'O envio pelo crTOUR ainda não está ligado. Por enquanto, responda pelo WhatsApp.' })
     expect(regraDeEnvio({ ...base, consentimento: 'pediu_saida' })).toEqual({ ok: false, motivo: 'Este cliente pediu para não receber mensagens.' })
     expect(regraDeEnvio({ ...base, ultimaRecebidaEm: '2026-10-17T14:00:00-03:00' })).toEqual({

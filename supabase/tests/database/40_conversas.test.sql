@@ -18,7 +18,7 @@ select set_config('t.alfa', (select agencia_id::text from public.membros where u
 insert into public.clientes (id, agencia_id, nome, whatsapp, consentimento_whatsapp) values
   ('a1000000-0000-0000-0000-000000000001', current_setting('t.alfa')::uuid, 'Ana', '5511999990001', 'aceitou');
 insert into public.etiquetas (id, agencia_id, nome) values ('e1000000-0000-0000-0000-000000000001', current_setting('t.alfa')::uuid, 'Europa');
-insert into public.canais_whatsapp (agencia_id, provedor, conta) values (current_setting('t.alfa')::uuid, 'falso', 'num-alfa');
+insert into public.canais_whatsapp (agencia_id, provedor, conta, modo) values (current_setting('t.alfa')::uuid, 'falso', 'num-alfa', 'envio');
 
 create function pg_temp.como(p_user uuid) returns void language sql as $$
   select set_config('request.jwt.claims', json_build_object('sub', p_user, 'role', 'authenticated')::text, true);

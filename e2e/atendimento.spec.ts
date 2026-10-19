@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto'
 import { expect, test } from '@playwright/test'
 import { atualizar, conversaDoNumero, criarVendedora, diasAtras, ligarWhatsappFalso, receberWhatsapp } from './banco'
 
@@ -132,4 +133,59 @@ test('atendimento: reply, provider failure, live update, 24 h window and opt-out
   await page.reload()
   await expect(conversa.getByText('Este cliente pediu para não receber mensagens.')).toBeVisible()
   await expect(conversa.getByLabel('Responder')).toHaveCount(0)
+})
+
+// Spec 21 (W1): official WhatsApp in coexistence, read only. Notices signed with the app secret, as Meta sends them.
+test('atendimento: official notices (message from an ad, echo from the phone, history) in read-only mode', async ({ page, request }) => {
+  const SEGREDO = 'segredo-e2e-local' // same test-only secret as playwright.config.ts
+  const agencia = `Agência oficial ${Date.now()}`
+  await page.goto('/cadastro')
+  await page.getByLabel('Seu nome').fill('Pedro Dono')
+  await page.getByLabel('Nome da agência').fill(agencia)
+  await page.getByLabel('E-mail', { exact: true }).fill(`e2e-oficial-${Date.now()}@teste.dev`)
+  await page.getByLabel('Senha', { exact: true }).fill('senha1234')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Criar conta' }).click()
+  await expect(page.getByRole('link', { name: 'Painel' })).toBeVisible()
+  const conta = await ligarWhatsappFalso(agencia, { provedor: 'meta' })
+  const n = String(Date.now()).slice(-8)
+  const cliente = `5511${n}`
+  const agora = Math.floor(Date.now() / 1000)
+
+  // R111: Meta's one-time check, only for our token
+  expect((await request.get('/api/whatsapp/aviso/meta?hub.mode=subscribe&hub.verify_token=token-e2e-local&hub.challenge=4242')).status()).toBe(200)
+  expect((await request.get('/api/whatsapp/aviso/meta?hub.mode=subscribe&hub.verify_token=errado&hub.challenge=4242')).status()).toBe(403)
+
+  const metadata = { display_phone_number: '5511900000000', phone_number_id: conta }
+  const enviar = (field: string, value: object, segredo = SEGREDO) => {
+    const corpo = JSON.stringify({ object: 'whatsapp_business_account', entry: [{ id: 'WABA', changes: [{ field, value: { messaging_product: 'whatsapp', metadata, ...value } }] }] })
+    const assinatura = `sha256=${createHmac('sha256', segredo).update(corpo).digest('hex')}`
+    return request.post('/api/whatsapp/aviso/meta', { data: corpo, headers: { 'content-type': 'application/json', 'x-hub-signature-256': assinatura } })
+  }
+
+  // A forged notice is refused and stores nothing
+  expect((await enviar('messages', { messages: [{ from: cliente, id: `wamid.F${n}`, timestamp: String(agora), type: 'text', text: { body: 'falso' } }] }, 'outro')).status()).toBe(401)
+
+  // R113: history first (180 days), then a message from an ad, then the agency's answer from the phone (R112)
+  expect((await enviar('history', { history: [{ metadata: { phase: 0, chunk_order: 1, progress: 100 }, threads: [{ id: cliente, messages: [
+    { from: cliente, id: `wamid.H1${n}`, timestamp: String(agora - 30 * 86_400), type: 'text', text: { body: 'Vocês fazem Bonito?' }, history_context: { status: 'READ' } },
+    { from: '5511900000000', id: `wamid.H2${n}`, timestamp: String(agora - 30 * 86_400 + 60), type: 'text', text: { body: 'Fazemos sim, em março' }, history_context: { status: 'READ' } },
+  ] }] }] })).status()).toBe(200)
+  expect((await enviar('messages', {
+    contacts: [{ profile: { name: 'Júlia Prado' }, wa_id: cliente }],
+    messages: [{ from: cliente, id: `wamid.M${n}`, timestamp: String(agora - 60), type: 'text', text: { body: 'Vi o anúncio de Gramado!' },
+      referral: { source_url: 'https://fb.me/x', source_id: '120200', source_type: 'ad', headline: 'Gramado no inverno', ctwa_clid: `CLID${n}` } }],
+  })).status()).toBe(200)
+  expect((await enviar('smb_message_echoes', { message_echoes: [{ from: '5511900000000', to: cliente, id: `wamid.E${n}`, timestamp: String(agora), type: 'text', text: { body: 'Oi Júlia! Te mando o roteiro.' } }] })).status()).toBe(200)
+
+  await page.goto('/atendimento')
+  await page.getByRole('list', { name: 'Conversas' }).getByRole('link', { name: /Contato do WhatsApp|Júlia/ }).click()
+  const historico = page.getByRole('list', { name: 'Mensagens e eventos' })
+  await expect(historico).toContainText('Vocês fazem Bonito?')
+  await expect(historico).toContainText('Vi o anúncio de Gramado!')
+  await expect(historico).toContainText('Chegou pelo anúncio "Gramado no inverno"')
+  await expect(historico.getByRole('listitem').filter({ hasText: 'Oi Júlia! Te mando o roteiro.' }).last()).toContainText('pelo celular')
+  // R114: read only, the reply box is replaced by the explanation
+  await expect(page.getByText('Responda pelo WhatsApp do celular. A resposta aparece aqui em alguns segundos.')).toBeVisible()
+  await expect(page.getByLabel('Responder')).toHaveCount(0)
 })

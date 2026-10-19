@@ -18,12 +18,16 @@ const itemSchema = z.object({
 })
 export type ItemConversa = z.infer<typeof itemSchema>
 
-// R107: the inbox exists only for an agency with a WhatsApp number connected.
-export async function temCanalWhatsapp(): Promise<boolean> {
+const canalSchema = z.object({ provedor: z.string(), modo: z.enum(['leitura', 'envio']), situacao: z.enum(['conectado', 'desconectado']) })
+export type CanalWhatsapp = z.infer<typeof canalSchema>
+
+// R107: the inbox exists only for an agency with a WhatsApp number; spec 21: its mode says whether crTOUR may send.
+export async function canalWhatsapp(): Promise<CanalWhatsapp | null> {
   const supabase = await criarClienteServidor()
-  const { data, error } = await supabase.from('canais_whatsapp').select('agencia_id').maybeSingle()
-  if (error) console.error('temCanalWhatsapp falhou', error.code)
-  return Boolean(data)
+  const { data, error } = await supabase.from('canais_whatsapp').select('provedor, modo, situacao').maybeSingle()
+  if (error) console.error('canalWhatsapp falhou', error.code)
+  const r = canalSchema.safeParse(data)
+  return r.success ? r.data : null
 }
 
 // R102, R103: the list of one tab (RLS keeps a seller to new conversations and her own).
@@ -45,7 +49,7 @@ export async function contarConversas(): Promise<Map<string, number>> {
 }
 
 const mensagemSchema = z.object({
-  id: z.uuid(), direcao, texto: z.string().nullable(), modelo: z.string().nullable(), situacao: situacaoMsg, criada_em: z.string(),
+  id: z.uuid(), direcao, texto: z.string().nullable(), modelo: z.string().nullable(), situacao: situacaoMsg, criada_em: z.string(), pelo_celular: z.boolean(),
 })
 const eventoSchema = z.object({
   id: z.uuid(), tipo: z.enum(['assumiu', 'transferiu', 'arquivou', 'reabriu', 'etiqueta_adicionada', 'etiqueta_removida', 'chegou_por_anuncio']),
@@ -75,7 +79,7 @@ export async function buscarConversa(id: string) {
   if (!conversa.success) return null
   const clienteId = conversa.data.cliente_id
   const [msgs, evs, etapas, tags, aberta] = await Promise.all([
-    supabase.from('mensagens_whatsapp').select('id, direcao, texto, modelo, situacao, criada_em').eq('cliente_id', clienteId)
+    supabase.from('mensagens_whatsapp').select('id, direcao, texto, modelo, situacao, criada_em, pelo_celular').eq('cliente_id', clienteId)
       .order('criada_em', { ascending: false }).limit(ATENDIMENTO.LIMITE_MENSAGENS),
     supabase.from('eventos_conversa').select('id, tipo, autor_id, para_id, detalhe, criado_em').eq('conversa_id', id).order('criado_em'),
     supabase.from('negociacao_eventos').select('id, de, para, em, negociacoes!inner(titulo, cliente_id)').eq('negociacoes.cliente_id', clienteId)

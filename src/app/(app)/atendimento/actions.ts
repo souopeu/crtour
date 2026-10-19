@@ -67,12 +67,13 @@ export async function enviarMensagem(id: string, _: EstadoForm, fd: FormData): P
   if (!texto.success) return { campos: { texto: [texto.error.issues[0].message] }, valores, versao }
 
   const [supabase, membro] = await Promise.all([criarClienteServidor(), getMembro()])
+  const { data: canal } = await supabase.from('canais_whatsapp').select('provedor, modo').maybeSingle()
   const { data } = await supabase.from('conversas').select('cliente_id, ultima_recebida_em, clientes!inner(whatsapp, consentimento_whatsapp)').eq('id', id).maybeSingle()
   const alvo = alvoSchema.safeParse(data)
-  if (!membro || !alvo.success || !alvo.data.clientes.whatsapp) return { erro: SEM_ACESSO, valores, versao }
+  if (!membro || !alvo.success || !alvo.data.clientes.whatsapp || !canal) return { erro: SEM_ACESSO, valores, versao }
 
-  const provedor = provedorDeEnvio(process.env)
-  const regra = regraDeEnvio({ temProvedor: provedor !== null, consentimento: alvo.data.clientes.consentimento_whatsapp, ultimaRecebidaEm: alvo.data.ultima_recebida_em })
+  const provedor = provedorDeEnvio(process.env, canal.provedor)
+  const regra = regraDeEnvio({ somenteLeitura: canal.modo !== 'envio', temProvedor: provedor !== null, consentimento: alvo.data.clientes.consentimento_whatsapp, ultimaRecebidaEm: alvo.data.ultima_recebida_em })
   if (!regra.ok || !provedor) return { erro: regra.ok ? ERRO : regra.motivo, valores, versao }
 
   let idExterno: string
@@ -89,7 +90,7 @@ export async function enviarMensagem(id: string, _: EstadoForm, fd: FormData): P
   const { error } = await createClient(url, chave, { auth: { persistSession: false } }).rpc('whatsapp_registrar_envio', {
     p_usuario: membro.user_id, p_cliente: alvo.data.cliente_id, p_provedor: provedor.nome, p_id_externo: idExterno, p_texto: texto.data, p_modelo: null,
   })
-  if (error) { console.error('enviarMensagem: registro falhou', error.code); return { erro: 'A mensagem foi enviada, mas não ficou registrada aqui.', versao } }
+  if (error) { console.error('enviarMensagem: registro falhou', error.code); return { erro: 'A mensagem foi enviada, mas não ficou registrada aqui.', versao } } // CR010 cannot happen here: the mode was checked above
   revalidatePath('/atendimento')
   return { ok: 'Mensagem enviada.', versao }
 }

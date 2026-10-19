@@ -19,7 +19,10 @@ function provedorFalsoLocal(env: Env): ProvedorWhatsapp | null {
   }
 }
 
-// The provider used to send from the inbox: the configured one, else the local test fake, else none.
-export function provedorDeEnvio(env: Env): ProvedorWhatsapp | null {
-  return obterProvedorWhatsapp(env) ?? provedorFalsoLocal(env)
+// The provider that sends for a channel: the local test fake for a 'falso' channel, else the configured provider
+// when it is the channel's own; none otherwise.
+export function provedorDeEnvio(env: Env, provedorDoCanal: string): ProvedorWhatsapp | null {
+  if (provedorDoCanal === 'falso') return provedorFalsoLocal(env)
+  const configurado = obterProvedorWhatsapp(env)
+  return configurado?.nome === provedorDoCanal ? configurado : null
 }

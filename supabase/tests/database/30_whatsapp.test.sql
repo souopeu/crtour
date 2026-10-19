@@ -9,7 +9,7 @@ select set_config('t.alfa', (select agencia_id::text from public.membros where u
 insert into public.clientes (id, agencia_id, nome, whatsapp, consentimento_whatsapp) values
   ('a1000000-0000-0000-0000-000000000001', current_setting('t.alfa')::uuid, 'Ana', '5511999990001', 'aceitou'),
   ('a1000000-0000-0000-0000-000000000003', current_setting('t.alfa')::uuid, 'Caio', '5511999990003', 'pediu_saida');
-insert into public.canais_whatsapp (agencia_id, provedor, conta) values (current_setting('t.alfa')::uuid, 'falso', 'num-alfa');
+insert into public.canais_whatsapp (agencia_id, provedor, conta, modo) values (current_setting('t.alfa')::uuid, 'falso', 'num-alfa', 'envio');
 
 -- R73: only the server (service key, after checking the provider's signature) writes what comes from WhatsApp
 set local role service_role;

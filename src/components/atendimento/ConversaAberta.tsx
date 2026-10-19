@@ -85,7 +85,7 @@ function Balao({ m }: { m: Conversa['mensagens'][number] & { em: string } }) {
       <span className="sr-only">{enviada ? 'Enviada' : 'Recebida'}:</span>
       <span className="whitespace-pre-wrap break-words">{m.texto ?? (m.modelo ? `Modelo: ${m.modelo}` : '(sem texto)')}</span>
       <span className={`self-end text-xs ${m.situacao === 'falhou' ? 'text-despesa' : 'text-tinta-suave'}`}>
-        {hora(m.em)}{marca && <> · {marca.simbolo}<span className="sr-only"> {marca.texto}</span></>}
+        {m.pelo_celular && 'pelo celular · '}{hora(m.em)}{marca && <> · {marca.simbolo}<span className="sr-only"> {marca.texto}</span></>}
       </span>
     </li>
   )

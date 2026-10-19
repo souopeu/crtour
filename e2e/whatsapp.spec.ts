@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test'
 
-test('WhatsApp: without a configured provider the notice route does not exist and no screen changes (R73)', async ({ request, page }) => {
-  const r = await request.post('/api/whatsapp/aviso/meta', { data: [{ tipo: 'mensagem' }], maxRedirects: 0 })
+// The e2e server has the Meta provider configured (spec 21); any other provider name has no route.
+test('WhatsApp: a provider that is not configured has no notice route and no screen changes (R73)', async ({ request, page }) => {
+  const r = await request.post('/api/whatsapp/aviso/outro', { data: [{ tipo: 'mensagem' }], maxRedirects: 0 })
   expect(r.status()).toBe(404)
   expect((await request.post('/api/whatsapp/avisoX', { maxRedirects: 0 })).status()).toBe(307)
 

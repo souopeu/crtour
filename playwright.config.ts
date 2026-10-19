@@ -27,7 +27,11 @@ export default defineConfig({
     reuseExistingServer: true,
     // E-mailed links use a configured base URL in production builds.
     // WHATSAPP_FALSO_LOCAL: the inbox sends through a fake provider (only works against the local database).
-    env: { NEXT_PUBLIC_SITE_URL: 'http://localhost:3100', WHATSAPP_FALSO_LOCAL: '1', SUPABASE_SERVICE_ROLE_KEY: chaveServicoLocal() },
+    // WHATSAPP_PROVEDOR=meta with test-only secrets: e2e posts notices signed like Meta's (spec 21).
+    env: {
+      NEXT_PUBLIC_SITE_URL: 'http://localhost:3100', WHATSAPP_FALSO_LOCAL: '1', SUPABASE_SERVICE_ROLE_KEY: chaveServicoLocal(),
+      WHATSAPP_PROVEDOR: 'meta', WHATSAPP_META_APP_SECRET: 'segredo-e2e-local', WHATSAPP_META_VERIFY_TOKEN: 'token-e2e-local',
+    },
     timeout: 180_000,
   },
 })
