@@ -1,13 +1,15 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { Carregando } from '@/components/Carregando'
+import { AtualizarSozinho } from '@/components/atendimento/AtualizarSozinho'
 import { ConversaAberta } from '@/components/atendimento/ConversaAberta'
 import { ListaConversas } from '@/components/atendimento/ListaConversas'
-import { lerFiltrosAtendimento } from '@/lib/atendimento/atendimento'
+import { lerFiltrosAtendimento, regraDeEnvio } from '@/lib/atendimento/atendimento'
 import { buscarConversa, contarConversas, listarConversas, temCanalWhatsapp } from '@/lib/atendimento/dados'
 import { getMembro } from '@/lib/auth/agencia'
 import { listarEtiquetas } from '@/lib/clientes/dados'
 import { listarMembros } from '@/lib/negociacoes/dados'
+import { provedorDeEnvio } from '@/lib/whatsapp/falso'
 
 export const metadata = { title: 'Atendimento' }
 
@@ -35,14 +37,16 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/atendimento'>, 'searc
     listarConversas(filtros), contarConversas(), listarEtiquetas(), listarMembros(), filtros.conversa ? buscarConversa(filtros.conversa) : Promise.resolve(null),
   ])
   const agora = new Date()
+  const regra = conversa && regraDeEnvio({ temProvedor: provedorDeEnvio(process.env) !== null, consentimento: conversa.consentimento, ultimaRecebidaEm: conversa.ultimaRecebidaEm, agora })
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
+      <AtualizarSozinho />
       <div className={filtros.conversa ? 'hidden lg:block' : ''}>
         <ListaConversas filtros={filtros} itens={itens} naoLidas={naoLidas} ehDono={ehDono} etiquetas={etiquetas} agora={agora} />
       </div>
       <div className={filtros.conversa ? '' : 'hidden lg:block'}>
         {conversa ? (
-          <ConversaAberta conversa={conversa} filtros={filtros} membros={membros} meuId={membro.user_id} agora={agora} />
+          <ConversaAberta conversa={conversa} filtros={filtros} membros={membros} meuId={membro.user_id} agora={agora} bloqueio={regra && !regra.ok ? regra.motivo : null} />
         ) : filtros.conversa ? (
           <p role="status" className="rounded-(--radius-cartao) border border-linha bg-superficie p-4 text-sm">Conversa não encontrada ou não está mais com você.</p>
         ) : (

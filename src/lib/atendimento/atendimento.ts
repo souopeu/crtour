@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { diaNoBrasil, formatarDataBr } from '@/lib/formato'
+import { dentroDaJanela } from '@/lib/whatsapp/whatsapp'
 import { ATENDIMENTO } from './config'
 
 export const ABAS = [
@@ -115,4 +116,17 @@ export function hrefAtendimento(f: FiltrosAtendimento, m: Partial<FiltrosAtendim
   if (n.conversa) p.set('c', n.conversa)
   const qs = p.toString()
   return qs ? `/atendimento?${qs}` : '/atendimento'
+}
+
+type RegraEnvio = { temProvedor: boolean; consentimento: 'aceitou' | 'nao_informado' | 'pediu_saida'; ultimaRecebidaEm: string | null; agora?: Date }
+
+// R105: free text only inside 24 h of the client's last message, never to who asked to leave, only with a provider.
+// The server action applies the same rule before sending; the screen uses it to explain why the field is off.
+export function regraDeEnvio(r: RegraEnvio): { ok: true } | { ok: false; motivo: string } {
+  if (!r.temProvedor) return { ok: false, motivo: 'O envio pelo crTOUR ainda não está ligado. Por enquanto, responda pelo WhatsApp.' }
+  if (r.consentimento === 'pediu_saida') return { ok: false, motivo: 'Este cliente pediu para não receber mensagens.' }
+  if (!dentroDaJanela(r.ultimaRecebidaEm, r.agora)) {
+    return { ok: false, motivo: 'Passou de 24 h desde a última mensagem do cliente: só dá para enviar modelo aprovado.' }
+  }
+  return { ok: true }
 }

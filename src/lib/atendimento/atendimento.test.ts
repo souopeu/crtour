@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { hrefAtendimento, iniciais, lerFiltrosAtendimento, linhaDoTempo, marcaDeEnvio, tempoRelativo, textoDoEvento } from './atendimento'
+import { hrefAtendimento, iniciais, regraDeEnvio, lerFiltrosAtendimento, linhaDoTempo, marcaDeEnvio, tempoRelativo, textoDoEvento } from './atendimento'
 
 const AGORA = new Date('2026-10-18T15:00:00-03:00') // Sunday
 
@@ -83,5 +83,21 @@ describe('hrefAtendimento', () => {
   test('the default tab has a clean link', () => expect(hrefAtendimento(base, {})).toBe('/atendimento'))
   test('keeps search and tag, adds the conversation', () => {
     expect(hrefAtendimento({ ...base, aba: 'meus', q: 'ana silva' }, { conversa: 'c1' })).toBe('/atendimento?aba=meus&q=ana+silva&c=c1')
+  })
+})
+
+describe('regraDeEnvio', () => {
+  const base = { temProvedor: true, consentimento: 'aceitou' as const, ultimaRecebidaEm: '2026-10-18T10:00:00-03:00', agora: AGORA }
+  test('inside the 24 h window, with consent and a provider: free text', () => {
+    expect(regraDeEnvio(base)).toEqual({ ok: true })
+    expect(regraDeEnvio({ ...base, consentimento: 'nao_informado' })).toEqual({ ok: true }) // the client wrote first
+  })
+  test('each block says why', () => {
+    expect(regraDeEnvio({ ...base, temProvedor: false })).toEqual({ ok: false, motivo: 'O envio pelo crTOUR ainda não está ligado. Por enquanto, responda pelo WhatsApp.' })
+    expect(regraDeEnvio({ ...base, consentimento: 'pediu_saida' })).toEqual({ ok: false, motivo: 'Este cliente pediu para não receber mensagens.' })
+    expect(regraDeEnvio({ ...base, ultimaRecebidaEm: '2026-10-17T14:00:00-03:00' })).toEqual({
+      ok: false, motivo: 'Passou de 24 h desde a última mensagem do cliente: só dá para enviar modelo aprovado.',
+    })
+    expect(regraDeEnvio({ ...base, ultimaRecebidaEm: null }).ok).toBe(false)
   })
 })

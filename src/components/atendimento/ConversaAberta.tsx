@@ -7,15 +7,16 @@ import type { MembroLinha } from '@/lib/negociacoes/dados'
 import { COR_ETAPA } from '@/components/negociacoes/coresEtapa'
 import { formatarWhatsapp } from '@/lib/clientes/rotulos'
 import { AcoesConversa } from './AcoesConversa'
+import { CampoResposta } from './CampoResposta'
 import { EtiquetaCor } from './EtiquetaCor'
 import { MarcarLida } from './MarcarLida'
 
-type Props = { conversa: Conversa; filtros: FiltrosAtendimento; membros: MembroLinha[]; meuId: string; agora: Date }
+type Props = { conversa: Conversa; filtros: FiltrosAtendimento; membros: MembroLinha[]; meuId: string; agora: Date; bloqueio: string | null }
 
 const hora = (iso: string) => formatarDataHora(iso).slice(-5)
 
 // R104: the open conversation: header, actions, then messages and events by day (Virtus Fig. 4, Helena Fig. 7–8).
-export function ConversaAberta({ conversa: c, filtros, membros, meuId, agora }: Props) {
+export function ConversaAberta({ conversa: c, filtros, membros, meuId, agora, bloqueio }: Props) {
   const nomes = new Map(membros.map((m) => [m.user_id, m.nome]))
   const responsavel = c.responsavelId ? nomes.get(c.responsavelId) ?? 'Pessoa removida' : null
   const ultimoEvento = c.eventos[c.eventos.length - 1]
@@ -71,7 +72,7 @@ export function ConversaAberta({ conversa: c, filtros, membros, meuId, agora }: 
           </li>
         ))}
       </ol>
-      <p className="border-t border-linha pt-3 text-sm text-tinta-suave">Responder pelo crTOUR chega na próxima etapa. Por enquanto, responda pelo WhatsApp.</p>
+      <CampoResposta id={c.id} bloqueio={bloqueio} />
     </section>
   )
 }

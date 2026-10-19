@@ -17,7 +17,7 @@ function admin() {
 
 export const diasAtras = (dias: number) => new Date(Date.now() - dias * 86_400_000).toISOString()
 
-export async function atualizar(tabela: 'clientes' | 'negociacoes' | 'saidas', id: string, campos: Record<string, string>) {
+export async function atualizar(tabela: 'clientes' | 'negociacoes' | 'saidas' | 'conversas', id: string, campos: Record<string, string>) {
   const { error } = await admin().from(tabela).update(campos).eq('id', id)
   if (error) throw new Error(`atualizar ${tabela}: ${error.message}`)
 }
@@ -58,4 +58,11 @@ export async function criarVendedora(nomeAgencia: string, nome: string) {
   if (propria) await db.from('agencias').delete().eq('id', propria.agencia_id)
   const r = await db.from('membros').insert({ user_id: u.user.id, agencia_id: ag.id, papel: 'vendedor', nome })
   if (r.error) throw new Error(`criarVendedora: ${r.error.message}`)
+}
+
+// The conversation id of a client, looked up by the client's WhatsApp number.
+export async function conversaDoNumero(whatsapp: string): Promise<{ id: string; clienteId: string }> {
+  const { data, error } = await admin().from('clientes').select('id, conversas(id)').eq('whatsapp', whatsapp).single()
+  if (error || !data) throw new Error(`conversaDoNumero: ${error?.message}`)
+  return { id: (data.conversas as { id: string }[])[0].id, clienteId: data.id }
 }

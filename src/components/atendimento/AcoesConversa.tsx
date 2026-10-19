@@ -15,7 +15,7 @@ export function AcoesConversa({ id, meuId, responsavelId, arquivada, membros }: 
   const [assumido, assumir, assumindo] = useActionState<EstadoForm>(assumirConversa.bind(null, id), {})
   const [transferido, transferir, transferindo] = useActionState<EstadoForm, FormData>(transferirConversa.bind(null, id), {})
   const [arquivado, arquivar, arquivando] = useActionState<EstadoForm>(arquivarConversa.bind(null, id), {})
-  const outros = membros.filter((m) => m.user_id !== responsavelId)
+  const outros = membros.filter((m) => m.user_id !== responsavelId && m.user_id !== meuId)
   const [para, setPara] = useState(outros[0]?.user_id ?? '')
   const estado = [transferido, assumido, arquivado].find((e) => e.erro || e.ok) ?? {}
   return (

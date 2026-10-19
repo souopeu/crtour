@@ -55,7 +55,8 @@ const etapaEventoSchema = z.object({ id: z.uuid(), de: etapa.nullable(), para: e
 
 const cabecalhoSchema = z.object({
   id: z.uuid(), cliente_id: z.uuid(), responsavel_id: z.uuid().nullable(), situacao: z.enum(['aberta', 'arquivada']), nao_lidas: z.coerce.number(),
-  clientes: z.object({ nome: z.string(), whatsapp: z.string().nullable() }),
+  ultima_recebida_em: z.string().nullable(),
+  clientes: z.object({ nome: z.string(), whatsapp: z.string().nullable(), consentimento_whatsapp: z.enum(['aceitou', 'nao_informado', 'pediu_saida']) }),
 })
 
 export type MensagemConversa = z.infer<typeof mensagemSchema>
@@ -68,7 +69,7 @@ export type Conversa = NonNullable<Awaited<ReturnType<typeof buscarConversa>>>
 export async function buscarConversa(id: string) {
   const supabase = await criarClienteServidor()
   const { data: linha, error } = await supabase.from('conversas')
-    .select('id, cliente_id, responsavel_id, situacao, nao_lidas, clientes!inner(nome, whatsapp)').eq('id', id).maybeSingle()
+    .select('id, cliente_id, responsavel_id, situacao, nao_lidas, ultima_recebida_em, clientes!inner(nome, whatsapp, consentimento_whatsapp)').eq('id', id).maybeSingle()
   if (error) console.error('buscarConversa falhou', error.code)
   const conversa = cabecalhoSchema.safeParse(linha)
   if (!conversa.success) return null
@@ -93,6 +94,8 @@ export async function buscarConversa(id: string) {
     responsavelId: conversa.data.responsavel_id,
     situacao: conversa.data.situacao,
     naoLidas: conversa.data.nao_lidas,
+    ultimaRecebidaEm: conversa.data.ultima_recebida_em,
+    consentimento: conversa.data.clientes.consentimento_whatsapp,
     etiquetas: z.array(z.object({ etiquetas: etiqueta })).catch([]).parse(tags.data ?? []).map((t) => t.etiquetas),
     etapa: z.object({ etapa }).nullable().catch(null).parse(aberta.data ?? null)?.etapa ?? null,
     mensagens: z.array(mensagemSchema).catch([]).parse(msgs.data ?? []).reverse(),

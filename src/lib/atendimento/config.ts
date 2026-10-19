@@ -6,4 +6,6 @@ export const ATENDIMENTO = {
   LIMITE_MENSAGENS: 500,
   MAX_BUSCA: 100,
   MAX_ETIQUETAS_ITEM: 3,
+  // R106 (decided 19/10/2026 instead of Supabase Realtime): the open screen refreshes itself this often, and when the tab comes back.
+  ATUALIZAR_MS: 10_000,
 } as const

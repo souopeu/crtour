@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { criarVendedora, ligarWhatsappFalso, receberWhatsapp } from './banco'
+import { atualizar, conversaDoNumero, criarVendedora, diasAtras, ligarWhatsappFalso, receberWhatsapp } from './banco'
 
 // Spec 19, Fatia 2b (R102–R104, R107): the inbox with a fake provider, no sending yet.
 test('atendimento: hidden without WhatsApp; a message lands in Novos, is read, taken, handed over and archived', async ({ page }) => {
@@ -76,4 +76,60 @@ test('atendimento: hidden without WhatsApp; a message lands in Novos, is read, t
   await receberWhatsapp(conta, `w3-${n}`, `5511${n}`, 'Lucas Pereira', 'Voltei!')
   await page.goto('/atendimento?aba=outros')
   await expect(page.getByRole('list', { name: 'Conversas' })).toContainText('Voltei!')
+})
+
+// Spec 19, Fatia 2c (R105, R106): reply through the (fake) provider, new messages without reloading, 24 h window and consent.
+test('atendimento: reply, provider failure, live update, 24 h window and opt-out', async ({ page }) => {
+  const agencia = `Agência resposta ${Date.now()}`
+  await page.goto('/cadastro')
+  await page.getByLabel('Seu nome').fill('Pedro Dono')
+  await page.getByLabel('Nome da agência').fill(agencia)
+  await page.getByLabel('E-mail', { exact: true }).fill(`e2e-resp-${Date.now()}@teste.dev`)
+  await page.getByLabel('Senha', { exact: true }).fill('senha1234')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button', { name: 'Criar conta' }).click()
+  await expect(page.getByRole('link', { name: 'Painel' })).toBeVisible()
+  const conta = await ligarWhatsappFalso(agencia)
+  const n = String(Date.now()).slice(-8)
+  const numero = `5511${n}`
+  await receberWhatsapp(conta, `r1-${n}`, numero, 'Marina Alves', 'Bom dia! Ainda tem vaga para Bonito?')
+  const { id, clienteId } = await conversaDoNumero(numero)
+
+  await page.goto(`/atendimento?c=${id}`)
+  const conversa = page.getByRole('region', { name: 'Marina Alves' })
+  const historico = conversa.getByRole('list', { name: 'Mensagens e eventos' })
+
+  // R105: inside the 24 h window a reply goes out and shows as sent
+  await conversa.getByLabel('Responder').fill('Tem sim! Posso te mandar o roteiro?')
+  await conversa.getByRole('button', { name: 'Enviar' }).click()
+  await expect(conversa.getByText('Mensagem enviada.')).toBeVisible()
+  await expect(historico).toContainText('Tem sim! Posso te mandar o roteiro?')
+  await expect(historico).toContainText('✓ enviada')
+  await expect(conversa.getByLabel('Responder')).toHaveValue('')
+
+  // A provider failure keeps the text to try again
+  await conversa.getByLabel('Responder').fill('Mensagem que vai [falha]')
+  await conversa.getByRole('button', { name: 'Enviar' }).click()
+  await expect(conversa.getByText(/Não foi possível enviar/)).toBeVisible()
+  await expect(conversa.getByLabel('Responder')).toHaveValue('Mensagem que vai [falha]')
+
+  // R106: a new message shows up on the open screen without reloading
+  await receberWhatsapp(conta, `r2-${n}`, numero, 'Marina Alves', 'Pode sim, obrigada!')
+  await expect(historico).toContainText('Pode sim, obrigada!', { timeout: 20_000 })
+
+  // The window is checked by the server, not only by the screen: the field is still there, the send is refused
+  await atualizar('conversas', id, { ultima_recebida_em: diasAtras(2) })
+  await conversa.getByLabel('Responder').fill('Oi de novo')
+  await conversa.getByRole('button', { name: 'Enviar' }).click()
+  await expect(conversa.getByText(/Passou de 24 h desde a última mensagem do cliente/)).toBeVisible()
+  await page.reload()
+  await expect(conversa.getByText(/Passou de 24 h desde a última mensagem do cliente/)).toBeVisible()
+  await expect(conversa.getByLabel('Responder')).toHaveCount(0)
+
+  // Who asked to leave never receives
+  await atualizar('conversas', id, { ultima_recebida_em: new Date().toISOString() })
+  await atualizar('clientes', clienteId, { consentimento_whatsapp: 'pediu_saida' })
+  await page.reload()
+  await expect(conversa.getByText('Este cliente pediu para não receber mensagens.')).toBeVisible()
+  await expect(conversa.getByLabel('Responder')).toHaveCount(0)
 })
