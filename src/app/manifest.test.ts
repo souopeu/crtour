@@ -12,7 +12,7 @@ describe('manifest', () => {
   })
 
   test('uses the brand blue as theme color', () => {
-    expect(m.theme_color).toBe('#1d4ed8')
+    expect(m.theme_color).toBe('#f6f7fb')
   })
 
   test('declares 192, 512 and maskable icons', () => {

@@ -137,7 +137,7 @@ export default function CalendarioPage({ searchParams }: PageProps<'/calendario'
   return (
     <section className="mx-auto flex max-w-6xl flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight">Calendário</h1>
+        <h1 className="text-[1.75rem] font-medium tracking-tight">Calendário</h1>
         <p className="text-sm text-tinta-suave">Saídas, saldos a vencer e aniversários do mês. Clique num item para abrir.</p>
       </div>
       <Suspense fallback={<Carregando altura="h-96" />}>

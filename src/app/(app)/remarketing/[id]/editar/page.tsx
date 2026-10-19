@@ -20,7 +20,7 @@ async function Conteudo({ params, searchParams }: PageProps<'/remarketing/[id]/e
   const [etiquetas, cidades, clientes] = await Promise.all([listarEtiquetas(), listarCidades(), clientesDoSegmento(criterios)])
   return (
     <>
-      <h1 className="text-2xl font-bold tracking-tight">Editar critérios de &quot;{segmento.nome}&quot;</h1>
+      <h1 className="text-[1.75rem] font-medium tracking-tight">Editar critérios de &quot;{segmento.nome}&quot;</h1>
       <FiltrosSegmento criterios={criterios} etiquetas={etiquetas} cidades={cidades} acao={`/remarketing/${segmento.id}/editar`} />
       <PreviaSegmento criterios={criterios} clientes={clientes} etiquetas={new Map(etiquetas.map((e) => [e.id, e.nome]))} />
       <form action={salvarCriterios.bind(null, segmento.id, criteriosParaQuery(criterios))} className="flex flex-wrap items-center gap-3">

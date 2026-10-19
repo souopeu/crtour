@@ -39,7 +39,7 @@ async function Conteudo({ params, searchParams }: Pick<PageProps<'/saidas/[id]'>
     <div className="mx-auto flex max-w-5xl flex-col gap-8">
       <div>
         <Link href={`/passeios/${saida.passeio_id}`} className="text-sm text-primaria underline">← {saida.passeio_nome}</Link>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight">Saída de {formatarDataBr(saida.data)}</h1>
+        <h1 className="mt-1 text-[1.75rem] font-medium tracking-tight">Saída de {formatarDataBr(saida.data)}</h1>
         <p className="mt-1 text-tinta-suave" aria-live="polite">
           Vagas: {saida.reservadas} reservadas de {saida.capacidade} · {Math.max(saida.livres, 0)} livres
           {lotada && saida.situacao === 'aberta' && <strong className="ml-2 text-alerta">Lotada</strong>}

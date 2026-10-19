@@ -21,7 +21,7 @@ export default function ImportarPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Importar planilha</h1>
+        <h1 className="text-[1.75rem] font-medium tracking-tight">Importar planilha</h1>
         <p className="mt-1 text-tinta-suave">
           Traga seus clientes de outra planilha. Você confere tudo antes de importar e pode desfazer depois.
         </p>

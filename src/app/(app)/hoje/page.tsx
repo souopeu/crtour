@@ -173,7 +173,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/hoje'>, 'searchParams
 export default function HojePage({ searchParams }: PageProps<'/hoje'>) {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <h1 className="text-2xl font-bold tracking-tight">Hoje</h1>
+      <h1 className="text-[1.75rem] font-medium tracking-tight">Hoje</h1>
       <Suspense fallback={<Carregando altura="h-64" />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>

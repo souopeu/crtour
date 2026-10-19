@@ -23,7 +23,7 @@ async function Conteudo({ params }: Pick<PageProps<'/passeios/[id]'>, 'params'>)
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">{passeio.nome}</h1>
+        <h1 className="text-[1.75rem] font-medium tracking-tight">{passeio.nome}</h1>
         {passeio.arquivado && <span className="rounded-full bg-superficie-suave px-3 py-1 text-sm">Arquivado</span>}
       </div>
 

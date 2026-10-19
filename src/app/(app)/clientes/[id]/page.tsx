@@ -52,7 +52,7 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{cliente.nome}</h1>
+        <h1 className="text-[1.75rem] font-medium tracking-tight">{cliente.nome}</h1>
         <p className="text-sm text-tinta-suave">{textoUltimaInteracao(ultimaInteracao, hojeNoBrasil())}</p>
       </div>
       <ChamarWhatsapp

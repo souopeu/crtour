@@ -13,7 +13,7 @@ async function Conteudo() {
 export default function NovaSenhaPage() {
   return (
     <>
-      <h1 className="mb-4 text-2xl font-bold tracking-tight">Nova senha</h1>
+      <h1 className="mb-4 text-[1.75rem] font-medium tracking-tight">Nova senha</h1>
       <Suspense fallback={<Carregando altura="h-40" />}>
         <Conteudo />
       </Suspense>

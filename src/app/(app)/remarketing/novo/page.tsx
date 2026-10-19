@@ -32,7 +32,7 @@ export default function NovoSegmentoPage({ searchParams }: PageProps<'/remarketi
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <Link href="/remarketing" className="w-fit text-primaria underline">Voltar para Remarketing</Link>
-      <h1 className="text-2xl font-bold tracking-tight">Novo segmento</h1>
+      <h1 className="text-[1.75rem] font-medium tracking-tight">Novo segmento</h1>
       <Suspense fallback={<Carregando altura="h-64" />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>

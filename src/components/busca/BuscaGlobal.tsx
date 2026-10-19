@@ -105,7 +105,7 @@ export function BuscaGlobal({ className = '' }: { className?: string }) {
         onChange={(e) => { setTermo(e.target.value); setAberto(true) }}
         onFocus={() => setAberto(true)}
         onKeyDown={aoTeclarNoCampo}
-        className="h-10 w-full rounded-lg border border-controle bg-superficie px-3 text-sm text-tinta"
+        className="h-10 w-full rounded-full border border-linha bg-superficie-suave px-4 text-sm text-tinta focus:bg-superficie"
       />
       <p role="status" className="sr-only">{mostrar ? status : ''}</p>
       {mostrar && (

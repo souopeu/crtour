@@ -24,7 +24,7 @@ async function Conteudo({ params }: Pick<PageProps<'/saidas/[id]/passageiros'>, 
         <Link href={`/saidas/${saida.id}`} className="text-sm text-primaria underline">← Voltar para a saída</Link>
       </div>
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">Lista de passageiros</h1>
+        <h1 className="text-[1.75rem] font-medium tracking-tight">Lista de passageiros</h1>
         <p className="text-tinta-suave print:text-black">{saida.passeio_nome} · saída de {formatarDataBr(saida.data)}</p>
         <p className="mt-1" aria-live="polite">
           <strong>{linhas.length}</strong> {linhas.length === 1 ? 'passageiro' : 'passageiros'} de {saida.capacidade} vagas

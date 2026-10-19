@@ -184,7 +184,7 @@ export default function FunilPage({ searchParams }: PageProps<'/funil'>) {
   return (
     <section className="mx-auto flex max-w-6xl flex-col gap-4">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold tracking-tight">Funil de vendas</h1>
+        <h1 className="text-[1.75rem] font-medium tracking-tight">Funil de vendas</h1>
         <Link href="/negociacoes/novo" className={botaoNovo}>Nova negociação</Link>
       </div>
       <Suspense fallback={<Carregando altura="h-40" />}>

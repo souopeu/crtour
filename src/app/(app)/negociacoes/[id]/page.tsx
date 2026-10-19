@@ -25,7 +25,7 @@ async function Conteudo({ params }: Pick<PageProps<'/negociacoes/[id]'>, 'params
     <div className="mx-auto flex max-w-5xl flex-col gap-8">
       <div>
         <Link href="/funil" className="text-sm text-primaria underline">← Funil</Link>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight">{n.titulo}</h1>
+        <h1 className="mt-1 text-[1.75rem] font-medium tracking-tight">{n.titulo}</h1>
         <p className="text-tinta-suave">
           Cliente: <Link href={`/clientes/${n.cliente_id}`} className="text-primaria underline">{n.cliente_nome}</Link> · {rotuloDaEtapa(n.etapa)} · {n.probabilidade}%
         </p>

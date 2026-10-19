@@ -1,10 +1,13 @@
 @import "tailwindcss";
 
+/* R117: always light, like the monday layout; native controls (date, select) follow. */
 :root {
+  color-scheme: light;
   --duracao-saida: 150ms;
   --duracao-entrada: 210ms;
   --duracao-movimento: 400ms;
   --atraso-esqueleto: 120ms;
+  --fundo-app: #f6f7fb;
   --papel: #ffffff;
   --superficie: #ffffff;
   --superficie-suave: #f1f4fa;
@@ -43,34 +46,9 @@
   --etapa-perdido-borda: #64748b;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --papel: #1b1c20;
-    --superficie: #25262b;
-    --superficie-suave: #2f3036;
-    --tinta: #f2f3f5;
-    --tinta-suave: #aaaeb9;
-    --linha: #3a3c44;
-    --controle: #8a8f9c;
-    --primaria: #7ea6ff;
-    --primaria-suave: #25324f;
-    --receita: #28a883;
-    --receita-suave: #12332b;
-    --despesa: #e85d4a;
-    --despesa-suave: #3a1f1c;
-    --alerta: #f0b25a;
-    --alerta-suave: #3b2c12;
-    --etapa-interessado-borda: #818cf8;
-    --etapa-orcamento-borda: #60a5fa;
-    --etapa-reservado-borda: #22d3ee;
-    --etapa-pago-borda: #4ade80;
-    --etapa-viajou-borda: #22c55e;
-    --etapa-pos-venda-borda: #a3e635;
-    --etapa-perdido-borda: #94a3b8;
-  }
-}
 
 @theme inline {
+  --color-fundo-app: var(--fundo-app);
   --color-papel: var(--papel);
   --color-superficie: var(--superficie);
   --color-superficie-suave: var(--superficie-suave);

@@ -12,7 +12,7 @@ export function MenuCelular({ grupos }: { grupos: GrupoMenu[] }) {
   useEffect(() => { if (menu.current) menu.current.open = false }, [caminho])
   return (
     <details ref={menu} className="relative lg:hidden">
-      <summary className="inline-flex min-h-11 cursor-pointer list-none items-center rounded-full border border-white/40 px-4">Menu</summary>
+      <summary className="inline-flex min-h-11 cursor-pointer list-none items-center rounded-full border border-linha bg-superficie px-4">Menu</summary>
       <nav aria-label="Principal" className="absolute right-0 z-20 mt-2 max-h-[calc(100dvh-6rem)] w-64 overflow-y-auto rounded-(--radius-cartao) border border-linha bg-superficie p-2 text-tinta shadow-lg">
         <ListaDeItens grupos={grupos} caminho={caminho} />
       </nav>

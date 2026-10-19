@@ -22,3 +22,10 @@ export const getMembro = cache(async (): Promise<Membro | null> => {
 export async function getAgenciaId() {
   return (await getMembro())?.agencia_id ?? null
 }
+
+// RLS shows only the caller's agency. Shown at the top of the sidebar (R118).
+export async function nomeDaAgencia(): Promise<string> {
+  const supabase = await criarClienteServidor()
+  const { data } = await supabase.from('agencias').select('nome').maybeSingle()
+  return typeof data?.nome === 'string' ? data.nome : ''
+}

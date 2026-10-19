@@ -6,7 +6,9 @@ import { MenuCelular } from '@/components/menu/MenuCelular'
 import { MenuLateral } from '@/components/menu/MenuLateral'
 import { sair } from '@/app/(auth)/actions'
 import { APP_NAME } from '@/lib/brand'
-import { getMembro } from '@/lib/auth/agencia'
+import Link from 'next/link'
+import { IconeMenu } from '@/components/menu/IconeMenu'
+import { getMembro, nomeDaAgencia } from '@/lib/auth/agencia'
 import { exigirUsuario } from '@/lib/auth/usuario'
 import { COOKIE_LATERAL, VALOR_RECOLHIDA } from '@/lib/menu/config'
 import { montarMenu } from '@/lib/menu/menu'
@@ -14,14 +16,14 @@ import { contarAvisosNaoLidos } from '@/lib/negociacoes/dados'
 import { canalWhatsapp, contarConversas } from '@/lib/atendimento/dados'
 
 function Carregando() {
-  return <div aria-busy="true" aria-label="Carregando" className="min-h-screen bg-papel" />
+  return <div aria-busy="true" aria-label="Carregando" className="min-h-screen bg-fundo-app" />
 }
 
 // Logged in but not in any agency (e.g. a removed seller): no data, just a way out.
 function SemAgencia({ email }: { email: string }) {
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-4 p-6">
-      <h1 className="text-2xl font-bold tracking-tight">Sem acesso a uma agência</h1>
+      <h1 className="text-[1.75rem] font-medium tracking-tight">Sem acesso a uma agência</h1>
       <p>A conta {email} não faz parte de nenhuma agência no momento. Se isso for um engano, fale com o dono da agência.</p>
       <form action={sair}>
         <button type="submit" className="min-h-11 rounded-full border border-controle px-4">Sair</button>
@@ -35,42 +37,45 @@ async function Casca({ children }: { children: React.ReactNode }) {
   const membro = await getMembro()
   if (!membro) return <SemAgencia email={usuario.email ?? ''} />
   // R107: the inbox entry exists only with a WhatsApp number connected; its badge counts conversations with unread messages.
-  const [avisosNovos, canal, contagem] = await Promise.all([
-    membro.papel === 'dono' ? contarAvisosNaoLidos() : Promise.resolve(0), canalWhatsapp(), contarConversas(),
+  const [avisosNovos, canal, contagem, agencia] = await Promise.all([
+    membro.papel === 'dono' ? contarAvisosNaoLidos() : Promise.resolve(0), canalWhatsapp(), contarConversas(), nomeDaAgencia(),
   ])
   const atendimento = canal ? [...contagem.entries()].filter(([aba]) => aba !== 'arquivadas').reduce((s, [, n]) => s + n, 0) : null
   const grupos = montarMenu(membro.papel, avisosNovos, atendimento)
   const recolhido = (await cookies()).get(COOKIE_LATERAL)?.value === VALOR_RECOLHIDA
-  const botaoSair = (classe: string) => (
-    <form action={sair}>
-      <button type="submit" className={`min-h-11 rounded-full px-4 ${classe}`}>Sair</button>
-    </form>
-  )
+  // R118: monday-like frame — light top bar across the screen, light sidebar, content on a white sheet.
   return (
-    <div className="flex min-h-screen">
-      <MenuLateral grupos={grupos} recolhidoInicial={recolhido} />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex min-h-14 items-center justify-between bg-marca px-4 text-white lg:hidden print:hidden">
-          <span className="text-xl font-extrabold tracking-tight text-destaque">{APP_NAME}</span>
-          <div className="flex items-center gap-2 text-sm">
-            <BuscaCelular />
-            <MenuCelular grupos={grupos} />
-            {botaoSair('border border-white/40')}
-          </div>
-        </header>
-        <div className="hidden min-h-14 items-center justify-between gap-3 border-b border-linha bg-superficie px-4 text-sm lg:flex print:hidden">
-          <BuscaGlobal className="w-full max-w-md" />
-          <div className="flex items-center gap-3">
-            <span className="text-tinta-suave">{usuario.email}</span>
-            {botaoSair('border border-controle')}
-          </div>
+    <div className="flex min-h-screen flex-col bg-fundo-app">
+      <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 bg-fundo-app px-4 print:hidden">
+        <Link href="/" className="text-xl font-extrabold tracking-tight text-marca">{APP_NAME}</Link>
+        <BuscaGlobal className="mx-auto hidden w-full max-w-md lg:block" />
+        <div className="ml-auto flex items-center gap-2 text-sm lg:ml-0">
+          <BuscaCelular />
+          {/* shortcut: owner only, like /avisos today; E8-6 opens it to everyone with personal reminders */}
+          {membro.papel === 'dono' && <Link
+            href="/avisos"
+            aria-label={avisosNovos ? `Notificações, ${avisosNovos} ${avisosNovos === 1 ? 'nova' : 'novas'}` : 'Notificações'}
+            className="relative inline-flex size-11 items-center justify-center rounded-full text-tinta-suave hover:bg-superficie-suave hover:text-tinta"
+          >
+            <IconeMenu nome="avisos" className="size-5" />
+            {avisosNovos ? <span aria-hidden="true" className="absolute right-1 top-1 rounded-full bg-despesa px-1.5 text-xs font-bold text-white">{avisosNovos}</span> : null}
+          </Link>}
+          <span aria-hidden="true" title={usuario.email} className="hidden size-9 items-center justify-center rounded-full bg-marca font-bold text-white sm:inline-flex">
+            {(membro.nome || usuario.email || '?').trim().charAt(0).toUpperCase()}
+          </span>
+          <MenuCelular grupos={grupos} />
+          <form action={sair}>
+            <button type="submit" className="min-h-11 rounded-full border border-linha bg-superficie px-4 hover:bg-superficie-suave">Sair</button>
+          </form>
         </div>
-        <div className="flex-1 p-4">{children}</div>
+      </header>
+      <div className="flex min-h-0 flex-1">
+        <MenuLateral grupos={grupos} recolhidoInicial={recolhido} agencia={agencia} />
+        <div className="min-w-0 flex-1 border-linha bg-papel p-4 lg:rounded-tl-2xl lg:border-l lg:border-t lg:p-6 print:border-0 print:p-0">{children}</div>
       </div>
     </div>
   )
 }
-
 export default function AppLayout({ children }: LayoutProps<'/'>) {
   return (
     <Suspense fallback={<Carregando />}>

@@ -28,7 +28,7 @@ async function Conteudo({ params }: Pick<PageProps<'/remarketing/[id]'>, 'params
 
   return (
     <>
-      <h1 className="text-2xl font-bold tracking-tight">{segmento.nome}</h1>
+      <h1 className="text-[1.75rem] font-medium tracking-tight">{segmento.nome}</h1>
       <p className="text-sm text-tinta-suave">
         {descreverCriterios(segmento.criterios, new Map(etiquetas.map((e) => [e.id, e.nome]))).join(' · ')} · {clientes.length} {clientes.length === 1 ? 'cliente' : 'clientes'} · rodada {segmento.rodada}
       </p>

@@ -36,7 +36,7 @@ export default function FornecedoresPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <Link href="/passeios" className="w-fit text-sm text-primaria underline">← Passeios</Link>
-      <h1 className="text-2xl font-bold tracking-tight">Fornecedores</h1>
+      <h1 className="text-[1.75rem] font-medium tracking-tight">Fornecedores</h1>
       <FormFornecedor />
       <Suspense fallback={<Carregando altura="h-40" />}>
         <Lista />

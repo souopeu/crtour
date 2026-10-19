@@ -62,7 +62,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/negociacoes/novo'>, '
 export default function NovaNegociacaoPage({ searchParams }: PageProps<'/negociacoes/novo'>) {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-4 text-2xl font-bold tracking-tight">Nova negociação</h1>
+      <h1 className="mb-4 text-[1.75rem] font-medium tracking-tight">Nova negociação</h1>
       <Suspense fallback={<Carregando altura="h-40" />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>

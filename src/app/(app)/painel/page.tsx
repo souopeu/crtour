@@ -233,7 +233,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
 export default function PainelPage({ searchParams }: PageProps<'/painel'>) {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
-      <h1 className="text-2xl font-bold tracking-tight">Painel</h1>
+      <h1 className="text-[1.75rem] font-medium tracking-tight">Painel</h1>
       <Suspense fallback={<Carregando altura="h-64" />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>

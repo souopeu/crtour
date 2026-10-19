@@ -124,7 +124,7 @@ const SECOES = [
 export default function ConfiguracoesPage() {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
-      <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
+      <h1 className="text-[1.75rem] font-medium tracking-tight">Configurações</h1>
       <div className="grid gap-6 lg:grid-cols-[13rem_1fr]">
         <nav aria-label="Nesta página" className="lg:sticky lg:top-4 lg:self-start">
           <ul className="flex flex-wrap gap-x-4 gap-y-1 lg:flex-col">

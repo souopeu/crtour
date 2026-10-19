@@ -61,7 +61,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/atendimento'>, 'searc
 export default function AtendimentoPage({ searchParams }: PageProps<'/atendimento'>) {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
-      <h1 className="text-2xl font-bold tracking-tight">Atendimento</h1>
+      <h1 className="text-[1.75rem] font-medium tracking-tight">Atendimento</h1>
       <Suspense fallback={<Carregando altura="h-64" />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>

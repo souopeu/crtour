@@ -30,7 +30,7 @@ export default function Home({ searchParams }: PageProps<'/'>) {
   return (
     <section className="mx-auto flex max-w-6xl flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold tracking-tight">Clientes</h1>
+        <h1 className="text-[1.75rem] font-medium tracking-tight">Clientes</h1>
         <div className="flex items-center gap-4">
           <Link href="/importar" className="text-primaria underline">Importar planilha</Link>
           <Link href="/clientes/novo" className={botaoNovo}>Novo cliente</Link>

@@ -12,14 +12,14 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/cadastro'>, 'searchPa
   if (!token) {
     return (
       <>
-        <h1 className="mb-4 text-2xl font-bold tracking-tight">Criar conta</h1>
+        <h1 className="mb-4 text-[1.75rem] font-medium tracking-tight">Criar conta</h1>
         <FormCadastro />
       </>
     )
   }
   return (
     <>
-      <h1 className="mb-2 text-2xl font-bold tracking-tight">Entrar na equipe</h1>
+      <h1 className="mb-2 text-[1.75rem] font-medium tracking-tight">Entrar na equipe</h1>
       <p className="mb-4 text-sm text-tinta-suave">Você foi convidada(o) para usar o crTOUR com a sua agência. Crie seu acesso com o e-mail do convite.</p>
       <FormCadastro convite={{ token, email: um(sp.email).slice(0, 254) }} />
     </>

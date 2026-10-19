@@ -19,7 +19,7 @@ async function Conteudo({ params, searchParams }: PageProps<'/f/[codigo]'>) {
   return (
     <>
       <p className="text-sm font-semibold uppercase tracking-wide text-primaria">{form.agencia}</p>
-      <h1 className="text-2xl font-bold tracking-tight">{form.titulo}</h1>
+      <h1 className="text-[1.75rem] font-medium tracking-tight">{form.titulo}</h1>
       {form.texto && <p className="whitespace-pre-line text-tinta-suave">{form.texto}</p>}
       <FormPublico codigo={codigo} origem={Object.fromEntries(PARAMETROS_DO_LINK.map((k) => [k, um(sp[k])]))} />
     </>

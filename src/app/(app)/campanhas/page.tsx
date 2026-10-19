@@ -127,7 +127,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/campanhas'>, 'searchP
 export default function CampanhasPage({ searchParams }: PageProps<'/campanhas'>) {
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
-      <h1 className="text-2xl font-bold tracking-tight">Campanhas</h1>
+      <h1 className="text-[1.75rem] font-medium tracking-tight">Campanhas</h1>
       <Suspense fallback={<Carregando altura="h-40" />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>

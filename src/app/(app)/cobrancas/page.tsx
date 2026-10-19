@@ -84,7 +84,7 @@ export default function CobrancasPage({ searchParams }: PageProps<'/cobrancas'>)
   return (
     <section className="mx-auto flex max-w-6xl flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight">Cobranças</h1>
+        <h1 className="text-[1.75rem] font-medium tracking-tight">Cobranças</h1>
         <p className="text-sm text-tinta-suave">Reservas ativas com saldo a receber, das mais urgentes para as menos.</p>
       </div>
       <Suspense fallback={<Carregando altura="h-40" />}>

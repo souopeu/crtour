@@ -17,7 +17,7 @@ export default function ImportarReservasPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Importar reservas</h1>
+        <h1 className="text-[1.75rem] font-medium tracking-tight">Importar reservas</h1>
         <p className="mt-1 text-tinta-suave">
           Traga as reservas da sua planilha. Os clientes, os passeios e as saídas precisam já estar cadastrados: a planilha não cria nada disso.
           As vagas são respeitadas, e você confere tudo antes de importar.

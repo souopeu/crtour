@@ -46,7 +46,7 @@ async function Conteudo({ params }: Pick<PageProps<'/reservas/[id]'>, 'params'>)
     <div className="mx-auto flex max-w-5xl flex-col gap-8">
       <div>
         <Link href={`/saidas/${reserva.saida_id}`} className="text-sm text-primaria underline">← {reserva.passeio_nome} · saída de {formatarDataBr(reserva.saida_data)}</Link>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight">
+        <h1 className="mt-1 text-[1.75rem] font-medium tracking-tight">
           Reserva de <Link href={`/clientes/${reserva.cliente_id}`} className="text-primaria underline">{reserva.cliente_nome}</Link>
         </h1>
         <p className="text-tinta-suave">{reserva.qtd_pessoas} {reserva.qtd_pessoas === 1 ? 'pessoa' : 'pessoas'}</p>

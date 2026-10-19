@@ -7,7 +7,7 @@ export const metadata = { title: 'Novo cliente' }
 export default function NovoClientePage() {
   return (
     <>
-      <h1 className="mb-4 text-2xl font-bold tracking-tight">Novo cliente</h1>
+      <h1 className="mb-4 text-[1.75rem] font-medium tracking-tight">Novo cliente</h1>
       <ClienteForm acao={salvarCliente.bind(null, null)} inicial={VALORES_VAZIOS} rotuloBotao="Salvar cliente" />
     </>
   )

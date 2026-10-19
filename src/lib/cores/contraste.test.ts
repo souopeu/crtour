@@ -4,12 +4,11 @@ import { contraste } from './contraste'
 
 const css = readFileSync(new URL('../../app/globals.css', import.meta.url), 'utf8')
 
-// Reads `--nome: #hex` declarations from the :root block, or from the dark media block.
-function tokens(modo: 'claro' | 'escuro'): Record<string, string> {
-  const escuro = css.match(/@media \(prefers-color-scheme: dark\) \{\s*:root \{([\s\S]*?)\n  \}/)?.[1] ?? ''
+// Reads `--nome: #hex` declarations from the :root block (R117: light only).
+function tokens(): Record<string, string> {
   const raiz = css.match(/:root \{([\s\S]*?)\n\}/)?.[1] ?? ''
   const ler = (bloco: string) => Object.fromEntries([...bloco.matchAll(/--([\w-]+):\s*(#[0-9a-fA-F]{6})/g)].map((m) => [m[1], m[2]]))
-  return modo === 'claro' ? ler(raiz) : { ...ler(raiz), ...ler(escuro) }
+  return ler(raiz)
 }
 
 const ETAPAS = ['interessado', 'orcamento', 'reservado', 'pago', 'viajou', 'pos-venda', 'perdido']
@@ -26,8 +25,8 @@ describe('contraste', () => {
   })
 })
 
-describe.each(['claro', 'escuro'] as const)('stage tokens (%s)', (modo) => {
-  const t = tokens(modo)
+describe('stage tokens', () => {
+  const t = tokens()
 
   it.each(ETAPAS)('defines fill and border for %s', (etapa) => {
     expect(t[`etapa-${etapa}`], `--etapa-${etapa}`).toBeDefined()
@@ -45,6 +44,8 @@ describe.each(['claro', 'escuro'] as const)('stage tokens (%s)', (modo) => {
   it('keeps the sidebar text readable and the active entry visible', () => {
     expect(contraste(t['tinta'], t['superficie'])).toBeGreaterThanOrEqual(4.5)
     expect(contraste(t['primaria'], t['primaria-suave'])).toBeGreaterThanOrEqual(4.5)
+    // R118: the top bar and the sidebar sit on the app background
+    for (const cor of ['tinta', 'tinta-suave', 'primaria']) expect(contraste(t[cor], t['fundo-app']), cor).toBeGreaterThanOrEqual(4.5)
   })
 })
 

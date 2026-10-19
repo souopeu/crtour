@@ -49,7 +49,7 @@ export default function PasseiosPage({ searchParams }: PageProps<'/passeios'>) {
   return (
     <section className="mx-auto flex max-w-6xl flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold tracking-tight">Passeios</h1>
+        <h1 className="text-[1.75rem] font-medium tracking-tight">Passeios</h1>
         <div className="flex items-center gap-4">
           <Link href="/fornecedores" className="text-primaria underline">Fornecedores</Link>
           <Link href="/passeios/novo" className={botaoNovo}>Novo passeio</Link>

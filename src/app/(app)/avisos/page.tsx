@@ -59,7 +59,7 @@ async function Lista() {
 export default function AvisosPage() {
   return (
     <section className="mx-auto flex max-w-3xl flex-col gap-4">
-      <h1 className="text-2xl font-bold tracking-tight">Avisos</h1>
+      <h1 className="text-[1.75rem] font-medium tracking-tight">Avisos</h1>
       <Suspense fallback={<Carregando altura="h-40" />}>
         <Lista />
       </Suspense>

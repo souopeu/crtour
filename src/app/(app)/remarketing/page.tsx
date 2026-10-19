@@ -30,7 +30,7 @@ export default function RemarketingPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold tracking-tight">Remarketing</h1>
+        <h1 className="text-[1.75rem] font-medium tracking-tight">Remarketing</h1>
         <Link href="/remarketing/novo" className="inline-flex min-h-12 items-center rounded-full bg-destaque px-6 font-semibold text-destaque-texto">Novo segmento</Link>
       </div>
       <p className="max-w-prose text-sm text-tinta-suave">

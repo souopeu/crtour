@@ -35,7 +35,7 @@ async function Conteudo({ params }: Pick<PageProps<'/p/[codigo]'>, 'params'>) {
     <>
       <header className="flex flex-col gap-1">
         <p className="text-sm font-semibold uppercase tracking-wide text-primaria">{p.agencia}</p>
-        <h1 className="text-2xl font-bold tracking-tight">Proposta para {p.cliente}</h1>
+        <h1 className="text-[1.75rem] font-medium tracking-tight">Proposta para {p.cliente}</h1>
         <p className="text-tinta-suave">{p.titulo}</p>
       </header>
       <Bloco titulo="Viagem">

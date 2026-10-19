@@ -27,7 +27,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/login'>, 'searchParam
 export default function LoginPage({ searchParams }: PageProps<'/login'>) {
   return (
     <>
-      <h1 className="mb-4 text-2xl font-bold tracking-tight">Entrar</h1>
+      <h1 className="mb-4 text-[1.75rem] font-medium tracking-tight">Entrar</h1>
       <Suspense fallback={<Carregando altura="h-64" />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>
