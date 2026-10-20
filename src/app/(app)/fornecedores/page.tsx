@@ -8,6 +8,7 @@ import { rotuloDoTipo } from '@/lib/custos/custos'
 import { listarFornecedores } from '@/lib/custos/dados'
 import { apagarFornecedor } from './actions'
 import { EstadoVazio } from '@/components/tela/EstadoVazio'
+import { caixaTabela, rodapeTabela, tabelaPadrao } from '@/components/tela/estilos'
 
 export const metadata = { title: 'Fornecedores' }
 
@@ -16,25 +17,35 @@ async function Lista() {
   if (fornecedores.length === 0) {
     return <EstadoVazio compacto acoes={[{ href: '#novo-fornecedor', rotulo: 'Cadastrar o primeiro fornecedor' }]}>Nenhum fornecedor ainda. Cadastre ônibus, hotéis, guias e quem mais entra nos custos das saídas.</EstadoVazio>
   }
+  // R119: table in the monday pattern (coloured left edge, rows at --linha-tabela, total in the footer)
   return (
-    <ul aria-label="Fornecedores" className="flex flex-col gap-2">
-      {fornecedores.map((f) => (
-        <li key={f.id} className="flex flex-col gap-1 rounded-[--radius-cartao] border border-linha bg-superficie p-3">
-          <p className="font-semibold">{f.nome} <span className="text-sm font-normal text-tinta-suave">· {rotuloDoTipo(f.tipo)}</span></p>
-          {f.contato && <p className="text-sm">{f.contato}</p>}
-          {membro?.papel === 'dono' && (
-            <ConfirmarExclusao acao={apagarFornecedor.bind(null, f.id)} rotulo={`Apagar ${f.nome}`} rotuloConfirmar="Apagar mesmo"
-              aviso="Apaga o fornecedor. Os custos já lançados continuam nas saídas, sem fornecedor." />
-          )}
-        </li>
-      ))}
-    </ul>
+    <div className={caixaTabela}>
+      <table aria-label="Fornecedores" className={tabelaPadrao}>
+        <thead><tr><th>Fornecedor</th><th>Tipo</th><th>Contato</th>{membro?.papel === 'dono' && <th className="sr-only">Ações</th>}</tr></thead>
+        <tbody>
+          {fornecedores.map((f) => (
+            <tr key={f.id}>
+              <td className="font-medium">{f.nome}</td>
+              <td><span className="rounded-md bg-superficie-suave px-2 py-0.5">{rotuloDoTipo(f.tipo)}</span></td>
+              <td>{f.contato ?? '—'}</td>
+              {membro?.papel === 'dono' && (
+                <td className="text-right">
+                  <ConfirmarExclusao acao={apagarFornecedor.bind(null, f.id)} rotulo={`Apagar ${f.nome}`} rotuloConfirmar="Apagar mesmo"
+                    aviso="Apaga o fornecedor. Os custos já lançados continuam nas saídas, sem fornecedor." />
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+        <tfoot><tr className={rodapeTabela}><td colSpan={membro?.papel === 'dono' ? 4 : 3}>{fornecedores.length} {fornecedores.length === 1 ? 'fornecedor' : 'fornecedores'}</td></tr></tfoot>
+      </table>
+    </div>
   )
 }
 
 export default function FornecedoresPage() {
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6">
+    <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <Link href="/passeios" className="w-fit text-sm text-primaria underline">← Passeios</Link>
       <h1 className="text-[1.75rem] font-medium tracking-tight">Fornecedores</h1>
       <FormFornecedor />

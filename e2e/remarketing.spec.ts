@@ -50,17 +50,23 @@ test('remarketing: segment, consent-only queue, send becomes activity, rounds, t
   await expect(page.getByRole('heading', { name: 'Lisboa 2027', level: 1 })).toBeVisible()
   const urlSegmento = page.url()
 
-  // Only consent "aceitou" with a number gets a button; the rest are apart, without one
+  // R127: tabs with counters; only consent "aceitou" with a number gets a button; the rest are apart, without one
+  const abas = page.getByRole('navigation', { name: 'Fila do segmento' })
   const chamar = page.getByRole('region', { name: /Para chamar/ })
   const chamados = page.getByRole('region', { name: /Já chamados/ })
-  const fora = page.getByRole('region', { name: /Fora do envio/ })
+  const fora = page.getByRole('region', { name: /Sem permissão/ })
+  await expect(abas).toContainText('Para chamar (1)')
+  await expect(abas).toContainText('Já chamados (0)')
+  await expect(abas).toContainText('Sem permissão (3)')
   await expect(chamar.getByRole('heading')).toHaveText('Para chamar (1)')
-  await expect(chamar).toContainText('Olá, Ana! Tudo bem? Temos novidades de Lisboa para você.')
+  await expect(chamar.getByRole('table')).toContainText('Olá, Ana! Tudo bem? Temos novidades de Lisboa para você.')
+  await expect(page.getByRole('link', { name: /^Chamar (Bia|Caio|Eva)/ })).toHaveCount(0)
+  await abas.getByRole('link', { name: 'Sem permissão (3)' }).click()
   await expect(fora).toContainText('Bia Lima')
   await expect(fora).toContainText('Consentimento não informado')
   await expect(fora).toContainText('Pediu para sair')
   await expect(fora).toContainText('Sem WhatsApp cadastrado')
-  await expect(page.getByRole('link', { name: /^Chamar (Bia|Caio|Eva)/ })).toHaveCount(0)
+  await abas.getByRole('link', { name: 'Para chamar (1)' }).click()
 
   // Send: WhatsApp, then register
   await context.route('https://wa.me/**', (rota) => rota.fulfill({ status: 200, contentType: 'text/html', body: '<p>wa.me</p>' }))
@@ -69,6 +75,7 @@ test('remarketing: segment, consent-only queue, send becomes activity, rounds, t
   expect((await aba).url()).toContain('Temos%20novidades%20de%20Lisboa')
   await chamar.getByRole('button', { name: 'Registrar envio' }).click()
   await expect(chamar).toContainText('Ninguém para chamar nesta rodada.')
+  await abas.getByRole('link', { name: 'Já chamados (1)' }).click()
   await expect(chamados.getByRole('heading')).toHaveText('Já chamados nesta rodada (1)')
   await expect(chamados).toContainText('Ana Souza')
 
@@ -78,9 +85,11 @@ test('remarketing: segment, consent-only queue, send becomes activity, rounds, t
   await expect(page.getByRole('region', { name: 'Linha do tempo' })).toContainText('Remarketing (Lisboa 2027): Olá, Ana!')
 
   // Reopening gives the same result; a new round allows calling again
-  await page.goto(urlSegmento)
+  await page.goto(`${urlSegmento}?aba=chamados`)
   await expect(chamados).toContainText('Ana Souza')
   await page.getByRole('button', { name: /Começar nova rodada/ }).click()
+  await expect(abas).toContainText('Já chamados (0)')
+  await abas.getByRole('link', { name: 'Para chamar (1)' }).click()
   await expect(chamar.getByRole('heading')).toHaveText('Para chamar (1)')
   await expect(page.getByText(/rodada 2/)).toBeVisible()
 

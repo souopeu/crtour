@@ -46,7 +46,9 @@ test('suppliers, costs per departure, margin on the departure and on the panel',
   await novo.getByLabel('Contato (opcional)').fill('(11) 98888-0000')
   await novo.getByRole('button', { name: 'Cadastrar fornecedor' }).click()
   await expect(page.getByText('Fornecedor cadastrado.')).toBeVisible()
-  await expect(page.getByRole('list', { name: 'Fornecedores' })).toContainText('Van do Zé · Transporte')
+  const linhaVan = page.getByRole('table', { name: 'Fornecedores' }).getByRole('row').filter({ hasText: 'Van do Zé' })
+  await expect(linhaVan).toContainText('Transporte')
+  await expect(linhaVan).toContainText('(11) 98888-0000')
 
   // Costs and margin on the departure
   await page.goto(urlSaida)

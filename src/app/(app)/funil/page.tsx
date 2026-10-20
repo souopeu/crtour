@@ -121,6 +121,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/funil'>, 'searchParam
               <GrupoRecolhivel
                 key={g.chave} id={`g-${g.chave}`} titulo={g.rotulo} quantidade={g.quantidade}
                 borda={porResponsavel ? 'border-l-primaria' : COR_ETAPA[g.chave as Etapa].borda}
+                cor={porResponsavel ? 'text-primaria' : COR_ETAPA[g.chave as Etapa].titulo}
                 resumo={<>Valor {formatarReais(g.totalValor)} · <strong className="text-tinta">previsto {formatarReais(g.totalPrevisto)}</strong></>}
               >
                 <table className="w-full min-w-[44rem] border-collapse text-left text-sm">
