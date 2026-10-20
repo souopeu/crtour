@@ -32,7 +32,8 @@ export async function salvarCliente(id: string | null, _: EstadoForm, fd: FormDa
       return { erro: ERRO_SALVAR, valores, versao }
     }
     revalidatePath('/')
-    redirect(`/clientes/${data.id}`)
+    // R123: a client created from "Nova negociação" goes straight back to it (fixed value, never a URL from the form)
+    redirect(fd.get('depois') === 'negociacao' ? `/negociacoes/novo?cliente=${data.id}` : `/clientes/${data.id}`)
   }
 
   const { data, error } = await supabase.from('clientes').update(r.data).eq('id', id).select('id')

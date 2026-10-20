@@ -1,3 +1,5 @@
+import { useId } from 'react'
+
 type Props = {
   nome: string
   id?: string
@@ -9,7 +11,11 @@ type Props = {
   dica?: string
 }
 
-export function Campo({ nome, id = nome, rotulo, tipo = 'text', valor, erros, autoComplete, dica }: Props) {
+// Unique id by default: Next 16 keeps the previous page (and the page behind a side window) in the DOM,
+// so a fixed id like "nome" would tie this label to another form's field.
+export function Campo({ nome, id: idFixo, rotulo, tipo = 'text', valor, erros, autoComplete, dica }: Props) {
+  const automatico = useId()
+  const id = idFixo ?? `${automatico}-${nome}`
   const idErro = `${id}-erro`
   return (
     <div className="flex flex-col gap-1">

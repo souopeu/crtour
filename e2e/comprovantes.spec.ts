@@ -9,7 +9,7 @@ test('payment receipt: attach, open by a short link, refuse fake files, remove; 
   await page.goto('/cadastro')
   await page.getByLabel('Seu nome').fill('Pessoa comprovante')
   await page.getByLabel('Nome da agência').fill('Agência comprovante')
-  await page.getByLabel('E-mail', { exact: true }).fill(`e2e-comprovante-${Date.now()}@teste.dev`)
+  await page.getByLabel('E-mail', { exact: true }).fill(`e2e-comprovante-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@teste.dev`)
   await page.getByLabel('Senha', { exact: true }).fill('senha1234')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Criar conta' }).click()

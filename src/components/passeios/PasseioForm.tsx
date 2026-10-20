@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useActionState } from 'react'
+import { rodapeForm } from '@/components/tela/estilos'
 import { BotaoEnviar } from '@/components/auth/BotaoEnviar'
 import { Campo } from '@/components/auth/Campo'
 import { Mensagem } from '@/components/auth/Mensagem'
@@ -34,7 +35,7 @@ export function PasseioForm({ acao, inicial, rotuloBotao }: Props) {
           {estado.campos?.[nome]?.[0] && <p role="alert" className="text-sm text-despesa">{estado.campos[nome]![0]}</p>}
         </div>
       ))}
-      <div className="flex items-center gap-4">
+      <div className={rodapeForm}>
         <BotaoEnviar>{rotuloBotao}</BotaoEnviar>
         <Link href="/passeios" className="text-sm text-primaria underline">Voltar</Link>
       </div>

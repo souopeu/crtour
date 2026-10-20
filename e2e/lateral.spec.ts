@@ -5,7 +5,7 @@ test('desktop sidebar: groups, active entry, collapse remembered after reload', 
   await page.goto('/cadastro')
   await page.getByLabel('Seu nome').fill('Pessoa lateral')
   await page.getByLabel('Nome da agência').fill('Agência lateral')
-  await page.getByLabel('E-mail', { exact: true }).fill(`e2e-lateral-${Date.now()}@teste.dev`)
+  await page.getByLabel('E-mail', { exact: true }).fill(`e2e-lateral-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@teste.dev`)
   await page.getByLabel('Senha', { exact: true }).fill('senha1234')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Criar conta' }).click()

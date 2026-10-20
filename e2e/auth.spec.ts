@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-const email = `e2e-${Date.now()}@teste.dev`
+const email = `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@teste.dev`
 const senha = 'senha1234'
 
 test('anonymous user is sent to login, keeping the destination', async ({ page }) => {

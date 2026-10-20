@@ -4,12 +4,12 @@ import { expect, test, type Page } from '@playwright/test'
 const senha = 'senha1234'
 
 async function cadastrar(page: Page, rotulo: string) {
-  const email = `e2e-${rotulo}-${Date.now()}@teste.dev`
+  const email = `e2e-${rotulo}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@teste.dev`
   await page.goto('/cadastro')
   await page.getByLabel('Seu nome').fill(`Pessoa ${rotulo}`)
   await page.getByLabel('Nome da agência').fill(`Agência ${rotulo}`)
   await page.getByLabel('E-mail', { exact: true }).fill(email)
-  await page.getByLabel('Senha').fill(senha)
+  await page.getByRole('textbox', { name: 'Senha', exact: true }).fill(senha)
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Criar conta' }).click()
   await expect(page).toHaveURL('/')
@@ -85,7 +85,7 @@ test('delete account: confirmation word, password check, data gone, login imposs
 
   // The login no longer exists
   await page.getByLabel('E-mail', { exact: true }).fill(email)
-  await page.getByLabel('Senha').fill(senha)
+  await page.getByRole('textbox', { name: 'Senha', exact: true }).fill(senha)
   await page.getByRole('button', { name: 'Entrar' }).click()
   await expect(page.getByText('E-mail ou senha incorretos.')).toBeVisible()
   await page.goto('/')

@@ -4,7 +4,7 @@ async function cadastrar(page: Page, rotulo: string) {
   await page.goto('/cadastro')
   await page.getByLabel('Seu nome').fill(`Pessoa ${rotulo}`)
   await page.getByLabel('Nome da agência').fill(`Agência ${rotulo}`)
-  await page.getByLabel('E-mail', { exact: true }).fill(`e2e-${rotulo}-${Date.now()}@teste.dev`)
+  await page.getByLabel('E-mail', { exact: true }).fill(`e2e-${rotulo}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@teste.dev`)
   await page.getByLabel('Senha', { exact: true }).fill('senha1234')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Criar conta' }).click()
@@ -54,7 +54,7 @@ test('funnel: create deals, automatic forecast, stage defaults, history, groupin
   await expect(page.getByText('previsto R$ 3.000,00')).toBeVisible()
 
   // A manual probability sticks until the next stage change
-  await page.getByLabel('Probabilidade (%)').fill('50')
+  await page.getByRole('spinbutton', { name: 'Probabilidade (%)' }).fill('50')
   await page.getByRole('button', { name: 'Salvar alterações' }).click()
   await expect(page.getByText('previsto R$ 5.000,00')).toBeVisible()
   await page.getByLabel('Etapa', { exact: true }).selectOption('reservado')

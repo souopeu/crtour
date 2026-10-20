@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useActionState, useState } from 'react'
+import { rodapeForm } from '@/components/tela/estilos'
 import { BotaoEnviar } from '@/components/auth/BotaoEnviar'
 import { Campo } from '@/components/auth/Campo'
 import { Mensagem } from '@/components/auth/Mensagem'
@@ -18,11 +19,40 @@ type Props = {
   rotuloBotao: string
   responsaveis: { user_id: string; nome: string }[]
   saidas: { id: string; rotulo: string }[]
+  faixaEtapas?: boolean
 }
 
 const select = 'h-12 rounded-xl border border-controle bg-superficie px-3 text-base'
 
-export function NegociacaoForm({ acao, inicial, rotuloBotao, responsaveis, saidas }: Props) {
+// Background of each arrow: stages up to the chosen one take their colour, like a progress bar (text says which is chosen).
+const COR_ETAPA: Record<string, string> = {
+  interessado: 'bg-etapa-interessado', orcamento: 'bg-etapa-orcamento', reservado: 'bg-etapa-reservado',
+  pago: 'bg-etapa-pago', viajou: 'bg-etapa-viajou', pos_venda: 'bg-etapa-pos-venda',
+}
+const SETA = '[clip-path:polygon(0_0,calc(100%-0.75rem)_0,100%_50%,calc(100%-0.75rem)_100%,0_100%,0.75rem_50%)] first:[clip-path:polygon(0_0,calc(100%-0.75rem)_0,100%_50%,calc(100%-0.75rem)_100%,0_100%)]'
+
+// R123: the stage strip of "Nova negociação" (arrows, as in the Bitrix print). The select below stays as the accessible fallback.
+function FaixaEtapas({ etapa, escolher }: { etapa: string; escolher: (e: string) => void }) {
+  const abertas = ETAPAS.filter((x) => x.valor !== 'perdido')
+  const indice = abertas.findIndex((x) => x.valor === etapa)
+  return (
+    <div role="group" aria-label="Etapa inicial" className="-mx-1 flex overflow-x-auto pb-1">
+      {abertas.map((x, i) => (
+        <button
+          key={x.valor}
+          type="button"
+          aria-pressed={x.valor === etapa}
+          onClick={() => escolher(x.valor)}
+          className={`-ml-1 min-h-11 min-w-28 flex-1 px-5 text-sm text-etapa-texto first:ml-0 ${SETA} ${i <= indice ? COR_ETAPA[x.valor] : 'bg-superficie-suave text-tinta-suave'} ${x.valor === etapa ? 'font-bold' : ''}`}
+        >
+          {x.valor === etapa ? `✓ ${x.rotulo}` : x.rotulo}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+export function NegociacaoForm({ acao, inicial, rotuloBotao, responsaveis, saidas, faixaEtapas = false }: Props) {
   const [estado, enviar] = useActionState<EstadoForm, FormData>(acao, {})
   const v = (estado.valores as ValoresNegociacao | undefined) ?? inicial
   const [etapa, setEtapa] = useState(v.etapa)
@@ -31,6 +61,7 @@ export function NegociacaoForm({ acao, inicial, rotuloBotao, responsaveis, saida
   return (
     <form key={estado.versao ?? 'inicial'} action={enviar} className="flex max-w-xl flex-col gap-4">
       <Mensagem estado={estado} />
+      {faixaEtapas && <FaixaEtapas etapa={etapa} escolher={setEtapa} />}
       <Campo nome="titulo" rotulo="Título" valor={v.titulo} erros={e('titulo')} dica="Ex.: Maria, Lisboa em março" autoComplete="off" />
       <Campo nome="valor" rotulo="Valor (R$)" valor={v.valor} erros={e('valor')} dica="Opcional. Ex.: 12.500,00" />
       <div className="flex flex-col gap-1">
@@ -75,7 +106,7 @@ export function NegociacaoForm({ acao, inicial, rotuloBotao, responsaveis, saida
         </select>
         {e('saida')?.[0] && <p role="alert" className="text-sm text-despesa">{e('saida')![0]}</p>}
       </div>
-      <div className="flex items-center gap-4">
+      <div className={rodapeForm}>
         <BotaoEnviar>{rotuloBotao}</BotaoEnviar>
         <Link href="/funil" className="text-sm text-primaria underline">Voltar</Link>
       </div>

@@ -76,10 +76,11 @@ async function Casca({ children }: { children: React.ReactNode }) {
     </div>
   )
 }
-export default function AppLayout({ children }: LayoutProps<'/'>) {
+export default function AppLayout({ children, modal }: LayoutProps<'/'>) {
   return (
     <Suspense fallback={<Carregando />}>
       <Casca>{children}</Casca>
+      {modal}
     </Suspense>
   )
 }

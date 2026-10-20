@@ -4,7 +4,7 @@ test('proposal: frozen values, public link with PDF, WhatsApp send moves to Orç
   await page.goto('/cadastro')
   await page.getByLabel('Seu nome').fill('Pessoa proposta')
   await page.getByLabel('Nome da agência').fill('Viagens Alfa')
-  await page.getByLabel('E-mail', { exact: true }).fill(`e2e-proposta-${Date.now()}@teste.dev`)
+  await page.getByLabel('E-mail', { exact: true }).fill(`e2e-proposta-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@teste.dev`)
   await page.getByLabel('Senha', { exact: true }).fill('senha1234')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Criar conta' }).click()

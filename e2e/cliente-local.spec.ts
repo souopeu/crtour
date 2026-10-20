@@ -4,7 +4,7 @@ test('client form: WhatsApp mask, e-mail check on leaving, country/state/city an
   await page.goto('/cadastro')
   await page.getByLabel('Seu nome').fill('Pessoa local')
   await page.getByLabel('Nome da agência').fill('Agência local')
-  await page.getByLabel('E-mail', { exact: true }).fill(`e2e-local-${Date.now()}@teste.dev`)
+  await page.getByLabel('E-mail', { exact: true }).fill(`e2e-local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@teste.dev`)
   await page.getByLabel('Senha').fill('senha1234')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Criar conta' }).click()

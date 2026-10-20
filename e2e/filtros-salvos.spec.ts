@@ -11,7 +11,7 @@ test('saved filters: save, apply, rename and delete on Clients and Funnel; missi
   await page.goto('/cadastro')
   await page.getByLabel('Seu nome').fill('Pessoa filtros')
   await page.getByLabel('Nome da agência').fill('Agência filtros')
-  await page.getByLabel('E-mail', { exact: true }).fill(`e2e-filtros-${Date.now()}@teste.dev`)
+  await page.getByLabel('E-mail', { exact: true }).fill(`e2e-filtros-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@teste.dev`)
   await page.getByLabel('Senha', { exact: true }).fill('senha1234')
   await page.getByRole('checkbox').check()
   await page.getByRole('button', { name: 'Criar conta' }).click()

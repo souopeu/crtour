@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react'
 import Link from 'next/link'
+import { rodapeForm } from '@/components/tela/estilos'
 import { BotaoEnviar } from '@/components/auth/BotaoEnviar'
 import { Campo } from '@/components/auth/Campo'
 import { CampoEmail, CampoWhatsapp, CamposLocal } from './CamposContato'
@@ -13,11 +14,12 @@ type Props = {
   acao: (estado: EstadoForm, fd: FormData) => Promise<EstadoForm>
   inicial: ValoresCliente
   rotuloBotao: string
+  depois?: 'negociacao'
 }
 
 const classeCampo = 'rounded-xl border border-controle bg-superficie px-3 text-base'
 
-export function ClienteForm({ acao, inicial, rotuloBotao }: Props) {
+export function ClienteForm({ acao, inicial, rotuloBotao, depois }: Props) {
   const [estado, enviar] = useActionState<EstadoForm, FormData>(acao, {})
   const v = (estado.valores as ValoresCliente | undefined) ?? inicial
   const e = (c: string) => estado.campos?.[c]
@@ -25,6 +27,7 @@ export function ClienteForm({ acao, inicial, rotuloBotao }: Props) {
   return (
     <form key={estado.versao ?? 'inicial'} action={enviar} className="flex max-w-xl flex-col gap-4">
       <Mensagem estado={estado} />
+      {depois && <input type="hidden" name="depois" value={depois} />}
 
       <fieldset className="flex flex-col gap-4">
         <legend className="mb-2 text-lg font-semibold">Contato</legend>
@@ -74,7 +77,7 @@ export function ClienteForm({ acao, inicial, rotuloBotao }: Props) {
         </div>
       </fieldset>
 
-      <div className="flex items-center gap-4">
+      <div className={rodapeForm}>
         <BotaoEnviar>{rotuloBotao}</BotaoEnviar>
         <Link href="/" className="text-sm text-primaria underline">Voltar</Link>
       </div>

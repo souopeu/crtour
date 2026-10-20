@@ -9,3 +9,5 @@ export const caixaTabela = 'overflow-x-auto rounded-(--radius-cartao) border bor
 export const tabelaPadrao = 'w-full border-collapse text-left text-sm [&_th]:h-(--linha-tabela) [&_th]:px-3 [&_th]:text-xs [&_th]:font-medium [&_th]:text-tinta-suave [&_td]:h-(--linha-tabela) [&_td]:border-t [&_td]:border-linha [&_td]:px-3 [&_td]:py-1'
 export const rodapeTabela = 'bg-superficie-suave font-semibold'
 export const cartaoPainel = 'flex flex-col gap-1 rounded-(--radius-cartao) border border-linha bg-superficie p-4'
+// R122: Save/Cancel stay visible at the bottom of long forms (page and side window).
+export const rodapeForm = 'sticky bottom-0 z-10 flex items-center gap-4 border-t border-linha bg-papel py-3'

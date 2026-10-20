@@ -54,7 +54,7 @@ export async function receberWhatsapp(conta: string, idExterno: string, de: stri
 export async function criarVendedora(nomeAgencia: string, nome: string) {
   const db = admin()
   const { data: ag } = await db.from('agencias').select('id').eq('nome', nomeAgencia).single()
-  const { data: u, error } = await db.auth.admin.createUser({ email: `e2e-vend-${Date.now()}@teste.dev`, password: 'senha1234', email_confirm: true })
+  const { data: u, error } = await db.auth.admin.createUser({ email: `e2e-vend-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@teste.dev`, password: 'senha1234', email_confirm: true })
   if (error || !u.user || !ag) throw new Error(`criarVendedora: ${error?.message}`)
   const { data: propria } = await db.from('membros').select('agencia_id').eq('user_id', u.user.id).single()
   if (propria) await db.from('agencias').delete().eq('id', propria.agencia_id)

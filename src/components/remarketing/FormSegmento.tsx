@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState, useId } from 'react'
+import { rodapeForm } from '@/components/tela/estilos'
 import { BotaoEnviar } from '@/components/auth/BotaoEnviar'
 import { Mensagem } from '@/components/auth/Mensagem'
 import type { EstadoForm } from '@/lib/forms'
@@ -35,7 +36,7 @@ export function FormSegmento({ acao, inicial, criterios, rotuloBotao }: Props) {
         Use {'{nome}'} para o primeiro nome e {'{destino}'} para o destino de interesse. Você confere cada mensagem antes de enviar.
       </p>
       {erroMensagem && <p role="alert" className="text-sm text-despesa">{erroMensagem}</p>}
-      <div><BotaoEnviar>{rotuloBotao}</BotaoEnviar></div>
+      <div className={rodapeForm}><BotaoEnviar>{rotuloBotao}</BotaoEnviar></div>
     </form>
   )
 }

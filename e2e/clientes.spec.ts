@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test'
 
 async function cadastrar(page: Page, rotulo: string) {
-  const email = `e2e-${rotulo}-${Date.now()}@teste.dev`
+  const email = `e2e-${rotulo}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@teste.dev`
   await page.goto('/cadastro')
   await page.getByLabel('Seu nome').fill(`Pessoa ${rotulo}`)
   await page.getByLabel('Nome da agência').fill(`Agência ${rotulo}`)

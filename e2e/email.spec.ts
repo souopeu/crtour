@@ -25,7 +25,7 @@ function caminhoDoLink(html: string) {
 }
 
 test('confirm signup, reuse blocked, reset password, invalid links', async ({ page, request }) => {
-  const email = `mail-${Date.now()}@teste.dev`
+  const email = `mail-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@teste.dev`
   const senha = 'senha1234'
   const novaSenha = 'novaSenha99'
 
@@ -64,7 +64,7 @@ test('confirm signup, reuse blocked, reset password, invalid links', async ({ pa
   await expect(page.getByText('Esse link expirou ou já foi usado')).toBeVisible()
 
   // Password reset: same answer for unknown e-mails, no mail sent to them
-  const desconhecido = `ninguem-${Date.now()}@teste.dev`
+  const desconhecido = `ninguem-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@teste.dev`
   await page.goto('/recuperar')
   await page.getByLabel('E-mail', { exact: true }).fill(desconhecido)
   await page.getByRole('button', { name: 'Enviar link' }).click()

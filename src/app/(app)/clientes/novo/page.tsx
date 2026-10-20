@@ -1,14 +1,16 @@
-import { ClienteForm } from '@/components/clientes/ClienteForm'
-import { VALORES_VAZIOS } from '@/lib/clientes/formulario'
-import { salvarCliente } from '../actions'
+import { Suspense } from 'react'
+import { Carregando } from '@/components/Carregando'
+import { ConteudoNovoCliente } from './ConteudoNovoCliente'
 
 export const metadata = { title: 'Novo cliente' }
 
-export default function NovoClientePage() {
+export default function NovoClientePage({ searchParams }: PageProps<'/clientes/novo'>) {
   return (
     <>
       <h1 className="mb-4 text-[1.75rem] font-medium tracking-tight">Novo cliente</h1>
-      <ClienteForm acao={salvarCliente.bind(null, null)} inicial={VALORES_VAZIOS} rotuloBotao="Salvar cliente" />
+      <Suspense fallback={<Carregando altura="h-64" />}>
+        <ConteudoNovoCliente searchParams={searchParams} />
+      </Suspense>
     </>
   )
 }
