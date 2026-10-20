@@ -2,6 +2,9 @@ import { Suspense } from 'react'
 import { BarraLinha } from '@/components/painel/BarraLinha'
 import { FormMeta } from '@/components/painel/FormMeta'
 import { GraficoVendas } from '@/components/painel/GraficoVendas'
+import { LinhaPrevisao } from '@/components/painel/LinhaPrevisao'
+import { PizzaEtapas } from '@/components/painel/PizzaEtapas'
+import { Velocimetro } from '@/components/painel/Velocimetro'
 import { getMembro } from '@/lib/auth/agencia'
 import { hojeNoBrasil } from '@/lib/formato'
 import { listarMembros, listarNegociacoes } from '@/lib/negociacoes/dados'
@@ -58,11 +61,11 @@ function AtividadesPorPessoa({ linhas, rotulo }: { linhas: AtividadesPessoa[] | 
   )
 }
 
-function Numero({ titulo, valor, detalhe }: { titulo: string; valor: string; detalhe?: string }) {
+function Numero({ titulo, valor, detalhe, grande = false }: { titulo: string; valor: string; detalhe?: string; grande?: boolean }) {
   return (
-    <div className={cartao}>
+    <div className={`${cartao} ${grande ? 'justify-center' : ''}`}>
       <p className="text-sm text-tinta-suave">{titulo}</p>
-      <p className="text-2xl font-bold">{valor}</p>
+      <p className={grande ? 'text-4xl font-bold tracking-tight' : 'text-2xl font-bold'}>{valor}</p>
       {detalhe && <p className="text-sm text-tinta-suave">{detalhe}</p>}
     </div>
   )
@@ -84,8 +87,8 @@ function Meta({ mes, meta, efetivo }: { mes: string; meta: number | null; efetiv
     <section aria-labelledby="meta-titulo" className={cartao}>
       <h2 id="meta-titulo" className="text-lg font-semibold">Meta de {rotulo}</h2>
       <div role="meter" aria-label="Receita efetiva em relação à meta" aria-valuemin={0} aria-valuemax={meta} aria-valuenow={efetivo}
-        aria-valuetext={`${pct(fracao)} da meta`} className="h-4 w-full overflow-hidden rounded-full bg-superficie-suave">
-        <div className="h-full rounded-full bg-receita" style={{ width: `${Math.min(100, fracao * 100)}%` }} />
+        aria-valuetext={`${pct(fracao)} da meta`}>
+        <Velocimetro efetivo={efetivo} meta={meta} />
       </div>
       <p><strong>{formatarReais(efetivo)}</strong> de {formatarReais(meta)} ({pct(fracao)})</p>
       <p className="text-sm text-tinta-suave">{falta > 0 ? `Faltam ${formatarReais(falta)}.` : 'Meta batida!'}</p>
@@ -152,20 +155,30 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
         <EstadoVazio acoes={[{ href: '/funil', rotulo: 'Abrir o funil' }]}>Ainda não há negociações{filtros.responsavel ? ' deste responsável' : ''}. O painel se monta sozinho a partir delas: crie no funil ou pela ficha de um cliente.</EstadoVazio>
       ) : (
         <>
-          {!ehDono ? (
-            <p className="text-sm text-tinta-suave">Estes são os números das negociações em que você é a pessoa responsável.</p>
-          ) : filtros.responsavel ? (
-            <p className="text-sm text-tinta-suave">A meta é da agência toda; escolha &quot;Toda a agência&quot; para ver o andamento dela.</p>
-          ) : (
-            <Meta mes={filtros.mes} meta={meta} efetivo={p.receita.valor} />
-          )}
+          {/* R120: monday-like dashboard — goal gauge | won and open totals | pie by stage, then the forecast line next to sales */}
+          <div className="grid gap-3 lg:grid-cols-3">
+            <div className="flex flex-col [&>*]:flex-1">
+              {!ehDono ? (
+                <p className="text-sm text-tinta-suave">Estes são os números das negociações em que você é a pessoa responsável.</p>
+              ) : filtros.responsavel ? (
+                <p className="text-sm text-tinta-suave">A meta é da agência toda; escolha &quot;Toda a agência&quot; para ver o andamento dela.</p>
+              ) : (
+                <Meta mes={filtros.mes} meta={meta} efetivo={p.receita.valor} />
+              )}
+            </div>
+            <div className="grid gap-3">
+              <Numero titulo={`Receita efetiva em ${rotulo}`} valor={formatarReais(p.receita.valor)} detalhe={`${p.receita.quantidade} ${p.receita.quantidade === 1 ? 'venda' : 'vendas'} em Pago ou depois`} grande />
+              <Numero titulo="Pipeline aberto (agora)" valor={formatarReais(p.pipeline.valor)} detalhe={`${p.pipeline.quantidade} em aberto · previsto ${formatarReais(p.pipeline.previsto)}`} grande />
+            </div>
+            <PizzaEtapas etapas={p.porEtapa} />
+          </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <Numero titulo={`Receita efetiva em ${rotulo}`} valor={formatarReais(p.receita.valor)} detalhe={`${p.receita.quantidade} ${p.receita.quantidade === 1 ? 'venda' : 'vendas'} em Pago ou depois`} />
+          <div className="grid gap-3 sm:grid-cols-2">
             <Numero titulo="Ticket médio" valor={p.receita.ticketMedio === null ? '—' : formatarReais(p.receita.ticketMedio)} />
             <Numero titulo="Conversão no mês" valor={p.conversao.taxa === null ? '—' : pct(p.conversao.taxa)} detalhe={`${p.conversao.ganhas} ganhas · ${p.conversao.perdidas} perdidas`} />
-            <Numero titulo="Pipeline aberto (agora)" valor={formatarReais(p.pipeline.valor)} detalhe={`${p.pipeline.quantidade} em aberto · previsto ${formatarReais(p.pipeline.previsto)}`} />
           </div>
+
+          <LinhaPrevisao previsao={p.previsao} />
 
           <GraficoVendas meses={serie} escolhido={filtros.mes} />
 

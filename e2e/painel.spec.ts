@@ -82,6 +82,11 @@ test('painel: numbers match known data, monthly goal, period and person filters'
   await expect(funil.getByRole('row', { name: /^Orçamento/ })).toContainText('67%')
   await expect(page.getByRole('region', { name: /Perdas por motivo/ })).toContainText('Achou caro1R$ 2.000,00')
   await expect(page.getByRole('region', { name: /Previsão por mês/ })).toContainText('Sem data1R$ 500,00')
+  // R120: pie of open deals by stage and the forecast line (the undated deal is told in text)
+  const pizza = page.getByRole('region', { name: 'Negociações abertas por etapa' })
+  await expect(pizza).toContainText('Interessado: 100% (1)')
+  await expect(pizza).toContainText('Orçamento: 0% (0)')
+  await expect(page.getByRole('region', { name: 'Previsão mensal' })).toContainText('Fora do gráfico: sem data (1)')
 
   // R97: six months, the chosen one with what was sold and lost; no goal column without a goal
   const grafico = page.getByRole('region', { name: 'Vendas nos últimos 6 meses' })
@@ -103,6 +108,8 @@ test('painel: numbers match known data, monthly goal, period and person filters'
   await expect(meta).toContainText('R$ 10.000,00 de R$ 40.000,00 (25%)')
   await expect(meta).toContainText('Faltam R$ 30.000,00.')
   await expect(meta.getByRole('meter')).toHaveAttribute('aria-valuetext', '25% da meta')
+  await expect(meta.getByRole('meter')).toContainText('AtualR$ 10.000,00')
+  await expect(meta.getByRole('meter')).toContainText('MetaR$ 40.000,00')
   await expect(grafico.getByRole('row').last()).toContainText('R$ 40.000,00')
 
   // Person filter: only Lisboa is theirs
