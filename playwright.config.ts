@@ -29,10 +29,13 @@ export default defineConfig({
     // WHATSAPP_FALSO_LOCAL: the inbox sends through a fake provider (only works against the local database).
     // WHATSAPP_PROVEDOR=meta with test-only secrets: e2e posts notices signed like Meta's (spec 21).
     // CRON_SECRET: test-only secret so e2e can tick the reminders clock (R132).
+    // NEXT_PUBLIC_VAPID_PUBLIC_KEY only (test key, its private half was discarded): the device toggle shows (R131)
+    // but the clock never pushes to a real push service during tests.
     env: {
       NEXT_PUBLIC_SITE_URL: 'http://localhost:3100', WHATSAPP_FALSO_LOCAL: '1', SUPABASE_SERVICE_ROLE_KEY: chaveServicoLocal(),
       WHATSAPP_PROVEDOR: 'meta', WHATSAPP_META_APP_SECRET: 'segredo-e2e-local', WHATSAPP_META_VERIFY_TOKEN: 'token-e2e-local',
       CRON_SECRET: 'relogio-e2e-local-segredo',
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: 'BERZrWZPxK6YwsPKz7UWWeGevVlM3tYw7Y4IA06Wfo9TNYziV673GbAE93XYa4HJsEijoSk-aS8l5RNF-Xwjp9g',
     },
     timeout: 180_000,
   },

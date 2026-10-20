@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { FormExcluirConta } from '@/components/FormExcluirConta'
 import { FormLimites } from '@/components/FormLimites'
 import { Equipe } from '@/components/equipe/Equipe'
+import { AvisosNoAparelho } from '@/components/push/AvisosNoAparelho'
 import { SecaoComissao } from '@/components/comissao/SecaoComissao'
 import { FormMensagensPasseio } from '@/components/mensagens/FormMensagensPasseio'
 import { buscarConfigMensagens } from '@/lib/mensagens/dados'
@@ -111,6 +112,7 @@ async function FormularioCaptacao() {
 }
 
 const SECOES = [
+  { id: 'avisos-aparelho-titulo', titulo: 'Avisos neste aparelho', Conteudo: AvisosNoAparelho },
   { id: 'prazos-titulo', titulo: 'Prazos da tela Hoje', Conteudo: Prazos },
   { id: 'formulario-titulo', titulo: 'Formulário de captação', Conteudo: FormularioCaptacao },
   { id: 'equipe-titulo', titulo: 'Equipe', Conteudo: SecaoEquipe },
