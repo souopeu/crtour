@@ -18,6 +18,8 @@ describe('campoDaColuna', () => {
     ['WhatsApp', 'whatsapp'], ['Telefone', 'whatsapp'], ['Celular', 'whatsapp'],
     ['E-mail', 'email'], ['Email', 'email'],
     ['Cidade', 'cidade'],
+    ['País', 'pais'],
+    ['UF', 'estado'],
     ['Aniversário', 'aniversario'], ['Data de nascimento', 'aniversario'],
     ['Origem', 'origem'],
     ['Destinos de interesse', 'destinos'],

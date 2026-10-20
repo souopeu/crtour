@@ -10,7 +10,7 @@ export async function exportarClientes(): Promise<string> {
   const [clientes, vinculos, etiquetas] = await Promise.all([
     paginar<ClienteExportado>((de, ate) =>
       supabase.from('clientes')
-        .select('id, nome, whatsapp, email, cidade, aniversario, origem, destinos_interesse, faixa_orcamento, qtd_pessoas, restricoes, passaporte_validade, consentimento_whatsapp, consentimento_em, criado_em')
+        .select('id, nome, whatsapp, email, pais, estado, cidade, aniversario, origem, destinos_interesse, faixa_orcamento, qtd_pessoas, restricoes, passaporte_validade, consentimento_whatsapp, consentimento_em, criado_em')
         .order('nome').order('id').range(de, ate)),
     paginar<{ cliente_id: string; etiqueta_id: string }>((de, ate) =>
       supabase.from('cliente_etiquetas').select('cliente_id, etiqueta_id').order('cliente_id').order('etiqueta_id').range(de, ate)),

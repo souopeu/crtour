@@ -1,7 +1,7 @@
 import { formatarWhatsapp } from './rotulos'
 
 export const CAMPOS_CLIENTE = [
-  'nome', 'whatsapp', 'email', 'cidade', 'aniversario', 'origem', 'destinos',
+  'nome', 'whatsapp', 'email', 'pais', 'estado', 'cidade', 'aniversario', 'origem', 'destinos',
   'faixaOrcamento', 'qtdPessoas', 'restricoes', 'passaporteValidade', 'consentimento',
 ] as const
 
@@ -12,6 +12,8 @@ export type LinhaCliente = {
   nome: string
   whatsapp: string | null
   email: string | null
+  pais: string
+  estado: string | null
   cidade: string | null
   aniversario: string | null
   origem: string | null
@@ -24,7 +26,7 @@ export type LinhaCliente = {
 }
 
 export const VALORES_VAZIOS: ValoresCliente = {
-  nome: '', whatsapp: '', email: '', cidade: '', aniversario: '', origem: '', destinos: '',
+  nome: '', whatsapp: '', email: '', pais: 'Brasil', estado: '', cidade: '', aniversario: '', origem: '', destinos: '',
   faixaOrcamento: '', qtdPessoas: '', restricoes: '', passaporteValidade: '', consentimento: 'nao_informado',
 }
 
@@ -33,6 +35,8 @@ export function valoresDaLinha(l: LinhaCliente): ValoresCliente {
     nome: l.nome,
     whatsapp: formatarWhatsapp(l.whatsapp),
     email: l.email ?? '',
+    pais: l.pais,
+    estado: l.estado ?? '',
     cidade: l.cidade ?? '',
     aniversario: l.aniversario ?? '',
     origem: l.origem ?? '',

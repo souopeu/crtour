@@ -5,7 +5,7 @@ import {
 } from './montar'
 
 const cliente = (extra: Partial<ClienteExportado> = {}): ClienteExportado => ({
-  id: 'c1', nome: 'Ana Souza', whatsapp: '5511999990001', email: 'ana@x.com', cidade: 'Santos',
+  id: 'c1', nome: 'Ana Souza', whatsapp: '5511999990001', email: 'ana@x.com', pais: 'Brasil', estado: 'SP', cidade: 'Santos',
   aniversario: '1990-05-17', origem: 'indicacao', destinos_interesse: ['Lisboa', 'Paris'], faixa_orcamento: 'R$ 5 mil',
   qtd_pessoas: 2, restricoes: 'Vegetariana', passaporte_validade: '2030-01-31', consentimento_whatsapp: 'aceitou',
   consentimento_em: '2026-10-17T15:30:00Z', criado_em: '2026-10-16T12:00:00Z', ...extra,
@@ -38,16 +38,16 @@ describe('montarCsvClientes', () => {
     const csv = montarCsvClientes([cliente()], [{ cliente_id: 'c1', etiqueta_id: 'e1' }, { cliente_id: 'c1', etiqueta_id: 'e2' }],
       [{ id: 'e1', nome: 'Europa' }, { id: 'e2', nome: 'VIP' }])
     const [cabecalho, linha] = csv.replace('﻿', '').split('\r\n')
-    expect(cabecalho).toBe('Nome*;WhatsApp;E-mail;Cidade;Aniversário;Origem;Destinos de interesse;Faixa de orçamento;Número de pessoas;Restrições;Validade do passaporte;Etiquetas;Consentimento WhatsApp;Consentimento em;Cadastrado em')
-    expect(linha).toBe('Ana Souza;5511999990001;ana@x.com;Santos;17/05/1990;Indicação;Lisboa, Paris;R$ 5 mil;2;Vegetariana;31/01/2030;Europa, VIP;Aceitou;17/10/2026 12:30;16/10/2026 09:00')
+    expect(cabecalho).toBe('Nome*;WhatsApp;E-mail;País;Estado;Cidade;Aniversário;Origem;Destinos de interesse;Faixa de orçamento;Número de pessoas;Restrições;Validade do passaporte;Etiquetas;Consentimento WhatsApp;Consentimento em;Cadastrado em')
+    expect(linha).toBe('Ana Souza;5511999990001;ana@x.com;Brasil;SP;Santos;17/05/1990;Indicação;Lisboa, Paris;R$ 5 mil;2;Vegetariana;31/01/2030;Europa, VIP;Aceitou;17/10/2026 12:30;16/10/2026 09:00')
   })
 
   test('handles empty optional fields and unknown tag ids', () => {
     const csv = montarCsvClientes(
-      [cliente({ whatsapp: null, origem: null, aniversario: null, consentimento_em: null, destinos_interesse: [], consentimento_whatsapp: 'nao_informado' })],
+      [cliente({ whatsapp: null, estado: null, origem: null, aniversario: null, consentimento_em: null, destinos_interesse: [], consentimento_whatsapp: 'nao_informado' })],
       [{ cliente_id: 'c1', etiqueta_id: 'sumiu' }], [])
     const linha = csv.replace('﻿', '').split('\r\n')[1]
-    expect(linha.startsWith('Ana Souza;;ana@x.com;Santos;;;;')).toBe(true)
+    expect(linha.startsWith('Ana Souza;;ana@x.com;Brasil;;Santos;;;;')).toBe(true)
     expect(linha).toContain('Não informado')
   })
 

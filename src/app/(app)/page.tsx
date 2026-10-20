@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { ListaClientes } from '@/components/clientes/ListaClientes'
-import { listarCidades, listarClientes, listarEtiquetas } from '@/lib/clientes/dados'
+import { listarCidades, listarClientes, listarEstados, listarEtiquetas } from '@/lib/clientes/dados'
 import { hrefDaLista, lerFiltros } from '@/lib/clientes/filtros'
 import { Carregando } from '@/components/Carregando'
 import { AvisoCriterioSumido } from '@/components/filtros/AvisoCriterioSumido'
@@ -13,7 +13,7 @@ import { semClienteInexistente } from '@/lib/filtros/filtrosSalvos'
 export const metadata = { title: 'Clientes' }
 
 async function Conteudo({ searchParams }: Pick<PageProps<'/'>, 'searchParams'>) {
-  const [etiquetas, cidades, salvos] = await Promise.all([listarEtiquetas(), listarCidades(), listarFiltrosSalvos('clientes')])
+  const [etiquetas, cidades, estados, salvos] = await Promise.all([listarEtiquetas(), listarCidades(), listarEstados(), listarFiltrosSalvos('clientes')])
   // R84: a deleted tag in the URL (e.g. from a saved filter) is dropped, with a warning
   const { filtros, sumiu } = semClienteInexistente(lerFiltros(await searchParams), etiquetas.map((e) => e.id))
   const { clientes, total } = await listarClientes(filtros)
@@ -23,7 +23,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/'>, 'searchParams'>) 
       {sumiu && <AvisoCriterioSumido />}
     </>
   )
-  return <ListaClientes filtros={filtros} clientes={clientes} total={total} etiquetas={etiquetas} cidades={cidades} abaixoDaBarra={abaixoDaBarra} />
+  return <ListaClientes filtros={filtros} clientes={clientes} total={total} etiquetas={etiquetas} cidades={cidades} estados={estados} abaixoDaBarra={abaixoDaBarra} />
 }
 
 export default function Home({ searchParams }: PageProps<'/'>) {

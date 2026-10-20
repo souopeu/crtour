@@ -3,7 +3,7 @@ import { clienteSchema } from './schema'
 import { VALORES_VAZIOS, valoresDaLinha, valoresDoForm, type LinhaCliente } from './formulario'
 
 const linha: LinhaCliente = {
-  nome: 'Ana', whatsapp: '5511999990001', email: null, cidade: 'Santos', aniversario: '1990-05-17', origem: 'site',
+  nome: 'Ana', whatsapp: '5511999990001', email: null, pais: 'Brasil', estado: 'SP', cidade: 'Santos', aniversario: '1990-05-17', origem: 'site',
   destinos_interesse: ['Lisboa', 'Paris'], faixa_orcamento: null, qtd_pessoas: 4, restricoes: null,
   passaporte_validade: null, consentimento_whatsapp: 'aceitou',
 }
@@ -11,7 +11,7 @@ const linha: LinhaCliente = {
 describe('valoresDaLinha', () => {
   test('turns a database row into form strings (null -> empty)', () => {
     expect(valoresDaLinha(linha)).toEqual({
-      nome: 'Ana', whatsapp: '(11) 99999-0001', email: '', cidade: 'Santos', aniversario: '1990-05-17', origem: 'site',
+      nome: 'Ana', whatsapp: '(11) 99999-0001', email: '', pais: 'Brasil', estado: 'SP', cidade: 'Santos', aniversario: '1990-05-17', origem: 'site',
       destinos: 'Lisboa, Paris', faixaOrcamento: '', qtdPessoas: '4', restricoes: '', passaporteValidade: '', consentimento: 'aceitou',
     })
   })

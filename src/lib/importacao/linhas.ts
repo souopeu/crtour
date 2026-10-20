@@ -90,6 +90,8 @@ export function converterLinha(numero: number, c: CelulasLinha): ResultadoLinha 
     nome: texto(c.nome),
     whatsapp: texto(c.whatsapp),
     email: texto(c.email),
+    pais: texto(c.pais),
+    estado: texto(c.estado),
     cidade: texto(c.cidade),
     aniversario: aniversario ?? '',
     origem: origem ?? '',

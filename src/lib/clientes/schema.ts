@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { normalizarWhatsapp } from './whatsapp'
+import { normalizarPais, PAIS_PADRAO, UFS } from './local'
 
 export const ORIGENS = ['instagram', 'indicacao', 'anuncio', 'site', 'outro'] as const
 export const CONSENTIMENTOS = ['aceitou', 'nao_informado', 'pediu_saida'] as const
@@ -44,6 +45,8 @@ export const clienteSchema = z
     email: vazioParaNulo(z.string().trim().toLowerCase().max(254, 'E-mail muito longo.')).pipe(
       z.email('Digite um e-mail válido.').nullable(),
     ),
+    pais: z.string().transform(normalizarPais).pipe(z.string().max(60, 'O país pode ter no máximo 60 caracteres.')),
+    estado: z.string().trim(),
     cidade: texto(120, 'A cidade'),
     aniversario: data('Aniversário')
       .refine((v) => v === '' || v <= hoje(), 'O aniversário não pode estar no futuro.')
@@ -69,10 +72,22 @@ export const clienteSchema = z
     passaporteValidade: data('Validade do passaporte').transform((v) => (v === '' ? null : v)),
     consentimento: z.enum(CONSENTIMENTOS, 'Escolha uma opção de consentimento.'),
   })
+  // R126: in Brazil the state is a UF (any case); abroad it is free text.
+  .superRefine((v, ctx) => {
+    if (v.pais === PAIS_PADRAO) {
+      if (v.estado !== '' && !(UFS as readonly string[]).includes(v.estado.toUpperCase())) {
+        ctx.addIssue({ code: 'custom', path: ['estado'], message: 'Escolha o estado da lista.' })
+      }
+    } else if (v.estado.length > 60) {
+      ctx.addIssue({ code: 'custom', path: ['estado'], message: 'O estado pode ter no máximo 60 caracteres.' })
+    }
+  })
   .transform((v) => ({
     nome: v.nome,
     whatsapp: v.whatsapp,
     email: v.email,
+    pais: v.pais,
+    estado: v.estado === '' ? null : v.pais === PAIS_PADRAO ? v.estado.toUpperCase() : v.estado,
     cidade: v.cidade,
     aniversario: v.aniversario,
     origem: v.origem,

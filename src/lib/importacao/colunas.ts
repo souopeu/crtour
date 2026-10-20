@@ -1,5 +1,5 @@
 export type CampoImportacao =
-  | 'nome' | 'whatsapp' | 'email' | 'cidade' | 'aniversario' | 'origem' | 'destinos'
+  | 'nome' | 'whatsapp' | 'email' | 'pais' | 'estado' | 'cidade' | 'aniversario' | 'origem' | 'destinos'
   | 'faixaOrcamento' | 'qtdPessoas' | 'restricoes' | 'passaporteValidade' | 'etiquetas' | 'consentimento'
 
 export function normalizarCabecalho(texto: string): string {
@@ -16,6 +16,8 @@ const ALIASES: Record<CampoImportacao, string[]> = {
   nome: ['nome', 'cliente', 'nome do cliente'],
   whatsapp: ['whatsapp', 'telefone', 'celular', 'fone', 'contato'],
   email: ['e-mail', 'email'],
+  pais: ['pais'],
+  estado: ['estado', 'uf'],
   cidade: ['cidade'],
   aniversario: ['aniversario', 'data de nascimento', 'nascimento'],
   origem: ['origem', 'como conheceu', 'como conheceu a agencia'],

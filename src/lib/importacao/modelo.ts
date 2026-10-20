@@ -1,15 +1,15 @@
 import ExcelJS from 'exceljs'
 
 export const COLUNAS_MODELO = [
-  'Nome*', 'WhatsApp', 'E-mail', 'Cidade', 'Aniversário', 'Origem', 'Destinos de interesse',
+  'Nome*', 'WhatsApp', 'E-mail', 'País', 'Estado', 'Cidade', 'Aniversário', 'Origem', 'Destinos de interesse',
   'Faixa de orçamento', 'Número de pessoas', 'Restrições', 'Validade do passaporte', 'Etiquetas',
   'Consentimento WhatsApp',
 ] as const
 
 const EXEMPLOS = [
-  ['Maria Exemplo', '(11) 99999-0001', 'maria@exemplo.com', 'Santos', '17/05/1990', 'Instagram', 'Lisboa, Paris',
+  ['Maria Exemplo', '(11) 99999-0001', 'maria@exemplo.com', 'Brasil', 'SP', 'Santos', '17/05/1990', 'Instagram', 'Lisboa, Paris',
     'R$ 8 a 12 mil', 2, 'Vegetariana', '31/01/2030', 'Europa, VIP', 'Não informado'],
-  ['João Exemplo', '(21) 98888-0002', '', 'Rio de Janeiro', '', 'Indicação', 'Fernando de Noronha',
+  ['João Exemplo', '(21) 98888-0002', '', 'Brasil', 'RJ', 'Rio de Janeiro', '', 'Indicação', 'Fernando de Noronha',
     '', 4, '', '', 'Praia', 'Não informado'],
 ]
 

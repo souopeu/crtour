@@ -8,7 +8,7 @@ import type { Viagem } from './viagens'
 import { emBlocos } from '@/lib/consultas/emBlocos'
 
 export const COLUNAS_CLIENTE =
-  'nome, whatsapp, email, cidade, aniversario, origem, destinos_interesse, faixa_orcamento, qtd_pessoas, restricoes, passaporte_validade, consentimento_whatsapp'
+  'nome, whatsapp, email, pais, estado, cidade, aniversario, origem, destinos_interesse, faixa_orcamento, qtd_pessoas, restricoes, passaporte_validade, consentimento_whatsapp'
 
 // Returns null for malformed ids and for clients the caller cannot see (RLS).
 export async function buscarCliente(id: string): Promise<(LinhaCliente & { id: string }) | null> {
@@ -49,6 +49,7 @@ export type ClienteDaLista = {
   whatsapp: string | null
   email: string | null
   cidade: string | null
+  estado: string | null
   origem: string | null
   consentimento_whatsapp: string
   total: number
@@ -61,6 +62,7 @@ export async function listarClientes(f: Filtros): Promise<{ clientes: ClienteDaL
     p_etiqueta: f.etiqueta,
     p_origem: f.origem,
     p_cidade: f.cidade || null,
+    p_estado: f.estado || null,
     p_limite: POR_PAGINA,
     p_deslocamento: (f.pagina - 1) * POR_PAGINA,
   })
@@ -142,4 +144,10 @@ export async function listarSugestoes(clienteId: string): Promise<Sugestao[]> {
     .eq('cliente_id', clienteId)
     .order('criada_em')
   return z.array(sugestaoSchema).parse(data ?? [])
+}
+
+export async function listarEstados(): Promise<string[]> {
+  const supabase = await criarClienteServidor()
+  const { data } = await supabase.rpc('estados_dos_clientes')
+  return ((data ?? []) as { estado: string }[]).map((e) => e.estado)
 }

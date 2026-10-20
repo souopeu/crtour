@@ -4,6 +4,7 @@ import { useActionState } from 'react'
 import Link from 'next/link'
 import { BotaoEnviar } from '@/components/auth/BotaoEnviar'
 import { Campo } from '@/components/auth/Campo'
+import { CampoEmail, CampoWhatsapp, CamposLocal } from './CamposContato'
 import { Mensagem } from '@/components/auth/Mensagem'
 import type { ValoresCliente } from '@/lib/clientes/formulario'
 import type { EstadoForm } from '@/lib/forms'
@@ -28,9 +29,9 @@ export function ClienteForm({ acao, inicial, rotuloBotao }: Props) {
       <fieldset className="flex flex-col gap-4">
         <legend className="mb-2 text-lg font-semibold">Contato</legend>
         <Campo nome="nome" rotulo="Nome" valor={v.nome} erros={e('nome')} autoComplete="off" />
-        <Campo nome="whatsapp" rotulo="WhatsApp" tipo="tel" valor={v.whatsapp} erros={e('whatsapp')} dica="DDD + número. Para outro país, comece com +." />
-        <Campo nome="email" rotulo="E-mail" tipo="email" valor={v.email} erros={e('email')} />
-        <Campo nome="cidade" rotulo="Cidade" valor={v.cidade} erros={e('cidade')} />
+        <CampoWhatsapp valor={v.whatsapp} erros={e('whatsapp')} />
+        <CampoEmail valor={v.email} erros={e('email')} />
+        <CamposLocal pais={v.pais} estado={v.estado} cidade={v.cidade} erros={e} />
         <Campo nome="aniversario" rotulo="Aniversário" tipo="date" valor={v.aniversario} erros={e('aniversario')} />
         <div className="flex flex-col gap-1">
           <label htmlFor="origem" className="text-sm font-medium">Como conheceu a agência</label>

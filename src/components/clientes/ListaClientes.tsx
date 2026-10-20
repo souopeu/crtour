@@ -2,12 +2,13 @@ import Link from 'next/link'
 import type { ClienteDaLista, EtiquetaLinha } from '@/lib/clientes/dados'
 import { hrefDaLista, resumoDaPagina, type Filtros } from '@/lib/clientes/filtros'
 import { ROTULO_CONSENTIMENTO, ROTULO_ORIGEM, formatarWhatsapp } from '@/lib/clientes/rotulos'
+import { rotuloLocal } from '@/lib/clientes/local'
 import { ouTraco } from '@/lib/formato'
 import { AbasDeVisao } from '@/components/tela/AbasDeVisao'
 import { botaoBarra, campoBarra, rotuloBarra } from '@/components/tela/estilos'
 import { EstadoVazio } from '@/components/tela/EstadoVazio'
 
-type Props = { filtros: Filtros; clientes: ClienteDaLista[]; total: number; etiquetas: EtiquetaLinha[]; cidades: string[]; abaixoDaBarra?: React.ReactNode }
+type Props = { filtros: Filtros; clientes: ClienteDaLista[]; total: number; etiquetas: EtiquetaLinha[]; cidades: string[]; estados: string[]; abaixoDaBarra?: React.ReactNode }
 
 // Consent as a status block: colour plus the words, never colour alone.
 const BLOCO_CONSENTIMENTO: Record<string, string> = {
@@ -24,7 +25,7 @@ function Tabela({ clientes, total }: { clientes: ClienteDaLista[]; total: number
           <tr className="h-(--linha-tabela) border-b border-linha text-xs text-tinta-suave">
             <th className="px-3 font-medium">Cliente</th>
             <th className="px-2 font-medium">WhatsApp</th>
-            <th className="px-2 font-medium">Cidade</th>
+            <th className="px-2 font-medium">Cidade · UF</th>
             <th className="px-2 font-medium">Origem</th>
             <th className="px-3 font-medium">Mensagens</th>
           </tr>
@@ -34,7 +35,7 @@ function Tabela({ clientes, total }: { clientes: ClienteDaLista[]; total: number
             <tr key={c.id} className="h-(--linha-tabela) border-b border-linha hover:bg-superficie-suave">
               <td className="px-3 py-1"><Link href={`/clientes/${c.id}`} className="font-medium text-primaria underline">{c.nome}</Link></td>
               <td className="px-2 py-1 tabular-nums">{ouTraco(c.whatsapp ? formatarWhatsapp(c.whatsapp) : null)}</td>
-              <td className="px-2 py-1">{ouTraco(c.cidade)}</td>
+              <td className="px-2 py-1">{ouTraco(rotuloLocal(c.cidade, c.estado, null) || null)}</td>
               <td className="px-2 py-1">{ouTraco(c.origem ? ROTULO_ORIGEM[c.origem] : null)}</td>
               <td className="px-3 py-1">
                 <span className={`inline-block rounded-md px-2 py-1 text-xs font-semibold ${BLOCO_CONSENTIMENTO[c.consentimento_whatsapp] ?? ''}`}>
@@ -67,7 +68,7 @@ function Cartoes({ clientes }: { clientes: ClienteDaLista[] }) {
             <span className="font-semibold">{c.nome}</span>
             <span className="flex flex-wrap gap-x-3 text-sm text-tinta-suave">
               {c.whatsapp && <span>{formatarWhatsapp(c.whatsapp)}</span>}
-              {c.cidade && <span>{c.cidade}</span>}
+              {(c.cidade || c.estado) && <span>{rotuloLocal(c.cidade, c.estado, null)}</span>}
               {c.origem && <span>{ROTULO_ORIGEM[c.origem]}</span>}
               <span className={c.consentimento_whatsapp === 'pediu_saida' ? 'text-despesa' : c.consentimento_whatsapp === 'aceitou' ? 'text-receita' : ''}>
                 {ROTULO_CONSENTIMENTO[c.consentimento_whatsapp]}
@@ -80,9 +81,9 @@ function Cartoes({ clientes }: { clientes: ClienteDaLista[] }) {
   )
 }
 
-export function ListaClientes({ filtros, clientes, total, etiquetas, cidades, abaixoDaBarra }: Props) {
+export function ListaClientes({ filtros, clientes, total, etiquetas, cidades, estados, abaixoDaBarra }: Props) {
   const resumo = resumoDaPagina(total, filtros.pagina)
-  const temFiltro = Boolean(filtros.q || filtros.etiqueta || filtros.origem || filtros.cidade)
+  const temFiltro = Boolean(filtros.q || filtros.etiqueta || filtros.origem || filtros.cidade || filtros.estado)
 
   return (
     <>
@@ -113,6 +114,13 @@ export function ListaClientes({ filtros, clientes, total, etiquetas, cidades, ab
           </select>
         </div>
         <div className="flex flex-col gap-1">
+          <label htmlFor={`estado-${filtros.visao}`} className={rotuloBarra}>Estado</label>
+          <select id={`estado-${filtros.visao}`} name="estado" defaultValue={filtros.estado} className={campoBarra}>
+            <option value="">Todos</option>
+            {estados.map((e) => <option key={e} value={e}>{e}</option>)}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
           <label htmlFor={`cidade-${filtros.visao}`} className={rotuloBarra}>Cidade</label>
           <select id={`cidade-${filtros.visao}`} name="cidade" defaultValue={filtros.cidade} className={campoBarra}>
             <option value="">Todas</option>
@@ -120,7 +128,7 @@ export function ListaClientes({ filtros, clientes, total, etiquetas, cidades, ab
           </select>
         </div>
         <button type="submit" className={botaoBarra}>Filtrar</button>
-        {temFiltro && <Link href={hrefDaLista({ q: '', etiqueta: null, origem: null, cidade: '', pagina: 1, visao: filtros.visao })} className="inline-flex min-h-10 items-center text-sm text-primaria underline">Limpar filtros</Link>}
+        {temFiltro && <Link href={hrefDaLista({ q: '', etiqueta: null, origem: null, cidade: '', estado: '', pagina: 1, visao: filtros.visao })} className="inline-flex min-h-10 items-center text-sm text-primaria underline">Limpar filtros</Link>}
       </form>
       {abaixoDaBarra}
 

@@ -25,7 +25,7 @@ const CONSENTIMENTO_IMPORTAVEL: Record<string, string> = {
 }
 
 export type ClienteExportado = {
-  id: string; nome: string; whatsapp: string | null; email: string | null; cidade: string | null
+  id: string; nome: string; whatsapp: string | null; email: string | null; pais: string; estado: string | null; cidade: string | null
   aniversario: string | null; origem: string | null; destinos_interesse: string[]; faixa_orcamento: string | null
   qtd_pessoas: number | null; restricoes: string | null; passaporte_validade: string | null
   consentimento_whatsapp: string; consentimento_em: string | null; criado_em: string
@@ -45,7 +45,7 @@ export function montarCsvClientes(
 
   const cabecalho = [...COLUNAS_MODELO, 'Consentimento em', 'Cadastrado em']
   const linhas = clientes.map((c) => [
-    c.nome, c.whatsapp, c.email, c.cidade, formatarDataBr(c.aniversario), c.origem ? ROTULO_ORIGEM[c.origem] : '',
+    c.nome, c.whatsapp, c.email, c.pais, c.estado, c.cidade, formatarDataBr(c.aniversario), c.origem ? ROTULO_ORIGEM[c.origem] : '',
     c.destinos_interesse.join(', '), c.faixa_orcamento, c.qtd_pessoas, c.restricoes, formatarDataBr(c.passaporte_validade),
     (etiquetasDoCliente.get(c.id) ?? []).join(', '), CONSENTIMENTO_IMPORTAVEL[c.consentimento_whatsapp],
     c.consentimento_em ? formatarDataHora(c.consentimento_em) : '', formatarDataHora(c.criado_em),

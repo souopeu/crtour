@@ -5,7 +5,7 @@ export const POR_PAGINA = 25
 const PAGINA_MAXIMA = 10000
 
 export type Origem = (typeof ORIGENS)[number]
-export type Filtros = { q: string; etiqueta: string | null; origem: Origem | null; cidade: string; pagina: number; visao: 'tabela' | 'cartoes' }
+export type Filtros = { q: string; etiqueta: string | null; origem: Origem | null; cidade: string; estado: string; pagina: number; visao: 'tabela' | 'cartoes' }
 type Parametros = Record<string, string | string[] | undefined>
 
 const um = (v: string | string[] | undefined) => (typeof v === 'string' ? v : '')
@@ -20,6 +20,7 @@ export function lerFiltros(p: Parametros): Filtros {
     etiqueta: etiqueta.success ? etiqueta.data : null,
     origem: (ORIGENS as readonly string[]).includes(origem) ? (origem as Origem) : null,
     cidade: um(p.cidade).trim().slice(0, 120),
+    estado: um(p.estado).trim().slice(0, 60),
     pagina: Number.isFinite(pagina) && pagina >= 1 ? Math.min(pagina, PAGINA_MAXIMA) : 1,
     visao: um(p.visao) === 'cartoes' ? 'cartoes' : 'tabela',
   }
@@ -31,6 +32,7 @@ export function hrefDaLista(f: Filtros): string {
   if (f.etiqueta) q.set('etiqueta', f.etiqueta)
   if (f.origem) q.set('origem', f.origem)
   if (f.cidade) q.set('cidade', f.cidade)
+  if (f.estado) q.set('estado', f.estado)
   if (f.pagina > 1) q.set('pagina', String(f.pagina))
   if (f.visao === 'cartoes') q.set('visao', 'cartoes')
   const s = q.toString()

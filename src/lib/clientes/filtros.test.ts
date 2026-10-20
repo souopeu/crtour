@@ -5,18 +5,18 @@ const uuid = 'a2000000-0000-4000-8000-000000000001'
 
 describe('lerFiltros', () => {
   test('uses defaults when empty', () => {
-    expect(lerFiltros({})).toEqual({ q: '', etiqueta: null, origem: null, cidade: '', pagina: 1, visao: 'tabela' })
+    expect(lerFiltros({})).toEqual({ q: '', etiqueta: null, origem: null, cidade: '', estado: '', pagina: 1, visao: 'tabela' })
   })
 
   test('reads valid values and trims text', () => {
-    expect(lerFiltros({ q: '  ana ', etiqueta: uuid, origem: 'instagram', cidade: ' Santos ', pagina: '3', visao: 'cartoes' })).toEqual({
-      q: 'ana', etiqueta: uuid, origem: 'instagram', cidade: 'Santos', pagina: 3, visao: 'cartoes',
+    expect(lerFiltros({ q: '  ana ', etiqueta: uuid, origem: 'instagram', cidade: ' Santos ', estado: ' SP ', pagina: '3', visao: 'cartoes' })).toEqual({
+      q: 'ana', etiqueta: uuid, origem: 'instagram', cidade: 'Santos', estado: 'SP', pagina: 3, visao: 'cartoes',
     })
   })
 
   test('ignores invalid values instead of failing', () => {
     const f = lerFiltros({ etiqueta: 'nao-uuid', origem: 'tv', pagina: '-4', q: ['a', 'b'], visao: 'grade' })
-    expect(f).toEqual({ q: '', etiqueta: null, origem: null, cidade: '', pagina: 1, visao: 'tabela' })
+    expect(f).toEqual({ q: '', etiqueta: null, origem: null, cidade: '', estado: '', pagina: 1, visao: 'tabela' })
   })
 
   test('caps absurd page numbers and long text', () => {
@@ -27,14 +27,14 @@ describe('lerFiltros', () => {
 
 describe('hrefDaLista', () => {
   test('omits empty filters and the first page', () => {
-    expect(hrefDaLista({ q: '', etiqueta: null, origem: null, cidade: '', pagina: 1, visao: 'tabela' })).toBe('/')
+    expect(hrefDaLista({ q: '', etiqueta: null, origem: null, cidade: '', estado: '', pagina: 1, visao: 'tabela' })).toBe('/')
   })
   test('encodes the filters', () => {
-    const href = hrefDaLista({ q: 'ana souza', etiqueta: null, origem: 'site', cidade: 'São Paulo', pagina: 2, visao: 'tabela' })
-    expect(href).toBe('/?q=ana+souza&origem=site&cidade=S%C3%A3o+Paulo&pagina=2')
+    const href = hrefDaLista({ q: 'ana souza', etiqueta: null, origem: 'site', cidade: 'São Paulo', estado: 'SP', pagina: 2, visao: 'tabela' })
+    expect(href).toBe('/?q=ana+souza&origem=site&cidade=S%C3%A3o+Paulo&estado=SP&pagina=2')
   })
   test('keeps the cards view and the filters together (R60)', () => {
-    expect(hrefDaLista({ q: 'ana', etiqueta: null, origem: null, cidade: '', pagina: 1, visao: 'cartoes' })).toBe('/?q=ana&visao=cartoes')
+    expect(hrefDaLista({ q: 'ana', etiqueta: null, origem: null, cidade: '', estado: '', pagina: 1, visao: 'cartoes' })).toBe('/?q=ana&visao=cartoes')
   })
 })
 
