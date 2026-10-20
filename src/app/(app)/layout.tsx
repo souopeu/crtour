@@ -4,10 +4,10 @@ import { BuscaCelular } from '@/components/busca/BuscaCelular'
 import { BuscaGlobal } from '@/components/busca/BuscaGlobal'
 import { MenuCelular } from '@/components/menu/MenuCelular'
 import { MenuLateral } from '@/components/menu/MenuLateral'
+import { Sino } from '@/components/sino/Sino'
 import { sair } from '@/app/(auth)/actions'
 import { APP_NAME } from '@/lib/brand'
 import Link from 'next/link'
-import { IconeMenu } from '@/components/menu/IconeMenu'
 import { getMembro, nomeDaAgencia } from '@/lib/auth/agencia'
 import { exigirUsuario } from '@/lib/auth/usuario'
 import { COOKIE_LATERAL, VALOR_RECOLHIDA } from '@/lib/menu/config'
@@ -38,7 +38,7 @@ async function Casca({ children }: { children: React.ReactNode }) {
   if (!membro) return <SemAgencia email={usuario.email ?? ''} />
   // R107: the inbox entry exists only with a WhatsApp number connected; its badge counts conversations with unread messages.
   const [avisosNovos, canal, contagem, agencia] = await Promise.all([
-    membro.papel === 'dono' ? contarAvisosNaoLidos() : Promise.resolve(0), canalWhatsapp(), contarConversas(), nomeDaAgencia(),
+    contarAvisosNaoLidos(), canalWhatsapp(), contarConversas(), nomeDaAgencia(),
   ])
   const atendimento = canal ? [...contagem.entries()].filter(([aba]) => aba !== 'arquivadas').reduce((s, [, n]) => s + n, 0) : null
   const grupos = montarMenu(membro.papel, avisosNovos, atendimento)
@@ -51,15 +51,7 @@ async function Casca({ children }: { children: React.ReactNode }) {
         <BuscaGlobal className="mx-auto hidden w-full max-w-md lg:block" />
         <div className="ml-auto flex items-center gap-2 text-sm lg:ml-0">
           <BuscaCelular />
-          {/* shortcut: owner only, like /avisos today; E8-6 opens it to everyone with personal reminders */}
-          {membro.papel === 'dono' && <Link
-            href="/avisos"
-            aria-label={avisosNovos ? `Notificações, ${avisosNovos} ${avisosNovos === 1 ? 'nova' : 'novas'}` : 'Notificações'}
-            className="relative inline-flex size-11 items-center justify-center rounded-full text-tinta-suave hover:bg-superficie-suave hover:text-tinta"
-          >
-            <IconeMenu nome="avisos" className="size-5" />
-            {avisosNovos ? <span aria-hidden="true" className="absolute right-1 top-1 rounded-full bg-despesa px-1.5 text-xs font-bold text-white">{avisosNovos}</span> : null}
-          </Link>}
+          <Sino naoLidosInicial={avisosNovos} />
           <span aria-hidden="true" title={usuario.email} className="hidden size-9 items-center justify-center rounded-full bg-marca font-bold text-white sm:inline-flex">
             {(membro.nome || usuario.email || '?').trim().charAt(0).toUpperCase()}
           </span>

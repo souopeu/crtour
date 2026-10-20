@@ -46,7 +46,7 @@ export function montarMenu(papel: PapelMenu, avisosNovos: number, atendimento: n
       titulo: 'Gestão',
       itens: [
         item('/painel', 'Painel', 'painel'),
-        ...(papel === 'dono' ? [item('/avisos', 'Avisos', 'avisos', [], avisosNovos)] : []),
+        item('/avisos', 'Avisos', 'avisos', [], avisosNovos), // R130: everyone has notices now (reminders are personal)
         item('/configuracoes', 'Configurações', 'configuracoes'),
       ],
     },

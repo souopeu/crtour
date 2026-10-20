@@ -51,5 +51,7 @@ describe('decidirAcesso', () => {
     // R73: WhatsApp provider notices are server to server, authenticated by signature
     expect(decidirAcesso('/api/whatsapp/aviso/meta', '', false)).toEqual({ tipo: 'seguir' })
     expect(decidirAcesso('/api/whatsapp/aviso', '', false).tipo).toBe('redirecionar')
+    // R132: the reminders clock checks its own secret, not a session
+    expect(decidirAcesso('/api/lembretes/relogio', '', false)).toEqual({ tipo: 'seguir' })
   })
 })

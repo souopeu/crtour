@@ -15,11 +15,10 @@ describe('montarMenu', () => {
     expect(menu[3].itens.map((i) => i.rotulo)).toEqual(['Painel', 'Avisos', 'Configurações'])
   })
 
-  it('shows Avisos with the unread count only to the owner', () => {
-    const dono = montarMenu('dono', 3).flatMap((g) => g.itens).find((i) => i.rotulo === 'Avisos')
-    expect(dono?.novos).toBe(3)
-    const vendedor = montarMenu('vendedor', 3).flatMap((g) => g.itens)
-    expect(vendedor.some((i) => i.rotulo === 'Avisos')).toBe(false)
+  it('shows Avisos with the unread count to everyone (R130: reminders are personal)', () => {
+    for (const papel of ['dono', 'vendedor'] as const) {
+      expect(montarMenu(papel, 3).flatMap((g) => g.itens).find((i) => i.rotulo === 'Avisos')?.novos).toBe(3)
+    }
   })
 
   it('keeps every route the old top menu had and never repeats a destination', () => {

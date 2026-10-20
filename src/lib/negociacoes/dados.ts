@@ -1,4 +1,5 @@
 import 'server-only'
+import type { AvisoLinha } from '@/lib/avisos/avisos'
 import { z } from 'zod'
 import { criarClienteServidor } from '@/lib/supabase/server'
 import { NEGOCIACOES } from './config'
@@ -90,18 +91,15 @@ export async function listarSaidasParaSelecao(): Promise<SaidaOpcao[]> {
   return saidas.map((s) => ({ id: s.id, rotulo: `${nome.get(s.passeio_id) ?? 'Passeio'} · ${s.data.split('-').reverse().join('/')}` }))
 }
 
-export type AvisoLinha = {
-  tipo: 'negociacao_ganha' | 'lead_formulario'; id: string; titulo: string; cliente_nome: string; valor_centavos: number; por_nome: string | null; lido_em: string | null; criado_em: string; negociacao_id: string | null }
-
-// RLS returns avisos only to the owner, so an empty list also means "not an owner".
-export async function listarAvisos(): Promise<AvisoLinha[]> {
+// R128: RLS returns each person's own notices, plus the agency-wide ones to the owner.
+export async function listarAvisos(limite = 100): Promise<AvisoLinha[]> {
   const supabase = await criarClienteServidor()
   const { data } = await supabase
     .from('avisos')
-    .select('id, tipo, titulo, cliente_nome, valor_centavos, por_nome, lido_em, criado_em, negociacao_id')
+    .select('id, tipo, titulo, cliente_nome, valor_centavos, por_nome, lido_em, criado_em, negociacao_id, reserva_id, saida_id, atividade:atividades(cliente_id)')
     .order('criado_em', { ascending: false })
-    .limit(100)
-  return (data ?? []) as AvisoLinha[]
+    .limit(limite)
+  return (data ?? []) as unknown as AvisoLinha[]
 }
 
 export async function contarAvisosNaoLidos(): Promise<number> {

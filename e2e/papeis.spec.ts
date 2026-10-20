@@ -61,7 +61,10 @@ test('roles: owner invites a seller by link, seller works with limits, owner rem
   await vera.getByRole('checkbox').check()
   await vera.getByRole('button', { name: 'Entrar na equipe' }).click()
   await expect(vera.getByRole('link', { name: 'Painel' })).toBeVisible()
-  await expect(vera.getByRole('link', { name: 'Avisos' })).toHaveCount(0)
+  // R128/R130: the seller has her own notices now, but never sees the owner's (e.g. a won deal)
+  await vera.goto('/avisos')
+  await expect(vera.getByText(/Nenhum aviso ainda/)).toBeVisible()
+  await vera.goto('/')
   await expect(vera.getByText('Cliente Compartilhada')).toBeVisible() // same agency data
 
   // Hoje: the seller starts on her own items; an unassigned activity created by the owner shows only under "Todas"

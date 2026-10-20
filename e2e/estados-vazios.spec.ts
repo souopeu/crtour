@@ -9,7 +9,7 @@ const TELAS: { url: string; texto: RegExp; acao: string }[] = [
   { url: '/remarketing', texto: /Nenhum segmento ainda/, acao: 'Criar o primeiro segmento' },
   { url: '/cobrancas', texto: /saldo em aberto/, acao: 'Ver passeios' },
   { url: '/comissoes', texto: /ainda não usa comissão/, acao: 'Configurações' },
-  { url: '/avisos', texto: /Nenhum aviso ainda/, acao: 'Abrir o funil' },
+  { url: '/avisos', texto: /Nenhum aviso ainda/, acao: 'Abrir o Hoje' },
   { url: '/painel', texto: /Ainda não há negociações/, acao: 'Abrir o funil' },
 ]
 

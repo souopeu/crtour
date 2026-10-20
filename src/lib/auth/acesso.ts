@@ -1,6 +1,7 @@
 import { proximoSeguro } from './redirect'
 
-const PUBLICAS = new Set(['/login', '/cadastro', '/recuperar', '/privacidade', '/termos', '/auth/confirmar'])
+// The reminders clock (R132) checks its own secret instead of a session.
+const PUBLICAS = new Set(['/login', '/cadastro', '/recuperar', '/privacidade', '/termos', '/auth/confirmar', '/api/lembretes/relogio'])
 // Server-to-server notices (payment providers): authenticated by the provider's signature, not by a session.
 const PREFIXOS_PUBLICOS = ['/api/pagamentos/aviso/', '/api/whatsapp/aviso/', '/f/', '/p/', '/v/', '/w/'] // provider notices; public lead form (R65); proposal link (R70); voucher link (R76); ad link to WhatsApp (R81)
 // Pages a logged-in user has no reason to see.
