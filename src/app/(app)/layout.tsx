@@ -10,8 +10,8 @@ import { APP_NAME } from '@/lib/brand'
 import Link from 'next/link'
 import { getMembro, nomeDaAgencia } from '@/lib/auth/agencia'
 import { exigirUsuario } from '@/lib/auth/usuario'
-import { COOKIE_LATERAL, VALOR_RECOLHIDA } from '@/lib/menu/config'
-import { montarMenu } from '@/lib/menu/menu'
+import { COOKIE_GRUPOS, COOKIE_LATERAL, VALOR_RECOLHIDA } from '@/lib/menu/config'
+import { lerGruposFechados, montarMenu } from '@/lib/menu/menu'
 import { contarAvisosNaoLidos } from '@/lib/negociacoes/dados'
 import { canalWhatsapp, contarConversas } from '@/lib/atendimento/dados'
 
@@ -42,7 +42,9 @@ async function Casca({ children }: { children: React.ReactNode }) {
   ])
   const atendimento = canal ? [...contagem.entries()].filter(([aba]) => aba !== 'arquivadas').reduce((s, [, n]) => s + n, 0) : null
   const grupos = montarMenu(membro.papel, avisosNovos, atendimento)
-  const recolhido = (await cookies()).get(COOKIE_LATERAL)?.value === VALOR_RECOLHIDA
+  const jar = await cookies()
+  const recolhido = jar.get(COOKIE_LATERAL)?.value === VALOR_RECOLHIDA
+  const fechados = [...lerGruposFechados(jar.get(COOKIE_GRUPOS)?.value)]
   // R118: monday-like frame — light top bar across the screen, light sidebar, content on a white sheet.
   return (
     <div className="flex min-h-screen flex-col bg-fundo-app">
@@ -55,14 +57,14 @@ async function Casca({ children }: { children: React.ReactNode }) {
           <span aria-hidden="true" title={usuario.email} className="hidden size-9 items-center justify-center rounded-full bg-marca font-bold text-white sm:inline-flex">
             {(membro.nome || usuario.email || '?').trim().charAt(0).toUpperCase()}
           </span>
-          <MenuCelular grupos={grupos} />
+          <MenuCelular grupos={grupos} fechadosIniciais={fechados} />
           <form action={sair}>
             <button type="submit" className="min-h-11 rounded-full border border-linha bg-superficie px-4 hover:bg-superficie-suave">Sair</button>
           </form>
         </div>
       </header>
       <div className="flex min-h-0 flex-1">
-        <MenuLateral grupos={grupos} recolhidoInicial={recolhido} agencia={agencia} />
+        <MenuLateral grupos={grupos} recolhidoInicial={recolhido} agencia={agencia} fechadosIniciais={fechados} />
         <div className="min-w-0 flex-1 border-linha bg-papel p-4 lg:rounded-tl-2xl lg:border-l lg:border-t lg:p-6 print:border-0 print:p-0">{children}</div>
       </div>
     </div>

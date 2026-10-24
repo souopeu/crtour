@@ -5,7 +5,8 @@ import { listarPasseios } from '@/lib/passeios/dados'
 import { Carregando } from '@/components/Carregando'
 import { EstadoVazio } from '@/components/tela/EstadoVazio'
 import { AbasDeVisao } from '@/components/tela/AbasDeVisao'
-import { botaoNovo, caixaTabela, rodapeTabela, tabelaPadrao } from '@/components/tela/estilos'
+import { CabecalhoPagina } from '@/components/tela/CabecalhoPagina'
+import { botaoPrincipal, botaoSecundario, caixaTabela, rodapeTabela, tabelaPadrao } from '@/components/tela/estilos'
 
 export const metadata = { title: 'Passeios' }
 
@@ -48,13 +49,10 @@ async function Lista({ searchParams }: Pick<PageProps<'/passeios'>, 'searchParam
 export default function PasseiosPage({ searchParams }: PageProps<'/passeios'>) {
   return (
     <section className="mx-auto flex max-w-6xl flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-[1.75rem] font-medium tracking-tight">Passeios</h1>
-        <div className="flex items-center gap-4">
-          <Link href="/fornecedores" className="text-primaria underline">Fornecedores</Link>
-          <Link href="/passeios/novo" className={botaoNovo}>Novo passeio</Link>
-        </div>
-      </div>
+      <CabecalhoPagina area="Catálogo" titulo="Passeios" descricao="Os passeios da agência e suas saídas com data, vagas e preço.">
+        <Link href="/passeios/novo" className={botaoPrincipal}>Novo passeio</Link>
+        <Link href="/fornecedores" className={botaoSecundario}>Fornecedores</Link>
+      </CabecalhoPagina>
       <Suspense fallback={<Carregando altura="h-40" />}>
         <Lista searchParams={searchParams} />
       </Suspense>

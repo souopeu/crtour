@@ -20,6 +20,7 @@ export default defineConfig({
         'src/lib/exportacao/dados.ts',
         'src/lib/passeios/dados.ts',
         'src/lib/pagamentos/dados.ts',
+        'src/lib/reservas/dados.ts',
         'src/lib/negociacoes/dados.ts',
         'src/lib/atividades/dados.ts',
         'src/lib/hoje/dados.ts',

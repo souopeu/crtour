@@ -1,18 +1,24 @@
 import { describe, expect, it } from 'vitest'
-import { itemAtivo, montarMenu } from './menu'
+import { alternarGrupo, gravarGruposFechados, grupoAberto, itemAtivo, lerGruposFechados, montarMenu } from './menu'
 
 const hrefs = (menu: ReturnType<typeof montarMenu>) => menu.flatMap((g) => g.itens.map((i) => i.href))
 const itemAtivoEm = (menu: ReturnType<typeof montarMenu>, caminho: string) =>
   menu.flatMap((g) => g.itens).filter((i) => itemAtivo(caminho, i))
 
 describe('montarMenu', () => {
-  it('groups the entries as Hoje, Vendas, Operação and Gestão, in that order', () => {
+  it('puts Hoje, Calendário and Reservas loose on top, then the collapsible groups (R133)', () => {
     const menu = montarMenu('dono', 0)
-    expect(menu.map((g) => g.titulo)).toEqual([undefined, 'Vendas', 'Operação', 'Gestão'])
-    expect(menu[0].itens.map((i) => i.rotulo)).toEqual(['Hoje'])
+    expect(menu.map((g) => g.titulo)).toEqual([undefined, 'Vendas', 'Catálogo', 'Financeiro', 'Gestão'])
+    expect(menu[0].itens.map((i) => i.rotulo)).toEqual(['Hoje', 'Calendário', 'Reservas'])
     expect(menu[1].itens.map((i) => i.rotulo)).toEqual(['Funil', 'Clientes', 'Remarketing', 'Campanhas'])
-    expect(menu[2].itens.map((i) => i.rotulo)).toEqual(['Passeios', 'Calendário', 'Fornecedores', 'Cobranças', 'Comissões'])
-    expect(menu[3].itens.map((i) => i.rotulo)).toEqual(['Painel', 'Avisos', 'Configurações'])
+    expect(menu[2].itens.map((i) => i.rotulo)).toEqual(['Passeios', 'Fornecedores'])
+    expect(menu[3].itens.map((i) => i.rotulo)).toEqual(['Cobranças', 'Comissões'])
+    expect(menu[4].itens.map((i) => i.rotulo)).toEqual(['Painel', 'Avisos', 'Configurações'])
+  })
+
+  it('gives every titled group a stable id and the loose top none', () => {
+    const menu = montarMenu('dono', 0)
+    expect(menu.map((g) => g.id)).toEqual([undefined, 'vendas', 'catalogo', 'financeiro', 'gestao'])
   })
 
   it('shows Avisos with the unread count to everyone (R130: reminders are personal)', () => {
@@ -27,6 +33,8 @@ describe('montarMenu', () => {
       expect(todos).toContain(antigo)
     }
     expect(todos).toContain('/fornecedores')
+    expect(todos).toContain('/calendario')
+    expect(todos).toContain('/reservas')
     expect(new Set(todos).size).toBe(todos.length)
   })
 
@@ -57,7 +65,8 @@ describe('itemAtivo', () => {
     ['/remarketing/3/editar', 'Remarketing'],
     ['/passeios/novo', 'Passeios'],
     ['/saidas/1/passageiros', 'Passeios'],
-    ['/reservas/2', 'Passeios'],
+    ['/reservas', 'Reservas'],
+    ['/reservas/2', 'Reservas'],
     ['/calendario', 'Calendário'],
     ['/fornecedores', 'Fornecedores'],
     ['/cobrancas', 'Cobranças'],
@@ -72,5 +81,43 @@ describe('itemAtivo', () => {
   it('does not mark a route whose name merely starts like another', () => {
     expect(itemAtivoEm(menu, '/passeios-extra')).toEqual([])
     expect(itemAtivoEm(menu, '/clientesx')).toEqual([])
+  })
+})
+
+describe('grupos recolhíveis (R133)', () => {
+  const menu = montarMenu('dono', 0)
+  const [topo, vendas, catalogo] = menu
+
+  it('always shows the loose top entries', () => {
+    expect(grupoAberto(topo, '/painel', new Set(['vendas', 'catalogo']))).toBe(true)
+  })
+
+  it('opens the group of the current screen even when it was closed', () => {
+    expect(grupoAberto(catalogo, '/saidas/1', new Set(['catalogo']))).toBe(true)
+  })
+
+  it('keeps the other groups as the person left them', () => {
+    expect(grupoAberto(vendas, '/passeios', new Set(['vendas']))).toBe(false)
+    expect(grupoAberto(vendas, '/passeios', new Set())).toBe(true)
+  })
+
+  it('reads only known group ids from the cookie', () => {
+    expect([...lerGruposFechados('vendas,gestao')]).toEqual(['vendas', 'gestao'])
+    expect([...lerGruposFechados('vendas,<script>,,catalogo,vendas')]).toEqual(['vendas', 'catalogo'])
+    expect(lerGruposFechados(undefined).size).toBe(0)
+    expect(lerGruposFechados('x'.repeat(5000)).size).toBe(0)
+  })
+
+  it('toggles a group without changing the set it was given', () => {
+    const antes = new Set(['vendas'])
+    const depois = alternarGrupo(antes, 'gestao')
+    expect([...antes]).toEqual(['vendas'])
+    expect([...depois].sort()).toEqual(['gestao', 'vendas'])
+    expect([...alternarGrupo(depois, 'vendas')]).toEqual(['gestao'])
+  })
+
+  it('writes the closed groups back in the cookie format it reads', () => {
+    const fechados = new Set(['financeiro', 'vendas'])
+    expect(lerGruposFechados(gravarGruposFechados(fechados))).toEqual(fechados)
   })
 })

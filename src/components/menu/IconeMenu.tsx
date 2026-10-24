@@ -16,6 +16,7 @@ const DESENHOS: Record<Nome | 'recolher', React.ReactNode> = {
   painel: <path d="M4 20V10M10 20V4M16 20v-7M21 20H3" />,
   avisos: <path d="M6 17v-6a6 6 0 0 1 12 0v6l1.5 2h-15zM10 21h4" />,
   configuracoes: <><path d="M4 7h10M18 7h2M4 17h2M10 17h10" /><circle cx="16" cy="7" r="2" /><circle cx="8" cy="17" r="2" /></>,
+  reservas: <><path d="M4 5h16v4a2.5 2.5 0 0 0 0 5v4H4v-4a2.5 2.5 0 0 0 0-5z" /><path d="M14 5v2M14 11v2M14 17v1" /></>,
   recolher: <path d="M15 5l-7 7 7 7" />,
 }
 

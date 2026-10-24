@@ -9,5 +9,10 @@ export const caixaTabela = 'overflow-x-auto rounded-(--radius-cartao) border bor
 export const tabelaPadrao = 'w-full border-collapse text-left text-sm [&_th]:h-(--linha-tabela) [&_th]:px-3 [&_th]:text-xs [&_th]:font-medium [&_th]:text-tinta-suave [&_td]:h-(--linha-tabela) [&_td]:border-t [&_td]:border-linha [&_td]:px-3 [&_td]:py-1'
 export const rodapeTabela = 'bg-superficie-suave font-semibold'
 export const cartaoPainel = 'flex flex-col gap-1 rounded-(--radius-cartao) border border-linha bg-superficie p-4'
+// R134: page header actions — the main one filled in blue, the others outlined.
+export const botaoPrincipal = 'inline-flex min-h-11 items-center gap-2 rounded-lg bg-marca px-4 text-sm font-semibold text-white hover:opacity-90'
+export const botaoSecundario = 'inline-flex min-h-11 items-center gap-2 rounded-lg border border-controle bg-superficie px-4 text-sm font-medium text-tinta hover:bg-superficie-suave'
+// R135: the card that holds a screen's filters.
+export const cartaoFiltros = 'flex flex-col gap-3 rounded-(--radius-cartao) border border-linha bg-superficie p-4'
 // R122: Save/Cancel stay visible at the bottom of long forms (page and side window).
 export const rodapeForm = 'sticky bottom-0 z-10 flex items-center gap-4 border-t border-linha bg-papel py-3'

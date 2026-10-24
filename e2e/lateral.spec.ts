@@ -14,9 +14,9 @@ test('desktop sidebar: groups, active entry, collapse remembered after reload', 
   const menu = page.getByRole('navigation', { name: 'Principal' })
   const lateral = page.locator('aside')
 
-  // Groups and entries, in the order of the spec (R59)
-  for (const titulo of ['Vendas', 'Operação', 'Gestão']) await expect(menu.getByText(titulo, { exact: true })).toBeVisible()
-  for (const nome of ['Hoje', 'Funil', 'Clientes', 'Remarketing', 'Passeios', 'Fornecedores', 'Cobranças', 'Comissões', 'Painel', 'Avisos', 'Configurações']) {
+  // Groups and entries, in the order of the spec (R133)
+  for (const titulo of ['Vendas', 'Catálogo', 'Financeiro', 'Gestão']) await expect(menu.getByRole('button', { name: titulo, exact: true })).toBeVisible()
+  for (const nome of ['Hoje', 'Calendário', 'Reservas', 'Funil', 'Clientes', 'Remarketing', 'Passeios', 'Fornecedores', 'Cobranças', 'Comissões', 'Painel', 'Avisos', 'Configurações']) {
     await expect(menu.getByRole('link', { name: nome })).toBeVisible()
   }
   await expect(menu.getByRole('link', { name: 'Clientes' })).toHaveAttribute('aria-current', 'page')
@@ -29,10 +29,26 @@ test('desktop sidebar: groups, active entry, collapse remembered after reload', 
   await expect(menu.getByRole('link', { name: 'Fornecedores' })).toHaveAttribute('aria-current', 'page')
   await expect(menu.getByRole('link', { name: 'Clientes' })).not.toHaveAttribute('aria-current', 'page')
 
+  // R133: a closed group stays closed after a reload, but the group of the current screen always opens
+  const vendas = menu.getByRole('button', { name: 'Vendas', exact: true })
+  await vendas.click()
+  await expect(vendas).toHaveAttribute('aria-expanded', 'false')
+  await expect(menu.getByRole('link', { name: 'Funil' })).toBeHidden()
+  await page.reload()
+  await expect(menu.getByRole('link', { name: 'Funil' })).toBeHidden()
+  await page.goto('/funil')
+  await expect(menu.getByRole('link', { name: 'Funil' })).toHaveAttribute('aria-current', 'page')
+  await expect(vendas).toHaveAttribute('aria-expanded', 'true')
+  await page.goto('/fornecedores')
+  await expect(menu.getByRole('link', { name: 'Funil' })).toBeHidden()
+  await vendas.click()
+  await expect(menu.getByRole('link', { name: 'Funil' })).toBeVisible()
+
   // Collapse: only icons stay, names stay available to screen readers, and the choice survives a reload
   await page.getByRole('button', { name: 'Recolher menu' }).click()
   await expect(menu.getByText('Vendas', { exact: true })).toBeHidden()
   await expect(menu.getByRole('link', { name: 'Funil' })).toBeVisible()
+  await expect(menu.getByRole('link', { name: 'Comissões' })).toBeVisible() // icons only: every group shows
   await expect.poll(largura).toBeLessThan(100) // the width animates
   await page.reload()
   await expect(page.getByRole('button', { name: 'Expandir menu' })).toHaveAttribute('aria-expanded', 'false')

@@ -95,7 +95,7 @@ describe('zip bomb guard', () => {
     expect(bomba.length).toBeLessThan(IMPORTACAO.arquivo.maxBytes)
     const r = await lerPlanilha(bomba, 'bomba.xlsx')
     expect(r).toEqual({ ok: false, erro: expect.stringMatching(/grande demais/i) })
-  })
+  }, 30_000) // compressing 50 MB takes <1 s alone but can pass 5 s when the whole suite runs in parallel
 
   test('treats a malformed directory as unsafe', () => {
     expect(tamanhoDescomprimido(Buffer.from('PK\u0003\u0004 sem diretório'))).toBe(Infinity)

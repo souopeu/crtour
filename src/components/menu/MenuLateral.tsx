@@ -3,14 +3,16 @@
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { COOKIE_LATERAL, VALOR_RECOLHIDA } from '@/lib/menu/config'
-import type { GrupoMenu } from '@/lib/menu/menu'
+import type { GrupoMenu, IdGrupo } from '@/lib/menu/menu'
 import { IconeMenu } from './IconeMenu'
 import { ListaDeItens } from './ListaDeItens'
 
 const UM_ANO = 60 * 60 * 24 * 365
 
 // Wide screens only. The collapsed choice is kept in a cookie so the server renders the right width on the first paint.
-export function MenuLateral({ grupos, recolhidoInicial, agencia }: { grupos: GrupoMenu[]; recolhidoInicial: boolean; agencia: string }) {
+export function MenuLateral({ grupos, recolhidoInicial, agencia, fechadosIniciais }: {
+  grupos: GrupoMenu[]; recolhidoInicial: boolean; agencia: string; fechadosIniciais: readonly IdGrupo[]
+}) {
   const caminho = usePathname()
   const [recolhido, setRecolhido] = useState(recolhidoInicial)
 
@@ -40,7 +42,7 @@ export function MenuLateral({ grupos, recolhidoInicial, agencia }: { grupos: Gru
         </button>
       </div>
       <nav aria-label="Principal" className="flex-1 overflow-y-auto p-2">
-        <ListaDeItens grupos={grupos} caminho={caminho} recolhido={recolhido} />
+        <ListaDeItens grupos={grupos} caminho={caminho} recolhido={recolhido} fechadosIniciais={fechadosIniciais} />
       </nav>
     </aside>
   )
