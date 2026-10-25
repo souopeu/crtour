@@ -39,7 +39,7 @@ test('payment receipt: attach, open by a short link, refuse fake files, remove; 
   await page.getByLabel('Valor (R$)', { exact: true }).fill('500,00')
   await page.getByLabel('Data do pagamento').fill(iso(0))
   await page.getByRole('button', { name: 'Registrar pagamento' }).click()
-  await expect(page.getByText('Pagamento registrado.')).toBeVisible()
+  await expect(page.getByText('Pagamento registrado.', { exact: true })).toBeVisible()
 
   const pagamento = page.getByRole('listitem').filter({ hasText: 'Sinal' })
   await expect(pagamento.getByText(/Não anexe documentos pessoais/)).toBeVisible()

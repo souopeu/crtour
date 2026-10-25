@@ -80,7 +80,7 @@ test('client sheet shows upcoming and past trips, balance owed, cancelled and co
   await page.getByLabel('Valor (R$)', { exact: true }).fill('500,00')
   await page.getByLabel('Data do pagamento').fill(iso(0))
   await page.getByRole('button', { name: 'Registrar pagamento' }).click()
-  await expect(page.getByText('Pagamento registrado.')).toBeVisible()
+  await expect(page.getByText('Pagamento registrado.', { exact: true })).toBeVisible()
 
   // A companion registered as a client on the upcoming trip
   await page.goto(futura)

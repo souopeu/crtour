@@ -74,7 +74,7 @@ test('reservations suggest moving the linked deal (Reservado, then Pago), one ta
   await page.getByLabel('Valor (R$)', { exact: true }).fill('1.000,00')
   await page.getByLabel('Data do pagamento').fill(iso(0))
   await page.getByRole('button', { name: 'Registrar pagamento' }).click()
-  await expect(page.getByText('Pagamento registrado.')).toBeVisible()
+  await expect(page.getByText('Reserva quitada: não há saldo a receber.')).toBeVisible() // paid in full: the form gives way to this
 
   // One tap on the kanban card
   await page.goto('/funil')

@@ -63,7 +63,7 @@ test('commission: three rules configured by the owner, due when the reservation 
   await page.getByLabel('Valor (R$)', { exact: true }).fill('2.000,00')
   await page.getByLabel('Data do pagamento').fill(iso(0))
   await page.getByRole('button', { name: 'Registrar pagamento' }).click()
-  await expect(page.getByText('Pagamento registrado.')).toBeVisible()
+  await expect(page.getByText('Reserva quitada: não há saldo a receber.')).toBeVisible() // paid in full: the form gives way to this ("Pagamento registrado." is unmounted with it)
   await page.goto('/comissoes')
   const total = page.getByRole('region', { name: /Comissões de/ })
   await expect(total).toContainText('R$ 100,00')
