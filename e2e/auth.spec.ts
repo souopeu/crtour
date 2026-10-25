@@ -37,6 +37,11 @@ test('signup, logout, login and wrong password', async ({ page }) => {
 
   await page.getByLabel('E-mail', { exact: true }).fill(email)
   await page.getByLabel('Senha').fill('errada1234')
+  // The eye shows and hides what was typed, without submitting
+  await page.getByRole('button', { name: 'Mostrar o que foi digitado' }).click()
+  await expect(page.getByLabel('Senha')).toHaveAttribute('type', 'text')
+  await page.getByRole('button', { name: 'Esconder o que foi digitado' }).click()
+  await expect(page.getByLabel('Senha')).toHaveAttribute('type', 'password')
   await page.getByRole('button', { name: 'Entrar' }).click()
   await expect(page.getByText('E-mail ou senha incorretos.')).toBeVisible()
 
