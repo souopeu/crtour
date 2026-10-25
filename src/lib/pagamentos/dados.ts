@@ -10,7 +10,7 @@ export type ReservaDetalhe = {
   id: string; saida_id: string; cliente_id: string; cliente_nome: string; qtd_pessoas: number
   valor_total_centavos: number; pago_centavos: number; saldo_centavos: number
   vencimento_saldo: string | null; situacao: 'ativa' | 'cancelada'; status_operacional: StatusOperacional
-  saida_data: string; passeio_nome: string
+  saida_data: string; passeio_id: string; passeio_nome: string
 }
 export type PagamentoLinha = {
   id: string; tipo: 'sinal' | 'parcela' | 'saldo' | 'estorno'; forma: string; valor_centavos: number
@@ -26,7 +26,7 @@ export async function buscarReserva(id: string): Promise<ReservaDetalhe | null> 
     .eq('id', id)
     .maybeSingle()
   if (!data) return null
-  const r = data as Omit<ReservaDetalhe, 'cliente_nome' | 'saida_data' | 'passeio_nome'>
+  const r = data as Omit<ReservaDetalhe, 'cliente_nome' | 'saida_data' | 'passeio_id' | 'passeio_nome'>
   const [cliente, saida] = await Promise.all([
     supabase.from('clientes').select('nome').eq('id', r.cliente_id).maybeSingle(),
     supabase.from('saidas').select('data, passeio_id').eq('id', r.saida_id).maybeSingle(),
@@ -37,6 +37,7 @@ export async function buscarReserva(id: string): Promise<ReservaDetalhe | null> 
     ...r,
     cliente_nome: (cliente.data as { nome: string } | null)?.nome ?? 'Cliente',
     saida_data: s?.data ?? '',
+    passeio_id: s?.passeio_id ?? '',
     passeio_nome: (passeio?.data as { nome: string } | null)?.nome ?? '',
   }
 }

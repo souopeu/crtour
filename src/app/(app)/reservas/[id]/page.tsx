@@ -7,7 +7,10 @@ import { formatarDataBr, hojeNoBrasil } from '@/lib/formato'
 import { diasAte, situacaoCobranca } from '@/lib/pagamentos/cobranca'
 import { buscarReserva, listarPagamentos } from '@/lib/pagamentos/dados'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
-import { definirStatusOperacional, estornarPagamento } from '../actions'
+import { definirStatusOperacional, estornarPagamento, moverReserva } from '../actions'
+import { MoverReserva } from '@/components/reservas/MoverReserva'
+import { saidasDosPasseios } from '@/lib/operacao/dados'
+import { destinosParaMover } from '@/lib/operacao/operacao'
 import { ChipStatus } from '@/components/reservas/ChipStatus'
 import { StatusOperacional } from '@/components/reservas/StatusOperacional'
 import { Carregando } from '@/components/Carregando'
@@ -38,9 +41,13 @@ async function Conteudo({ params }: Pick<PageProps<'/reservas/[id]'>, 'params'>)
   const reserva = await buscarReserva(id)
   if (!reserva) notFound()
   const [pagamentos, vendedorId, membros, membro] = await Promise.all([listarPagamentos(reserva.id), buscarVendedorDaReserva(reserva.id), listarMembros(), getMembro()])
-  const comComprovante = await pagamentosComComprovante(pagamentos.map((p) => p.id))
   const hoje = hojeNoBrasil()
   const ativa = reserva.situacao === 'ativa'
+  const [comComprovante, candidatas] = await Promise.all([
+    pagamentosComComprovante(pagamentos.map((p) => p.id)),
+    ativa && reserva.passeio_id ? saidasDosPasseios([reserva.passeio_id], hoje) : Promise.resolve([]),
+  ])
+  const destinos = destinosParaMover(candidatas, reserva.saida_id, reserva.passeio_id, reserva.qtd_pessoas, hoje)
   const situacao = situacaoCobranca(reserva.saldo_centavos, reserva.vencimento_saldo, hoje)
   const rotuloSituacao = { quitada: 'Quitada', vencida: 'Vencida', a_vencer: 'Em aberto', sem_vencimento: 'Em aberto' }[situacao]
 
@@ -53,6 +60,7 @@ async function Conteudo({ params }: Pick<PageProps<'/reservas/[id]'>, 'params'>)
         </h1>
         <p className="text-tinta-suave">{reserva.qtd_pessoas} {reserva.qtd_pessoas === 1 ? 'pessoa' : 'pessoas'}</p>
         <VendidoPor reservaId={reserva.id} vendedorId={vendedorId} membros={membros} podeMudar={membro?.papel === 'dono'} />
+        {ativa && <MoverReserva acao={moverReserva.bind(null, reserva.id)} destinos={destinos} />}
         {!ativa && (
           <p role="note" className="mt-3 rounded-xl bg-alerta-suave p-3 text-sm text-alerta">
             Reserva cancelada.{reserva.pago_centavos > 0 && ` Há ${formatarReais(reserva.pago_centavos)} registrados como pagos: estorne os pagamentos se o dinheiro for devolvido.`}

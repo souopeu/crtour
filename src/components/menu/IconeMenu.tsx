@@ -18,6 +18,7 @@ const DESENHOS: Record<Nome | 'recolher', React.ReactNode> = {
   configuracoes: <><path d="M4 7h10M18 7h2M4 17h2M10 17h10" /><circle cx="16" cy="7" r="2" /><circle cx="8" cy="17" r="2" /></>,
   reservas: <><path d="M4 5h16v4a2.5 2.5 0 0 0 0 5v4H4v-4a2.5 2.5 0 0 0 0-5z" /><path d="M14 5v2M14 11v2M14 17v1" /></>,
   veiculos: <><path d="M3 16V8a2 2 0 0 1 2-2h11l4 5v5h-2M3 16h2M9 16h6M3 11h17" /><circle cx="7" cy="16.5" r="1.8" /><circle cx="16.5" cy="16.5" r="1.8" /></>,
+  operacao: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M7 9h6M7 13h10M7 17h4" /><circle cx="17" cy="9" r="1.5" /></>,
   recolher: <path d="M15 5l-7 7 7 7" />,
 }
 

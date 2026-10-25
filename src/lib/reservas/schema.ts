@@ -33,6 +33,7 @@ const MENSAGENS: Record<string, string> = {
   CR006: 'Esta reserva está cancelada.',
   CR007: 'O valor excede o saldo da reserva, ou o total ficaria abaixo do que já foi pago.',
   CR008: 'Este pagamento já foi estornado.',
+  CR014: 'Só dá para mover a reserva para uma saída do mesmo passeio.',
   CR018: 'Para voltar o status da reserva, confirme a volta.',
   CR019: 'As vagas passam dos lugares do veículo. Diminua as vagas ou escolha um veículo maior.',
   '22008': 'A data do pagamento não pode estar no futuro.',

@@ -11,7 +11,7 @@ import { criarClienteServidor } from '@/lib/supabase/server'
 
 const uuid = (v: string) => z.uuid().safeParse(v).success
 const texto = (fd: FormData, n: string) => String(fd.get(n) ?? '')
-const ESPERADOS = ['CR006', 'CR007', 'CR008', 'CR018', '22008', '22023', '23514', '22003']
+const ESPERADOS = ['CR001', 'CR002', 'CR006', 'CR007', 'CR008', 'CR014', 'CR018', '22008', '22023', '23514', '22003']
 
 function atualizarTelas(reservaId: string) {
   revalidatePath(`/reservas/${reservaId}`)
@@ -32,6 +32,22 @@ export async function definirStatusOperacional(reservaId: string, _: EstadoForm,
   revalidatePath('/hoje')
   revalidatePath('/calendario')
   return { ok: `Status: ${rotuloDoStatus(status.data)}.`, versao }
+}
+
+// R140: move to another departure of the same tour; the database locks both and checks the seats.
+export async function moverReserva(reservaId: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const destino = String(fd.get('saida') ?? '')
+  if (!uuid(reservaId)) return { erro: mensagemDeErroReserva(undefined), versao }
+  if (!uuid(destino)) return { erro: 'Escolha a saída de destino.', versao }
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.rpc('mover_reserva_saida', { p_reserva: reservaId, p_saida: destino })
+  if (error) return falha(error)
+  atualizarTelas(reservaId)
+  revalidatePath('/operacao')
+  revalidatePath('/calendario')
+  revalidatePath('/passeios', 'layout')
+  return { ok: 'Reserva movida.', versao }
 }
 
 function falha(error: { code?: string }, valores?: Record<string, string>): EstadoForm {

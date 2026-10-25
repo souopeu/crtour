@@ -12,7 +12,7 @@
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
     "db:test": "supabase test db",
-    "db:test:concorrencia": "bash supabase/tests/concurrency/overbooking.sh vagas && bash supabase/tests/concurrency/overbooking.sh passageiros && bash supabase/tests/concurrency/overbooking.sh pagamentos",
+    "db:test:concorrencia": "bash supabase/tests/concurrency/overbooking.sh vagas && bash supabase/tests/concurrency/overbooking.sh passageiros && bash supabase/tests/concurrency/overbooking.sh pagamentos && bash supabase/tests/concurrency/overbooking.sh mover",
     "db:reset": "supabase db reset",
     "db:lint": "supabase db lint"
   },

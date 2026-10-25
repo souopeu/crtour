@@ -5,6 +5,7 @@
 #   vagas       - many sellers reserve the same departure (capacity 5)
 #   passageiros - many sessions add companions to one 3-person reservation (2 places)
 #   pagamentos  - many sessions pay R$ 10 each on a R$ 30 reservation (3 payments fit)
+#   mover       - many 1-person reservations move at once into a 5-seat departure of the same tour (R140)
 set -euo pipefail
 
 DB=${DB_CONTAINER:-supabase_db_crtour}
@@ -45,10 +46,21 @@ if [ "$MODE" = passageiros ] || [ "$MODE" = pagamentos ]; then
   RESERVA=$(psql_ -c "insert into public.reservas (agencia_id, saida_id, cliente_id, qtd_pessoas, valor_total_centavos)
     select agencia_id, '$SAIDA', '$CLIENTE', 3, 3000 from public.saidas where id = '$SAIDA' returning id;" | head -1)
 fi
+MOVER=()
+if [ "$MODE" = mover ]; then
+  # One 1-person reservation per worker, all in another departure of the same tour; $SAIDA is the target.
+  # shellcheck disable=SC2207 # ids have no spaces; macOS bash 3.2 has no mapfile
+  MOVER=($(psql_ -c "
+    with o as (insert into public.saidas (agencia_id, passeio_id, data, capacidade, preco_centavos)
+               select agencia_id, passeio_id, '2027-03-03', $WORKERS, 1000 from public.saidas where id = '$SAIDA' returning id, agencia_id)
+    insert into public.reservas (agencia_id, saida_id, cliente_id, qtd_pessoas, valor_total_centavos)
+    select o.agencia_id, o.id, '$CLIENTE', 1, 1000 from o, generate_series(1, $WORKERS) returning id;"))
+fi
 
 for i in $(seq 1 "$WORKERS"); do
   if [ "$MODE" = passageiros ]; then CALL="select public.adicionar_passageiro('$RESERVA', 'Passageiro $i');"
   elif [ "$MODE" = pagamentos ]; then CALL="select public.registrar_pagamento('$RESERVA', 1000, 'parcela', 'pix', (now() at time zone 'America/Sao_Paulo')::date);"
+  elif [ "$MODE" = mover ]; then CALL="select '${MOVER[$((i - 1))]}' from (select public.mover_reserva_saida('${MOVER[$((i - 1))]}', '$SAIDA')) m;"
   else CALL="select public.criar_reserva('$SAIDA', '$CLIENTE', 1);"; fi
   (
     docker exec -i "$DB" psql -U postgres -d postgres -tA -v ON_ERROR_STOP=1 > "$TMP/w$i.out" 2> "$TMP/w$i.err" <<SQL || true
