@@ -22,7 +22,7 @@ export default defineConfig({
   // Uses the installed Chrome (no browser download needed).
   use: { baseURL: 'http://localhost:3100', channel: 'chrome' },
   webServer: {
-    command: 'npm run build && npx next start -p 3100',
+    command: 'bash scripts/e2e-servidor.sh', // builds and serves on 3100, one run per checkout (lock)
     url: 'http://localhost:3100/login',
     reuseExistingServer: true,
     // E-mailed links use a configured base URL in production builds.

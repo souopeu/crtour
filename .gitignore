@@ -44,3 +44,6 @@ next-env.d.ts
 test-results/
 playwright-report/
 !.env.example
+
+# e2e lock (scripts/e2e-servidor.sh)
+.e2e-trava/
