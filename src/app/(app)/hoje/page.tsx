@@ -1,5 +1,9 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
+import { ChipStatus } from '@/components/reservas/ChipStatus'
+import { somarDias } from '@/lib/periodo/periodo'
+import { RESERVAS } from '@/lib/reservas/config'
+import { listarReservas } from '@/lib/reservas/dados'
 import { alternarAtividade } from '@/app/(app)/atividades/actions'
 import { WhatsappRapido } from '@/components/hoje/WhatsappRapido'
 import { getMembro } from '@/lib/auth/agencia'
@@ -55,13 +59,15 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/hoje'>, 'searchParams
   const hoje = hojeNoBrasil()
   const visao = lerVisao(sp, membro.papel)
   const minhas = visao === 'minhas' ? membro.user_id : undefined
-  const [pendentes, semContato, negociacoes, mensagens, configMsg, aniversarios] = await Promise.all([
+  const ateOrganizar = somarDias(hoje, RESERVAS.diasParaOrganizar - 1)
+  const [pendentes, semContato, negociacoes, mensagens, configMsg, aniversarios, paraOrganizar] = await Promise.all([
     listarPendentesAte(limiteSemContato(hoje, 0), minhas), // start of tomorrow = end of today
     listarSemContato(limiteSemContato(hoje, limites.dias_sem_contato)),
     listarNegociacoes(),
     filaMensagensPasseio(hoje, minhas),
     buscarConfigMensagens(),
     filaAniversarios(hoje),
+    listarReservas({ atalho: null, de: hoje, ate: ateOrganizar }, 'ativa', 'organizar'),
   ])
   const modelos = {
     confirmacao: configMsg.modelo_confirmacao, lembrete: configMsg.modelo_lembrete, avaliacao: configMsg.modelo_avaliacao,
@@ -96,6 +102,27 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/hoje'>, 'searchParams
       <section aria-labelledby="dehoje-titulo" className="flex flex-col gap-2">
         <Titulo id="dehoje-titulo" total={deHoje.length}>Para hoje</Titulo>
         {deHoje.length === 0 ? <EstadoVazio compacto acoes={[{ href: '/', rotulo: 'Agendar pela ficha de um cliente' }]}>Nenhuma atividade marcada para hoje.</EstadoVazio> : <ListaAtividades itens={deHoje} hoje={hoje} atrasadas={false} />}
+      </section>
+
+      <section aria-labelledby="organizar-titulo" className="flex flex-col gap-2">
+        <Titulo id="organizar-titulo" total={paraOrganizar.linhas.length}>Reservas para organizar</Titulo>
+        <p className={vazio}>Saídas nos próximos {RESERVAS.diasParaOrganizar} dias com reserva que ainda não está pronta. Da agência toda.</p>
+        {paraOrganizar.linhas.length === 0 ? <p className={vazio}>Tudo pronto para as próximas saídas.</p> : (
+          <ul className="flex flex-col gap-2">
+            {paraOrganizar.linhas.map((r) => (
+              <li key={r.id} className={cartao}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Link href={`/reservas/${r.id}`} className="font-semibold text-primaria underline">{r.clienteNome}</Link>
+                  <ChipStatus status={r.status} />
+                </div>
+                <p className="text-sm">{r.passeio} · {formatarDataBr(r.saidaData)}{r.saidaData === hoje ? ' (hoje)' : ''} · {r.pessoas} {r.pessoas === 1 ? 'pessoa' : 'pessoas'}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+        {paraOrganizar.linhas.length > 0 && (
+          <Link href={`/reservas?de=${hoje}&ate=${ateOrganizar}&status=organizar`} className="w-fit text-sm text-primaria underline">Ver em Reservas</Link>
+        )}
       </section>
 
       <section aria-labelledby="mensagens-titulo" className="flex flex-col gap-2">

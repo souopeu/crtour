@@ -51,7 +51,7 @@ grant select on cal to authenticated;
 select set_config('request.jwt.claims', '{"sub":"aaaaaaaa-0000-0000-0000-000000000001","role":"authenticated"}', true);
 set local role authenticated;
 
-select is((select detalhe from cal where tipo = 'saida' and dia = '2030-11-10'), '3/3', 'departure shows booked/capacity');
+select is((select detalhe from cal where tipo = 'saida' and dia = '2030-11-10'), '3/3 · 2 a organizar', 'departure shows booked/capacity and, since R136, what is left to organise');
 select is((select situacao from cal where tipo = 'saida' and dia = '2030-11-10'), 'lotada', 'open departure with no seats left is "lotada"');
 select is((select situacao from cal where tipo = 'saida' and dia = '2030-11-20'), 'cancelada', 'cancelled departure stays, marked as such');
 select is((select count(*) from cal where tipo = 'saida' and dia = '2030-12-15'), 0::bigint, 'only days inside the range');

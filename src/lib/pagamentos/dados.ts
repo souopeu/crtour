@@ -4,11 +4,12 @@ import type { FiltroCobranca } from './cobranca'
 import { passaFiltro } from './cobranca'
 import { criarClienteServidor } from '@/lib/supabase/server'
 import { emBlocos } from '@/lib/consultas/emBlocos'
+import type { StatusOperacional } from '@/lib/reservas/status'
 
 export type ReservaDetalhe = {
   id: string; saida_id: string; cliente_id: string; cliente_nome: string; qtd_pessoas: number
   valor_total_centavos: number; pago_centavos: number; saldo_centavos: number
-  vencimento_saldo: string | null; situacao: 'ativa' | 'cancelada'
+  vencimento_saldo: string | null; situacao: 'ativa' | 'cancelada'; status_operacional: StatusOperacional
   saida_data: string; passeio_nome: string
 }
 export type PagamentoLinha = {
@@ -21,7 +22,7 @@ export async function buscarReserva(id: string): Promise<ReservaDetalhe | null> 
   const supabase = await criarClienteServidor()
   const { data } = await supabase
     .from('v_reservas_saldo')
-    .select('id, saida_id, cliente_id, qtd_pessoas, valor_total_centavos, pago_centavos, saldo_centavos, vencimento_saldo, situacao')
+    .select('id, saida_id, cliente_id, qtd_pessoas, valor_total_centavos, pago_centavos, saldo_centavos, vencimento_saldo, situacao, status_operacional')
     .eq('id', id)
     .maybeSingle()
   if (!data) return null

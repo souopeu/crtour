@@ -54,7 +54,7 @@ test('calendar: departures, balances due and birthdays in the month, filters and
   await expect(page.getByRole('heading', { name: 'Calendário', level: 1 })).toBeVisible()
   await page.goto(`/calendario?mes=${mes}`)
   const grade = page.getByRole('table', { name: /Calendário de/ })
-  await expect(grade.getByRole('link', { name: /Saída: Lisboa clássica, 2\/10 vagas, aberta/ })).toBeVisible()
+  await expect(grade.getByRole('link', { name: /Saída: Lisboa clássica, 2\/10 vagas · 1 a organizar, aberta/ })).toBeVisible() // R136: the reservation is still "a definir"
   await expect(grade.getByRole('link', { name: /Saldo: Ana Souza, R\$\s2\.000,00/ })).toBeVisible()
   await expect(grade.getByRole('link', { name: /Aniversário: Ana Souza/ })).toBeVisible()
 

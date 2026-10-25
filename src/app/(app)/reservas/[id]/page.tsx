@@ -7,7 +7,9 @@ import { formatarDataBr, hojeNoBrasil } from '@/lib/formato'
 import { diasAte, situacaoCobranca } from '@/lib/pagamentos/cobranca'
 import { buscarReserva, listarPagamentos } from '@/lib/pagamentos/dados'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
-import { estornarPagamento } from '../actions'
+import { definirStatusOperacional, estornarPagamento } from '../actions'
+import { ChipStatus } from '@/components/reservas/ChipStatus'
+import { StatusOperacional } from '@/components/reservas/StatusOperacional'
 import { Carregando } from '@/components/Carregando'
 import { VendidoPor } from '@/components/comissao/VendidoPor'
 import { getMembro } from '@/lib/auth/agencia'
@@ -57,6 +59,12 @@ async function Conteudo({ params }: Pick<PageProps<'/reservas/[id]'>, 'params'>)
           </p>
         )}
       </div>
+
+      {ativa ? (
+        <StatusOperacional atual={reserva.status_operacional} acao={definirStatusOperacional.bind(null, reserva.id)} />
+      ) : (
+        <p className="text-sm text-tinta-suave">Status da operação: <ChipStatus status={reserva.status_operacional} /> (reserva cancelada, não muda mais)</p>
+      )}
 
       <section aria-labelledby="resumo-titulo" className="grid gap-3 rounded-[--radius-cartao] border border-linha bg-superficie p-4 sm:grid-cols-4">
         <h2 id="resumo-titulo" className="sr-only">Resumo financeiro</h2>

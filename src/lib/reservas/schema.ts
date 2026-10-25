@@ -33,6 +33,7 @@ const MENSAGENS: Record<string, string> = {
   CR006: 'Esta reserva está cancelada.',
   CR007: 'O valor excede o saldo da reserva, ou o total ficaria abaixo do que já foi pago.',
   CR008: 'Este pagamento já foi estornado.',
+  CR018: 'Para voltar o status da reserva, confirme a volta.',
   '22008': 'A data do pagamento não pode estar no futuro.',
   '22023': 'Esta operação não é permitida para este registro.',
   '23503': 'Cliente ou saída não encontrados nesta agência.',

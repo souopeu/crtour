@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
-  gradeDoMes, hrefAlternar, hrefItem, hrefMes, lerMes, lerOcultos, mesVizinho, porDia, rotuloMes, type ItemCalendario,
+  gradeDoMes, hrefAlternar, hrefItem, hrefMes, lerMes, lerOcultos, mesVizinho, porDia, rotuloMes, textoVagas, type ItemCalendario,
 } from './calendario'
+
+describe('textoVagas (R136)', () => {
+  it('names the seats and keeps what is left to organise after them', () => {
+    expect(textoVagas('2/10')).toBe('2/10 vagas')
+    expect(textoVagas('2/10 · 1 a organizar')).toBe('2/10 vagas · 1 a organizar')
+    expect(textoVagas(null)).toBe('')
+  })
+})
 
 const item = (dia: string, tipo: ItemCalendario['tipo'], titulo = 'x'): ItemCalendario =>
   ({ dia, tipo, id: 'i1', titulo, detalhe: null, valor_centavos: null, situacao: null })

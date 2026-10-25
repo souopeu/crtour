@@ -79,6 +79,13 @@ export function hrefAlternar(mes: string, ocultos: Set<TipoItem>, tipo: TipoItem
   return hrefMes(mes, novo)
 }
 
+// A departure's detail is "reserved/capacity", optionally followed by " · N a organizar" (R136).
+export function textoVagas(detalhe: string | null): string {
+  if (!detalhe) return ''
+  const [vagas, ...resto] = detalhe.split(' · ')
+  return [`${vagas} vagas`, ...resto].join(' · ')
+}
+
 /** Costs point to their departure (the id returned for a cost is the departure id). */
 export function hrefItem(i: Pick<ItemCalendario, 'tipo' | 'id'>): string {
   return { saida: '/saidas/', custo: '/saidas/', saldo: '/reservas/', aniversario: '/clientes/' }[i.tipo] + i.id

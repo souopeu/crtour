@@ -3,7 +3,7 @@ import { Suspense } from 'react'
 import { Carregando } from '@/components/Carregando'
 import { getMembro } from '@/lib/auth/agencia'
 import {
-  ITENS_POR_DIA, TIPOS, gradeDoMes, hrefAlternar, hrefItem, hrefMes, lerMes, lerOcultos, mesVizinho, porDia, rotuloMes,
+  ITENS_POR_DIA, TIPOS, gradeDoMes, hrefAlternar, hrefItem, hrefMes, lerMes, lerOcultos, mesVizinho, porDia, rotuloMes, textoVagas,
   type ItemCalendario, type TipoItem,
 } from '@/lib/calendario/calendario'
 import { listarCalendario } from '@/lib/calendario/dados'
@@ -26,7 +26,7 @@ function textoItem(i: ItemCalendario): string {
   const reais = i.valor_centavos === null ? '' : formatarReais(i.valor_centavos)
   const passeio = i.detalhe ? ` · ${i.detalhe}` : ''
   switch (i.tipo) {
-    case 'saida': return `Saída: ${i.titulo}, ${i.detalhe} vagas, ${i.situacao}`
+    case 'saida': return `Saída: ${i.titulo}, ${textoVagas(i.detalhe)}, ${i.situacao}`
     case 'saldo': return `Saldo: ${i.titulo}, ${reais}${passeio}`
     case 'aniversario': return `Aniversário: ${i.titulo}`
     case 'custo': return `Custo: ${i.titulo}, ${reais}${passeio}`

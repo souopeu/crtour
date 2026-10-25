@@ -6,16 +6,32 @@ import type { EstadoForm } from '@/lib/forms'
 import { hojeNoBrasil } from '@/lib/formato'
 import { criarPagamentoSchema, totalSchema, vencimentoSchema } from '@/lib/pagamentos/cobranca'
 import { mensagemDeErroReserva } from '@/lib/reservas/schema'
+import { rotuloDoStatus, statusSchema } from '@/lib/reservas/status'
 import { criarClienteServidor } from '@/lib/supabase/server'
 
 const uuid = (v: string) => z.uuid().safeParse(v).success
 const texto = (fd: FormData, n: string) => String(fd.get(n) ?? '')
-const ESPERADOS = ['CR006', 'CR007', 'CR008', '22008', '22023', '23514', '22003']
+const ESPERADOS = ['CR006', 'CR007', 'CR008', 'CR018', '22008', '22023', '23514', '22003']
 
 function atualizarTelas(reservaId: string) {
   revalidatePath(`/reservas/${reservaId}`)
+  revalidatePath('/reservas')
   revalidatePath('/cobrancas')
   revalidatePath('/saidas', 'layout')
+}
+
+// R136: forward is free; going back only with `voltar=1` (the screen asked first), checked again by the database.
+export async function definirStatusOperacional(reservaId: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const status = statusSchema.safeParse(fd.get('status'))
+  if (!status.success || !uuid(reservaId)) return { erro: mensagemDeErroReserva(undefined), versao }
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.rpc('definir_status_operacional', { p_reserva: reservaId, p_status: status.data, p_voltar: fd.get('voltar') === '1' })
+  if (error) return falha(error)
+  atualizarTelas(reservaId)
+  revalidatePath('/hoje')
+  revalidatePath('/calendario')
+  return { ok: `Status: ${rotuloDoStatus(status.data)}.`, versao }
 }
 
 function falha(error: { code?: string }, valores?: Record<string, string>): EstadoForm {
