@@ -9,6 +9,7 @@ import { ordenarPorHorario } from './operacao'
 const SaidaZ = z.object({
   id: z.uuid(), passeio_id: z.uuid(), data: z.string(), capacidade: z.number(), situacao: z.enum(['aberta', 'encerrada', 'cancelada']),
   reservadas: z.number(), livres: z.number(), horario: z.string().nullable(), veiculo_id: z.uuid().nullable(),
+  embarque_iniciado_em: z.string().nullable(),
 })
 const ReservaZ = z.object({ id: z.uuid(), saida_id: z.uuid(), cliente_id: z.uuid(), qtd_pessoas: z.number(), status_operacional: statusSchema })
 const NomeZ = z.object({ id: z.uuid(), nome: z.string() })
@@ -18,6 +19,7 @@ export type ReservaDoDia = { id: string; clienteId: string; clienteNome: string;
 export type SaidaDoDia = {
   id: string; passeioId: string; passeio: string; data: string; horario: string | null; situacao: 'aberta' | 'encerrada'
   capacidade: number; reservadas: number; livres: number; veiculo: { nome: string; lugares: number } | null; reservas: ReservaDoDia[]
+  embarqueIniciado: boolean // R141
 }
 export type Destino = { id: string; passeioId: string; data: string; horario: string | null; situacao: string; livres: number }
 
@@ -25,7 +27,7 @@ export type Destino = { id: string; passeioId: string; data: string; horario: st
 export async function saidasDoDia(dia: string): Promise<SaidaDoDia[]> {
   const supabase = await criarClienteServidor()
   const { data, error } = await supabase.from('v_saidas_vagas')
-    .select('id, passeio_id, data, capacidade, situacao, reservadas, livres, horario, veiculo_id')
+    .select('id, passeio_id, data, capacidade, situacao, reservadas, livres, horario, veiculo_id, embarque_iniciado_em')
     .eq('data', dia).neq('situacao', 'cancelada').limit(OPERACAO.maxSaidasPorDia)
   if (error) console.error('saidasDoDia falhou', error.code)
   const saidas = z.array(SaidaZ).catch([]).parse(data ?? [])
@@ -44,7 +46,7 @@ export async function saidasDoDia(dia: string): Promise<SaidaDoDia[]> {
   const veiculo = new Map(z.array(VeiculoZ).catch([]).parse(veiculos.data ?? []).map((v) => [v.id, { nome: v.nome, lugares: v.lugares }]))
 
   return ordenarPorHorario(saidas.map((s) => ({
-    id: s.id, passeioId: s.passeio_id, passeio: nomePasseio.get(s.passeio_id) ?? '', data: s.data, horario: s.horario,
+    id: s.id, passeioId: s.passeio_id, passeio: nomePasseio.get(s.passeio_id) ?? '', data: s.data, horario: s.horario, embarqueIniciado: s.embarque_iniciado_em !== null,
     situacao: s.situacao === 'encerrada' ? 'encerrada' as const : 'aberta' as const,
     capacidade: s.capacidade, reservadas: s.reservadas, livres: s.livres, veiculo: s.veiculo_id ? (veiculo.get(s.veiculo_id) ?? null) : null,
     reservas: reservas.filter((r) => r.saida_id === s.id).map((r) => ({

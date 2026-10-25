@@ -36,6 +36,7 @@ const MENSAGENS: Record<string, string> = {
   CR014: 'Só dá para mover a reserva para uma saída do mesmo passeio.',
   CR018: 'Para voltar o status da reserva, confirme a volta.',
   CR019: 'As vagas passam dos lugares do veículo. Diminua as vagas ou escolha um veículo maior.',
+  CR021: 'Inicie o embarque desta saída antes de marcar quem embarcou.',
   '22008': 'A data do pagamento não pode estar no futuro.',
   '22023': 'Esta operação não é permitida para este registro.',
   '23503': 'Cliente ou saída não encontrados nesta agência.',

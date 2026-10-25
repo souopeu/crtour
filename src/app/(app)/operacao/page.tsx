@@ -1,12 +1,16 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { moverReserva } from '@/app/(app)/reservas/actions'
+import { iniciarEmbarque } from '@/app/(app)/saidas/embarque-actions'
+import { IniciarEmbarque } from '@/components/embarque/IniciarEmbarque'
 import { Carregando } from '@/components/Carregando'
 import { ChipStatus } from '@/components/reservas/ChipStatus'
 import { MoverReserva } from '@/components/reservas/MoverReserva'
 import { CabecalhoPagina } from '@/components/tela/CabecalhoPagina'
 import { EstadoVazio } from '@/components/tela/EstadoVazio'
 import { botaoSecundario, campoBarra, cartaoFiltros } from '@/components/tela/estilos'
+import { lugaresDasSaidas } from '@/lib/embarque/dados'
+import { contarEmbarque } from '@/lib/embarque/embarque'
 import { formatarDataBr, hojeNoBrasil } from '@/lib/formato'
 import { saidasDoDia, saidasDosPasseios, type SaidaDoDia } from '@/lib/operacao/dados'
 import { destinosParaMover, lerDia, ocupacao } from '@/lib/operacao/operacao'
@@ -41,7 +45,9 @@ function SeletorDeDia({ dia, hoje }: { dia: string; hoje: string }) {
   )
 }
 
-function CartaoSaida({ s, destinos, hoje }: { s: SaidaDoDia; destinos: Awaited<ReturnType<typeof saidasDosPasseios>>; hoje: string }) {
+function CartaoSaida({ s, destinos, hoje, embarque }: {
+  s: SaidaDoDia; destinos: Awaited<ReturnType<typeof saidasDosPasseios>>; hoje: string; embarque: { embarcados: number; total: number }
+}) {
   const pct = ocupacao(s.reservadas, s.capacidade)
   return (
     <article aria-labelledby={`saida-${s.id}`} className="flex flex-col gap-3 rounded-(--radius-cartao) border border-linha bg-superficie p-4">
@@ -61,6 +67,16 @@ function CartaoSaida({ s, destinos, hoje }: { s: SaidaDoDia; destinos: Awaited<R
           <div className="h-full rounded-full bg-marca" style={{ width: `${pct}%` }} />
         </div>
       </div>
+      {embarque.total > 0 && (
+        // R141: start the boarding here, or follow it once started
+        s.embarqueIniciado ? (
+          <Link href={`/saidas/${s.id}/embarque`} className={`${botaoSecundario} w-fit`}>
+            Embarque: <strong className="tabular-nums">{embarque.embarcados} / {embarque.total}</strong> embarcados
+          </Link>
+        ) : (
+          <IniciarEmbarque acao={iniciarEmbarque.bind(null, s.id)} />
+        )
+      )}
       {s.reservas.length === 0 ? (
         <p className="text-sm text-tinta-suave">Nenhuma reserva nesta saída.</p>
       ) : (
@@ -85,7 +101,10 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/operacao'>, 'searchPa
   const hoje = hojeNoBrasil()
   const dia = lerDia(params.dia, hoje)
   const saidas = await saidasDoDia(dia)
-  const destinos = await saidasDosPasseios([...new Set(saidas.map((s) => s.passeioId))], hoje)
+  const [destinos, lugaresPorSaida] = await Promise.all([
+    saidasDosPasseios([...new Set(saidas.map((s) => s.passeioId))], hoje),
+    lugaresDasSaidas(saidas.map((s) => s.id)),
+  ])
   const lugares = saidas.reduce((t, s) => t + Math.max(s.livres, 0), 0)
   return (
     <>
@@ -96,7 +115,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/operacao'>, 'searchPa
         <>
           <p aria-live="polite" className="text-sm text-tinta-suave">{saidas.length} {saidas.length === 1 ? 'saída' : 'saídas'} · {lugares} {lugares === 1 ? 'lugar livre' : 'lugares livres'}</p>
           <div className="grid gap-4 lg:grid-cols-2">
-            {saidas.map((s) => <CartaoSaida key={s.id} s={s} destinos={destinos} hoje={hoje} />)}
+            {saidas.map((s) => <CartaoSaida key={s.id} s={s} destinos={destinos} hoje={hoje} embarque={contarEmbarque(lugaresPorSaida.get(s.id) ?? [])} />)}
           </div>
         </>
       )}

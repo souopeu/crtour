@@ -57,7 +57,14 @@ async function Conteudo({ params, searchParams }: Pick<PageProps<'/saidas/[id]'>
           {lotada && saida.situacao === 'aberta' && <strong className="ml-2 text-alerta">Lotada</strong>}
           {saida.situacao !== 'aberta' && <strong className="ml-2">{saida.situacao === 'cancelada' ? 'Cancelada' : 'Encerrada'}</strong>}
         </p>
-        <Link href={`/saidas/${saida.id}/passageiros`} className="mt-2 inline-flex min-h-11 items-center text-primaria underline">Lista de passageiros (imprimir)</Link>
+        <div className="mt-2 flex flex-wrap gap-x-6">
+          <Link href={`/saidas/${saida.id}/passageiros`} className="inline-flex min-h-11 items-center text-primaria underline">Lista de passageiros (imprimir)</Link>
+          {saida.situacao !== 'cancelada' && saida.reservadas > 0 && (
+            <Link href={`/saidas/${saida.id}/embarque`} className="inline-flex min-h-11 items-center text-primaria underline">
+              {saida.embarque_iniciado_em ? 'Embarque (lista de presença)' : 'Iniciar embarque'}
+            </Link>
+          )}
+        </div>
         {sp.feito === '1' && <p role="status" className="mt-3 w-fit rounded-xl bg-receita-suave p-3 text-sm text-receita">Reserva feita.</p>}
       </div>
 
