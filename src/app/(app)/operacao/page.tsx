@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { connection } from 'next/server'
 import { Suspense } from 'react'
 import { moverReserva } from '@/app/(app)/reservas/actions'
 import { iniciarEmbarque } from '@/app/(app)/saidas/embarque-actions'
@@ -97,7 +98,8 @@ function CartaoSaida({ s, destinos, hoje, embarque }: {
 }
 
 async function Conteudo({ searchParams }: Pick<PageProps<'/operacao'>, 'searchParams'>) {
-  const params = await searchParams // read the request first, so "today" is computed per request (not at build time)
+  const params = await searchParams
+  await connection() // "today" below must be computed per request (Cache Components)
   const hoje = hojeNoBrasil()
   const dia = lerDia(params.dia, hoje)
   const saidas = await saidasDoDia(dia)

@@ -23,6 +23,7 @@ export default defineConfig({
   use: { baseURL: 'http://localhost:3100', channel: 'chrome' },
   webServer: {
     command: 'bash scripts/e2e-servidor.sh', // builds and serves on 3100, one run per checkout (lock)
+    gracefulShutdown: { signal: 'SIGTERM', timeout: 5_000 }, // lets the script release the lock
     url: 'http://localhost:3100/login',
     reuseExistingServer: true,
     // E-mailed links use a configured base URL in production builds.

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { connection } from 'next/server'
 import { Suspense } from 'react'
 import { formatarDataBr, hojeNoBrasil } from '@/lib/formato'
 import { estadoDoBotao, linkWhatsapp } from '@/lib/clientes/whatsappLink'
@@ -27,6 +28,7 @@ function textoVencimento(vencimento: string | null, hoje: string) {
 async function Lista({ searchParams }: Pick<PageProps<'/cobrancas'>, 'searchParams'>) {
   const bruto = (await searchParams).filtro
   const filtro = (FILTROS_COBRANCA as readonly string[]).includes(String(bruto)) ? (bruto as FiltroCobranca) : 'todas'
+  await connection() // "today" must be computed per request (Cache Components)
   const hoje = hojeNoBrasil()
   const cobrancas = await listarCobrancas(filtro, hoje)
   const totalEmAberto = cobrancas.reduce((soma, c) => soma + c.saldo, 0)

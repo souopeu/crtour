@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { connection } from 'next/server'
 import { Suspense } from 'react'
 import { formatarDataBr, hojeNoBrasil, ouTraco } from '@/lib/formato'
 import { lerPeriodo } from '@/lib/periodo/periodo'
@@ -35,6 +36,7 @@ const OPCOES_STATUS: { valor: FiltroStatus | null; rotulo: string }[] = [
 
 async function Lista({ searchParams }: Pick<PageProps<'/reservas'>, 'searchParams'>) {
   const params = await searchParams
+  await connection() // "today" below must be computed per request (Cache Components)
   const situacao: SituacaoLista = params.aba === 'canceladas' ? 'cancelada' : 'ativa'
   const periodo = lerPeriodo(params, hojeNoBrasil())
   const status = lerFiltroStatus(params)
