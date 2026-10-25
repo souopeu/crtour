@@ -20,7 +20,7 @@ const uuid = (v: string) => z.uuid().safeParse(v).success
 export async function listarPasseios(arquivados: boolean): Promise<(PasseioLinha & { proximaSaida: string | null; totalSaidas: number })[]> {
   const supabase = await criarClienteServidor()
   const [passeios, saidas] = await Promise.all([
-    supabase.from('passeios').select(COLUNAS_PASSEIO).eq('arquivado', arquivados).order('nome'),
+    supabase.from('passeios').select(COLUNAS_PASSEIO).eq('arquivado', arquivados).eq('sob_medida', false).order('nome'), // R142: one-off services are not catalogue tours
     supabase.from('saidas').select('passeio_id, data').neq('situacao', 'cancelada').order('data').limit(5000),
   ])
   const hoje = hojeNoBrasil()

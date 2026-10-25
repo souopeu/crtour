@@ -100,7 +100,7 @@ export default function ReservasPage({ searchParams }: PageProps<'/reservas'>) {
   return (
     <section className="mx-auto flex max-w-6xl flex-col gap-4">
       <CabecalhoPagina area="Reservas" titulo="Reservas" descricao="Todas as reservas da agência, pela data da saída.">
-        <Link href="/passeios" className={botaoPrincipal}>Nova reserva</Link>
+        <Link href="/reservas/nova" className={botaoPrincipal}>Nova reserva</Link>
         <a href="/exportar?tipo=reservas" className={botaoSecundario}>Exportar reservas</a>
       </CabecalhoPagina>
       <Suspense fallback={<Carregando altura="h-40" />}>

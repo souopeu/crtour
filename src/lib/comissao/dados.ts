@@ -18,7 +18,7 @@ export async function buscarConfigComissao() {
   const [agencia, membros, passeios] = await Promise.all([
     supabase.from('agencias').select('regra_comissao').maybeSingle(),
     supabase.from('membros').select('user_id, nome, papel, comissao_percentual').order('nome'),
-    supabase.from('passeios').select('id, nome, comissao_percentual, comissao_por_pessoa_centavos').eq('arquivado', false).order('nome'),
+    supabase.from('passeios').select('id, nome, comissao_percentual, comissao_por_pessoa_centavos').eq('arquivado', false).eq('sob_medida', false).order('nome'),
   ])
   return {
     regra: ((agencia.data as { regra_comissao: Regra | null } | null)?.regra_comissao ?? null),
