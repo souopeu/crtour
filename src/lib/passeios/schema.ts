@@ -28,8 +28,14 @@ export const saidaSchema = z
       .string()
       .refine((v) => reaisParaCentavos(v) !== null, 'Digite o preço por pessoa, ex.: 8.900,00 (use 0 se for gratuito).'),
     situacao: z.enum(SITUACOES_SAIDA, 'Escolha a situação da saída.').default('aberta'),
+    // R138: optional time (HH:MM, 24 h) and vehicle; empty = none.
+    horario: z.string().trim().default('').refine((v) => v === '' || /^([01]\d|2[0-3]):[0-5]\d$/.test(v), 'Digite o horário como 08:30.'),
+    veiculo: z.string().trim().default('').refine((v) => v === '' || z.uuid().safeParse(v).success, 'Escolha um veículo da lista.'),
   })
-  .transform((v) => ({ data: v.data, capacidade: v.capacidade, preco_centavos: reaisParaCentavos(v.preco) as number, situacao: v.situacao }))
+  .transform((v) => ({
+    data: v.data, capacidade: v.capacidade, preco_centavos: reaisParaCentavos(v.preco) as number, situacao: v.situacao,
+    horario: v.horario === '' ? null : v.horario, veiculo_id: v.veiculo === '' ? null : v.veiculo,
+  }))
 
 export type DadosPasseio = z.output<typeof passeioSchema>
 export type DadosSaida = z.output<typeof saidaSchema>

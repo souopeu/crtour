@@ -8,17 +8,18 @@ const itemAtivoEm = (menu: ReturnType<typeof montarMenu>, caminho: string) =>
 describe('montarMenu', () => {
   it('puts Hoje, Calendário and Reservas loose on top, then the collapsible groups (R133)', () => {
     const menu = montarMenu('dono', 0)
-    expect(menu.map((g) => g.titulo)).toEqual([undefined, 'Vendas', 'Catálogo', 'Financeiro', 'Gestão'])
+    expect(menu.map((g) => g.titulo)).toEqual([undefined, 'Vendas', 'Catálogo', 'Operação', 'Financeiro', 'Gestão'])
     expect(menu[0].itens.map((i) => i.rotulo)).toEqual(['Hoje', 'Calendário', 'Reservas'])
     expect(menu[1].itens.map((i) => i.rotulo)).toEqual(['Funil', 'Clientes', 'Remarketing', 'Campanhas'])
     expect(menu[2].itens.map((i) => i.rotulo)).toEqual(['Passeios', 'Fornecedores'])
-    expect(menu[3].itens.map((i) => i.rotulo)).toEqual(['Cobranças', 'Comissões'])
-    expect(menu[4].itens.map((i) => i.rotulo)).toEqual(['Painel', 'Avisos', 'Configurações'])
+    expect(menu[3].itens.map((i) => i.rotulo)).toEqual(['Veículos'])
+    expect(menu[4].itens.map((i) => i.rotulo)).toEqual(['Cobranças', 'Comissões'])
+    expect(menu[5].itens.map((i) => i.rotulo)).toEqual(['Painel', 'Avisos', 'Configurações'])
   })
 
   it('gives every titled group a stable id and the loose top none', () => {
     const menu = montarMenu('dono', 0)
-    expect(menu.map((g) => g.id)).toEqual([undefined, 'vendas', 'catalogo', 'financeiro', 'gestao'])
+    expect(menu.map((g) => g.id)).toEqual([undefined, 'vendas', 'catalogo', 'operacao', 'financeiro', 'gestao'])
   })
 
   it('shows Avisos with the unread count to everyone (R130: reminders are personal)', () => {
@@ -69,6 +70,7 @@ describe('itemAtivo', () => {
     ['/reservas/2', 'Reservas'],
     ['/calendario', 'Calendário'],
     ['/fornecedores', 'Fornecedores'],
+    ['/veiculos', 'Veículos'],
     ['/cobrancas', 'Cobranças'],
     ['/painel', 'Painel'],
     ['/comissoes', 'Comissões'],

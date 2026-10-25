@@ -7,6 +7,7 @@ import { SaidaForm } from '@/components/passeios/SaidaForm'
 import { formatarDataBr } from '@/lib/formato'
 import { buscarPasseio, listarSaidas } from '@/lib/passeios/dados'
 import { formatarReais } from '@/lib/passeios/dinheiro'
+import { listarVeiculos } from '@/lib/veiculos/dados'
 import { alternarArquivado, excluirPasseio, salvarPasseio, salvarSaida } from '../actions'
 import { Carregando } from '@/components/Carregando'
 
@@ -18,7 +19,8 @@ async function Conteudo({ params }: Pick<PageProps<'/passeios/[id]'>, 'params'>)
   const { id } = await params
   const passeio = await buscarPasseio(id)
   if (!passeio) notFound()
-  const saidas = await listarSaidas(passeio.id)
+  const [saidas, veiculos] = await Promise.all([listarSaidas(passeio.id), listarVeiculos()])
+  const nomeVeiculo = new Map(veiculos.map((v) => [v.id, v.nome]))
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8">
@@ -56,7 +58,10 @@ async function Conteudo({ params }: Pick<PageProps<'/passeios/[id]'>, 'params'>)
               {saidas.map((s) => (
                 <li key={s.id}>
                   <Link href={`/saidas/${s.id}`} className="flex min-h-14 flex-col gap-1 rounded-[--radius-cartao] border border-linha bg-superficie p-3 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="font-semibold">{formatarDataBr(s.data)}</span>
+                    <span className="font-semibold">
+                      {formatarDataBr(s.data)}{s.horario && ` · ${s.horario.slice(0, 5)}`}
+                      {s.veiculo_id && <span className="font-normal text-tinta-suave"> · {nomeVeiculo.get(s.veiculo_id) ?? 'veículo arquivado'}</span>}
+                    </span>
                     <span className="flex flex-wrap gap-x-3 text-sm text-tinta-suave">
                       <span>Vagas: {s.reservadas} / {s.capacidade}</span>
                       <span>{formatarReais(s.preco_centavos)} por pessoa</span>
@@ -70,7 +75,8 @@ async function Conteudo({ params }: Pick<PageProps<'/passeios/[id]'>, 'params'>)
           <h3 className="mt-2 font-semibold">Nova saída</h3>
           <SaidaForm
             acao={salvarSaida.bind(null, passeio.id, null)}
-            inicial={{ data: '', capacidade: '', preco: '', situacao: 'aberta' }}
+            inicial={{ data: '', capacidade: '', preco: '', situacao: 'aberta', horario: '', veiculo: '' }}
+            veiculos={veiculos}
             rotuloBotao="Criar saída"
           />
         </section>

@@ -2,7 +2,7 @@ import { MAX_COOKIE_GRUPOS } from './config'
 
 export type IconeMenu =
   | 'hoje' | 'atendimento' | 'funil' | 'clientes' | 'remarketing' | 'campanhas' | 'passeios' | 'calendario' | 'fornecedores'
-  | 'cobrancas' | 'comissoes' | 'painel' | 'avisos' | 'configuracoes' | 'reservas'
+  | 'cobrancas' | 'comissoes' | 'painel' | 'avisos' | 'configuracoes' | 'reservas' | 'veiculos'
 
 export type ItemMenu = {
   href: string
@@ -13,7 +13,7 @@ export type ItemMenu = {
   novos?: number
 }
 
-export const IDS_GRUPOS = ['vendas', 'catalogo', 'financeiro', 'gestao'] as const
+export const IDS_GRUPOS = ['vendas', 'catalogo', 'operacao', 'financeiro', 'gestao'] as const
 export type IdGrupo = (typeof IDS_GRUPOS)[number]
 
 // A titled group has an id and can be collapsed (R133); the untitled top block is always open.
@@ -51,6 +51,13 @@ export function montarMenu(papel: PapelMenu, avisosNovos: number, atendimento: n
       itens: [
         item('/passeios', 'Passeios', 'passeios', ['/saidas']),
         item('/fornecedores', 'Fornecedores', 'fornecedores'),
+      ],
+    },
+    {
+      id: 'operacao',
+      titulo: 'Operação',
+      itens: [
+        item('/veiculos', 'Veículos', 'veiculos'),
       ],
     },
     {

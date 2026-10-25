@@ -13,6 +13,7 @@ import { excluirSaida, salvarSaida } from '../../passeios/actions'
 import { cancelarReserva } from '../actions'
 import { Carregando } from '@/components/Carregando'
 import { CustosSaida } from '@/components/custos/CustosSaida'
+import { buscarVeiculo, listarVeiculos } from '@/lib/veiculos/dados'
 
 export const metadata = { title: 'Saída' }
 
@@ -26,11 +27,15 @@ async function Conteudo({ params, searchParams }: Pick<PageProps<'/saidas/[id]'>
 
   const busca = um(sp.busca).trim().slice(0, 100)
   const clienteEscolhido = um(sp.cliente)
-  const [reservas, resultados, nomeEscolhido] = await Promise.all([
+  const [reservas, resultados, nomeEscolhido, ativos, veiculoAtual] = await Promise.all([
     listarReservas(saida.id),
     busca ? buscarClientesParaReserva(busca) : Promise.resolve([]),
     clienteEscolhido ? buscarNomeDoCliente(clienteEscolhido) : Promise.resolve(null),
+    listarVeiculos(),
+    saida.veiculo_id ? buscarVeiculo(saida.veiculo_id) : Promise.resolve(null),
   ])
+  // An archived vehicle still shows as the current choice, so saving the form does not drop it.
+  const veiculos = veiculoAtual && !ativos.some((v) => v.id === veiculoAtual.id) ? [...ativos, veiculoAtual] : ativos
   const lotada = saida.livres <= 0
   const podeReservar = saida.situacao === 'aberta' && !lotada
   const href = (extra: Record<string, string>) => `/saidas/${saida.id}?${new URLSearchParams({ ...(busca ? { busca } : {}), ...extra })}`
@@ -40,6 +45,13 @@ async function Conteudo({ params, searchParams }: Pick<PageProps<'/saidas/[id]'>
       <div>
         <Link href={`/passeios/${saida.passeio_id}`} className="text-sm text-primaria underline">← {saida.passeio_nome}</Link>
         <h1 className="mt-1 text-[1.75rem] font-medium tracking-tight">Saída de {formatarDataBr(saida.data)}</h1>
+        {(saida.horario || veiculoAtual) && (
+          <p className="mt-1">
+            {saida.horario && <>Horário: <strong>{saida.horario.slice(0, 5)}</strong></>}
+            {saida.horario && veiculoAtual && ' · '}
+            {veiculoAtual && <>Veículo: <Link href={`/veiculos/${veiculoAtual.id}`} className="text-primaria underline">{veiculoAtual.nome}</Link> ({veiculoAtual.lugares} lugares)</>}
+          </p>
+        )}
         <p className="mt-1 text-tinta-suave" aria-live="polite">
           Vagas: {saida.reservadas} reservadas de {saida.capacidade} · {Math.max(saida.livres, 0)} livres
           {lotada && saida.situacao === 'aberta' && <strong className="ml-2 text-alerta">Lotada</strong>}
@@ -137,7 +149,11 @@ async function Conteudo({ params, searchParams }: Pick<PageProps<'/saidas/[id]'>
           <h2 id="dados-titulo" className="text-lg font-semibold">Dados da saída</h2>
           <SaidaForm
             acao={salvarSaida.bind(null, saida.passeio_id, saida.id)}
-            inicial={{ data: saida.data, capacidade: String(saida.capacidade), preco: centavosParaCampo(saida.preco_centavos), situacao: saida.situacao }}
+            inicial={{
+              data: saida.data, capacidade: String(saida.capacidade), preco: centavosParaCampo(saida.preco_centavos), situacao: saida.situacao,
+              horario: saida.horario?.slice(0, 5) ?? '', veiculo: saida.veiculo_id ?? '',
+            }}
+            veiculos={veiculos}
             rotuloBotao="Salvar alterações"
             mostrarSituacao
           />

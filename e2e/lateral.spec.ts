@@ -15,8 +15,8 @@ test('desktop sidebar: groups, active entry, collapse remembered after reload', 
   const lateral = page.locator('aside')
 
   // Groups and entries, in the order of the spec (R133)
-  for (const titulo of ['Vendas', 'Catálogo', 'Financeiro', 'Gestão']) await expect(menu.getByRole('button', { name: titulo, exact: true })).toBeVisible()
-  for (const nome of ['Hoje', 'Calendário', 'Reservas', 'Funil', 'Clientes', 'Remarketing', 'Passeios', 'Fornecedores', 'Cobranças', 'Comissões', 'Painel', 'Avisos', 'Configurações']) {
+  for (const titulo of ['Vendas', 'Catálogo', 'Operação', 'Financeiro', 'Gestão']) await expect(menu.getByRole('button', { name: titulo, exact: true })).toBeVisible()
+  for (const nome of ['Hoje', 'Calendário', 'Reservas', 'Funil', 'Clientes', 'Remarketing', 'Passeios', 'Fornecedores', 'Veículos', 'Cobranças', 'Comissões', 'Painel', 'Avisos', 'Configurações']) {
     await expect(menu.getByRole('link', { name: nome })).toBeVisible()
   }
   await expect(menu.getByRole('link', { name: 'Clientes' })).toHaveAttribute('aria-current', 'page')

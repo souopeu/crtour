@@ -70,7 +70,7 @@ export async function salvarSaida(passeioId: string, saidaId: string | null, _: 
   const versao = crypto.randomUUID()
   const valores = {
     data: texto(fd, 'data'), capacidade: texto(fd, 'capacidade'), preco: texto(fd, 'preco'),
-    situacao: texto(fd, 'situacao') || 'aberta',
+    situacao: texto(fd, 'situacao') || 'aberta', horario: texto(fd, 'horario'), veiculo: texto(fd, 'veiculo'),
   }
   const r = saidaSchema.safeParse(valores)
   if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
@@ -82,8 +82,8 @@ export async function salvarSaida(passeioId: string, saidaId: string | null, _: 
     if (!agenciaId) return { erro: ERRO, valores, versao }
     const { error } = await supabase.from('saidas').insert({ ...r.data, agencia_id: agenciaId, passeio_id: passeioId })
     if (error) {
-      console.error('salvarSaida insert falhou', error.code)
-      return { erro: ERRO, valores, versao }
+      if (error.code !== 'CR019') console.error('salvarSaida insert falhou', error.code)
+      return { erro: error.code === 'CR019' ? mensagemDeErroReserva('CR019') : ERRO, valores, versao }
     }
     revalidatePath(`/passeios/${passeioId}`)
     revalidatePath('/passeios')
@@ -91,8 +91,9 @@ export async function salvarSaida(passeioId: string, saidaId: string | null, _: 
   }
   const { data, error } = await supabase.from('saidas').update(r.data).eq('id', saidaId).select('id')
   if (error || !data?.length) {
-    console.error('salvarSaida update falhou', error?.code)
-    return { erro: error?.code === 'CR003' ? mensagemDeErroReserva('CR003') : ERRO, valores, versao }
+    const esperado = error?.code === 'CR003' || error?.code === 'CR019'
+    if (!esperado) console.error('salvarSaida update falhou', error?.code)
+    return { erro: esperado ? mensagemDeErroReserva(error?.code) : ERRO, valores, versao }
   }
   revalidatePath(`/saidas/${saidaId}`)
   revalidatePath(`/passeios/${passeioId}`)

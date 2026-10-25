@@ -9,10 +9,11 @@ export type PasseioLinha = { id: string; nome: string; destino: string | null; d
 export type SaidaLinha = {
   id: string; passeio_id: string; data: string; capacidade: number; preco_centavos: number
   situacao: 'aberta' | 'encerrada' | 'cancelada'; reservadas: number; livres: number
+  horario: string | null; veiculo_id: string | null // R138: 'HH:MM:SS' from the database
 }
 
 const COLUNAS_PASSEIO = 'id, nome, destino, descricao, inclui, nao_inclui, arquivado'
-const COLUNAS_SAIDA = 'id, passeio_id, data, capacidade, preco_centavos, situacao, reservadas, livres'
+const COLUNAS_SAIDA = 'id, passeio_id, data, capacidade, preco_centavos, situacao, reservadas, livres, horario, veiculo_id'
 const uuid = (v: string) => z.uuid().safeParse(v).success
 
 export async function listarPasseios(arquivados: boolean): Promise<(PasseioLinha & { proximaSaida: string | null; totalSaidas: number })[]> {
