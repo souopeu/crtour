@@ -1,6 +1,6 @@
 import 'server-only'
 import { z } from 'zod'
-import { FORMAS_PAGO } from '@/lib/contas/contas'
+import { CATEGORIAS_CONTA, FORMAS_PAGO, rotuloCategoriaConta } from '@/lib/contas/contas'
 import { emBlocos } from '@/lib/consultas/emBlocos'
 import { criarClienteServidor } from '@/lib/supabase/server'
 import { diaNoBrasil } from '@/lib/formato'
@@ -8,10 +8,10 @@ import type { Movimento } from './conferencia'
 import type { ReservaVisao } from './visaoGeral'
 
 const forma = z.enum(FORMAS_PAGO)
-const PagamentoZ = z.object({ id: z.uuid(), reserva_id: z.uuid(), tipo: z.enum(['sinal', 'parcela', 'saldo', 'estorno']), forma, valor_centavos: z.number() })
-const ContaZ = z.object({ id: z.uuid(), descricao: z.string(), valor_centavos: z.number(), forma_pago: forma.nullable() })
-const CustoZ = z.object({ id: z.uuid(), saida_id: z.uuid(), descricao: z.string(), valor_centavos: z.number(), forma_pago: forma.nullable() })
-const ComissaoZ = z.object({ id: z.uuid(), vendedor_id: z.uuid(), valor_centavos: z.number(), forma_pago: forma })
+const PagamentoZ = z.object({ id: z.uuid(), reserva_id: z.uuid(), data: z.string(), tipo: z.enum(['sinal', 'parcela', 'saldo', 'estorno']), forma, valor_centavos: z.number() })
+const ContaZ = z.object({ id: z.uuid(), descricao: z.string(), categoria: z.enum(CATEGORIAS_CONTA), pago_em: z.string(), valor_centavos: z.number(), forma_pago: forma.nullable() })
+const CustoZ = z.object({ id: z.uuid(), saida_id: z.uuid(), descricao: z.string(), pago_em: z.string(), valor_centavos: z.number(), forma_pago: forma.nullable() })
+const ComissaoZ = z.object({ id: z.uuid(), vendedor_id: z.uuid(), pago_em: z.string(), valor_centavos: z.number(), forma_pago: forma })
 const MembroZ = z.object({ user_id: z.uuid(), nome: z.string() })
 const ReservaZ = z.object({ id: z.uuid(), cliente_id: z.uuid() })
 const NomeZ = z.object({ id: z.uuid(), nome: z.string() })
@@ -19,21 +19,21 @@ const ConferenciaZ = z.object({ conferido_por: z.uuid().nullable(), conferido_em
 
 export type Conferencia = { por: string; em: string; observacao: string | null; invalidadaEm: string | null }
 
-const LIMITE = 2000 // per table; shortcut: a single day with more movements than this would need paging
+export const LIMITE = 2000 // per table; shortcut: a single day with more movements than this would need paging
 
-function ler<T>(schema: z.ZodType<T>, r: { data: unknown; error: { code?: string } | null }, onde: string): T[] {
-  if (r.error) console.error(`movimentosEntre ${onde} falhou`, r.error.code)
+export function ler<T>(schema: z.ZodType<T>, r: { data: unknown; error: { code?: string } | null }, onde: string): T[] {
+  if (r.error) console.error(`financeiro ${onde} falhou`, r.error.code)
   return z.array(schema).catch([]).parse(r.data ?? [])
 }
 
 // R151/R152: every movement between two days (owner only, by RLS): payments and refunds received, bills, departure costs and commissions paid.
-async function movimentosEntre(inicio: string, fim: string): Promise<{ movimentos: Movimento[]; membro: Map<string, string> }> {
+export async function movimentosEntre(inicio: string, fim: string): Promise<{ movimentos: Movimento[]; membro: Map<string, string> }> {
   const supabase = await criarClienteServidor()
   const [pagR, contasR, custosR, comR, membrosR] = await Promise.all([
-    supabase.from('pagamentos').select('id, reserva_id, tipo, forma, valor_centavos').gte('data', inicio).lte('data', fim).order('criado_em').limit(LIMITE),
-    supabase.from('contas_pagar').select('id, descricao, valor_centavos, forma_pago').gte('pago_em', inicio).lte('pago_em', fim).limit(LIMITE),
-    supabase.from('custos_saida').select('id, saida_id, descricao, valor_centavos, forma_pago').gte('pago_em', inicio).lte('pago_em', fim).limit(LIMITE),
-    supabase.from('comissoes_pagas').select('id, vendedor_id, valor_centavos, forma_pago').gte('pago_em', inicio).lte('pago_em', fim).limit(LIMITE),
+    supabase.from('pagamentos').select('id, reserva_id, data, tipo, forma, valor_centavos').gte('data', inicio).lte('data', fim).order('criado_em').limit(LIMITE),
+    supabase.from('contas_pagar').select('id, descricao, categoria, pago_em, valor_centavos, forma_pago').gte('pago_em', inicio).lte('pago_em', fim).limit(LIMITE),
+    supabase.from('custos_saida').select('id, saida_id, descricao, pago_em, valor_centavos, forma_pago').gte('pago_em', inicio).lte('pago_em', fim).limit(LIMITE),
+    supabase.from('comissoes_pagas').select('id, vendedor_id, pago_em, valor_centavos, forma_pago').gte('pago_em', inicio).lte('pago_em', fim).limit(LIMITE),
     supabase.from('membros').select('user_id, nome'),
   ])
   const pagamentos = ler(PagamentoZ, pagR, 'pagamentos')
@@ -47,17 +47,17 @@ async function movimentosEntre(inicio: string, fim: string): Promise<{ movimento
 
   const movimentos: Movimento[] = [
     ...pagamentos.map((p): Movimento => ({
-      id: p.id, sentido: p.tipo === 'estorno' ? 'saida' : 'entrada', origem: p.tipo === 'estorno' ? 'estorno' : 'pagamento',
+      id: p.id, data: p.data, sentido: p.tipo === 'estorno' ? 'saida' : 'entrada', origem: p.tipo === 'estorno' ? 'estorno' : 'pagamento',
       descricao: `${clienteDa.get(p.reserva_id) ?? 'Cliente'} · ${p.tipo}`, valor: p.valor_centavos, forma: p.forma, href: `/reservas/${p.reserva_id}`,
     })),
     ...ler(ContaZ, contasR, 'contas').map((c): Movimento => ({
-      id: c.id, sentido: 'saida', origem: 'conta', descricao: c.descricao, valor: c.valor_centavos, forma: c.forma_pago, href: `/financeiro/contas/${c.id}`,
+      id: c.id, data: c.pago_em, categoria: rotuloCategoriaConta(c.categoria), sentido: 'saida', origem: 'conta', descricao: c.descricao, valor: c.valor_centavos, forma: c.forma_pago, href: `/financeiro/contas/${c.id}`,
     })),
     ...ler(CustoZ, custosR, 'custos').map((c): Movimento => ({
-      id: c.id, sentido: 'saida', origem: 'custo', descricao: c.descricao, valor: c.valor_centavos, forma: c.forma_pago, href: `/saidas/${c.saida_id}`,
+      id: c.id, data: c.pago_em, sentido: 'saida', origem: 'custo', descricao: c.descricao, valor: c.valor_centavos, forma: c.forma_pago, href: `/saidas/${c.saida_id}`,
     })),
     ...ler(ComissaoZ, comR, 'comissoes').map((c): Movimento => ({
-      id: c.id, sentido: 'saida', origem: 'comissao', descricao: `Comissão de ${membro.get(c.vendedor_id) ?? 'pessoa removida'}`, valor: c.valor_centavos, forma: c.forma_pago, href: '/comissoes',
+      id: c.id, data: c.pago_em, sentido: 'saida', origem: 'comissao', descricao: `Comissão de ${membro.get(c.vendedor_id) ?? 'pessoa removida'}`, valor: c.valor_centavos, forma: c.forma_pago, href: '/comissoes',
     })),
   ]
   return { movimentos, membro }

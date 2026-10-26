@@ -8,7 +8,7 @@ export const ABAS_FINANCEIRO = [
   { rotulo: 'Cobranças', href: '/cobrancas', soDono: false, pronta: true },
   { rotulo: 'Contas a pagar', href: '/financeiro/contas', soDono: true, pronta: true },
   { rotulo: 'Comissões e repasses', href: '/comissoes', soDono: false, pronta: true },
-  { rotulo: 'DRE', href: '/financeiro/dre', soDono: true, pronta: false },
+  { rotulo: 'DRE', href: '/financeiro/dre', soDono: true, pronta: true },
 ] as const
 
 export type AbaFinanceiro = { rotulo: string; href: string; ativa: boolean }

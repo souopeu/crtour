@@ -3,7 +3,7 @@ import type { LinhaAPagar } from '@/lib/contas/contas'
 import type { Movimento } from './conferencia'
 import { fimDoMes, visaoGeral } from './visaoGeral'
 
-const mov = (sentido: Movimento['sentido'], origem: Movimento['origem'], valor: number): Movimento => ({ id: 'm', sentido, origem, descricao: 'd', valor, forma: 'pix' })
+const mov = (sentido: Movimento['sentido'], origem: Movimento['origem'], valor: number): Movimento => ({ id: 'm', data: '2026-10-05', sentido, origem, descricao: 'd', valor, forma: 'pix' })
 const conta = (valor: number, vencimento: string | null, pagoEm: string | null = null): LinhaAPagar => ({
   origem: 'conta', id: 'c', descricao: 'd', categoria: 'Outros', valor, vencimento, pagoEm, fornecedor: null, parcela: null, href: '/x',
 })

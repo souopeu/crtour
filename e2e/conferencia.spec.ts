@@ -4,8 +4,8 @@ const iso = (dias: number) => new Date(Date.now() + dias * 86_400_000 - 3 * 3_60
 const br = (data: string) => data.split('-').reverse().join('/')
 
 // E10-3 (R151): the day's money per payment form; checking the day, and the check falling when a movement changes.
-// E10-4 (R152): the month overview shows the same numbers.
-test('conferência diária e visão geral do mês', async ({ page }) => {
+// E10-4 (R152): the month overview shows the same numbers. E10-5 (R153–R154): the DRE in both bases, and the CSVs.
+test('conferência diária, visão geral e DRE', async ({ page }) => {
   await page.goto('/cadastro')
   await page.getByLabel('Seu nome').fill('Pessoa caixa')
   await page.getByLabel('Nome da agência').fill('Agência caixa')
@@ -77,4 +77,27 @@ test('conferência diária e visão geral do mês', async ({ page }) => {
   await expect(page.getByRole('region', { name: 'Resultado de caixa' })).toContainText('R$ 100,00')
   await page.getByRole('region', { name: 'A receber' }).getByRole('link', { name: 'Ver cobranças' }).click()
   await expect(page.getByText('1 reserva · R$ 100,00 a receber')).toBeVisible()
+
+  // R153: cash basis counts the R$ 100,00 received; accrual counts the R$ 200,00 departure in its own month
+  const mes = iso(0).slice(0, 7)
+  const mesSaida = iso(5).slice(0, 7)
+  await page.goto(`/financeiro/dre?de=${mes}&ate=${mes}&base=caixa`)
+  const dre = page.getByRole('table', { name: 'DRE' })
+  await expect(dre.getByRole('row', { name: /Receita bruta/ })).toContainText('R$ 100,00')
+  await expect(dre.getByRole('row', { name: /Resultado/ })).toContainText('R$ 100,00')
+  await dre.getByRole('row', { name: /Receita bruta/ }).getByText('Ver 3 lançamentos').click()
+  await expect(page.getByRole('list', { name: 'O que compõe Receita bruta' }).getByRole('listitem')).toHaveCount(3)
+  await page.goto(`/financeiro/dre?de=${mes}&ate=${mesSaida}&base=competencia`)
+  await expect(page.getByRole('table', { name: 'DRE' }).getByRole('row', { name: /Receita bruta/ })).toContainText('R$ 200,00')
+  await expect(page.getByText(/Competência: receita e custos das saídas/)).toBeVisible()
+
+  // R154: both CSVs open in Excel (BOM, ";")
+  const csv = await page.request.get(`/financeiro/dre/csv?de=${mes}&ate=${mes}&base=caixa`)
+  expect(csv.headers()['content-type']).toContain('text/csv')
+  const texto = await csv.text()
+  expect(texto.startsWith('\uFEFFDRE;Caixa;')).toBe(true)
+  expect(texto).toContain('Receita bruta;100,00')
+  const contas = await page.request.get('/financeiro/contas/csv')
+  expect(contas.status()).toBe(200)
+  expect(await contas.text()).toContain('Descrição;Categoria;Fornecedor')
 })

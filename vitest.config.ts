@@ -26,6 +26,7 @@ export default defineConfig({
         'src/lib/embarque/dados.ts',
         'src/lib/contas/dados.ts',
         'src/lib/financeiro/dados.ts',
+        'src/lib/financeiro/dreDados.ts',
         'src/lib/comprovantes/saida.ts',
         'src/lib/negociacoes/dados.ts',
         'src/lib/atividades/dados.ts',

@@ -29,12 +29,15 @@ export function reaisParaCentavos(entrada: string): number | null {
 
 const MILHAR = new Intl.NumberFormat('pt-BR')
 
+// Negative values (refunds, a negative result) keep the sign in front: "-R$ 6,50".
+const sinal = (centavos: number) => (centavos < 0 ? '-' : '')
+const centavosDe = (centavos: number) => String(Math.abs(centavos) % 100).padStart(2, '0')
+
 export function formatarReais(centavos: number): string {
-  const reais = Math.floor(centavos / 100)
-  return `R$ ${MILHAR.format(reais)},${String(centavos % 100).padStart(2, '0')}`
+  return `${sinal(centavos)}R$ ${MILHAR.format(Math.floor(Math.abs(centavos) / 100))},${centavosDe(centavos)}`
 }
 
 // Value for the price <input>: "8900,00" (no thousands dots, so it parses back unchanged).
 export function centavosParaCampo(centavos: number): string {
-  return `${Math.floor(centavos / 100)},${String(centavos % 100).padStart(2, '0')}`
+  return `${sinal(centavos)}${Math.floor(Math.abs(centavos) / 100)},${centavosDe(centavos)}`
 }

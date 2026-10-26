@@ -3,6 +3,8 @@ import { FORMAS_PAGO } from '@/lib/contas/contas'
 export type Forma = (typeof FORMAS_PAGO)[number]
 export type Movimento = {
   id: string
+  data: string
+  categoria?: string // bills only: the expense category, for the DRE
   sentido: 'entrada' | 'saida'
   origem: 'pagamento' | 'estorno' | 'conta' | 'custo' | 'comissao'
   descricao: string

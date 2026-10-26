@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { totaisDoDia, type Movimento } from './conferencia'
 
-const mov = (m: Partial<Movimento>): Movimento => ({ id: 'x', sentido: 'entrada', origem: 'pagamento', descricao: 'd', valor: 0, forma: 'pix', ...m })
+const mov = (m: Partial<Movimento>): Movimento => ({ id: 'x', data: '2026-10-20', sentido: 'entrada', origem: 'pagamento', descricao: 'd', valor: 0, forma: 'pix', ...m })
 
 describe('totaisDoDia', () => {
   it('sums money in and out per payment form, with the day balance', () => {

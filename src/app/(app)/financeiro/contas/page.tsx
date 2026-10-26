@@ -70,6 +70,7 @@ async function Lista({ searchParams }: Pick<PageProps<'/financeiro/contas'>, 'se
         <label className="flex flex-col gap-1"><span className={rotuloBarra}>Vencimento de</span><input type="date" name="de" defaultValue={f.de ?? ''} className={campoBarra} /></label>
         <label className="flex flex-col gap-1"><span className={rotuloBarra}>até</span><input type="date" name="ate" defaultValue={f.ate ?? ''} className={campoBarra} /></label>
         <button type="submit" className={botaoSecundario}>Filtrar</button>
+        <a href={hrefCom(params, '', null).replace('/financeiro/contas', '/financeiro/contas/csv')} className={botaoSecundario}>Baixar CSV</a>
       </form>
       {linhas.length === 0 ? (
         <EstadoVazio compacto acoes={[]}>Nada neste filtro.</EstadoVazio>

@@ -32,6 +32,8 @@ describe('formatarReais', () => {
     [99, 'R$ 0,99'],
     [0, 'R$ 0,00'],
     [123456789, 'R$ 1.234.567,89'],
+    [-650, '-R$ 6,50'],
+    [-123456, '-R$ 1.234,56'],
   ])('%i -> %s', (centavos, esperado) => {
     expect(formatarReais(centavos).replace(/ /g, ' ')).toBe(esperado)
   })
@@ -42,6 +44,7 @@ describe('centavosParaCampo', () => {
     expect(centavosParaCampo(890000)).toBe('8900,00')
     expect(centavosParaCampo(99)).toBe('0,99')
     expect(centavosParaCampo(0)).toBe('0,00')
+    expect(centavosParaCampo(-650)).toBe('-6,50')
     for (const c of [0, 99, 100, 890050, 123456789]) expect(reaisParaCentavos(centavosParaCampo(c))).toBe(c)
   })
 })
