@@ -3,7 +3,7 @@ import type { PapelMenu } from '@/lib/menu/menu'
 // R143: the Financeiro tabs, in the spec's order. `pronta` turns on as each slice of Entrega 10 ships,
 // so a tab never leads to an unfinished screen. R144: `soDono` hides it from sellers.
 export const ABAS_FINANCEIRO = [
-  { rotulo: 'Visão geral', href: '/financeiro', soDono: true, pronta: false },
+  { rotulo: 'Visão geral', href: '/financeiro', soDono: true, pronta: true },
   { rotulo: 'Conferência diária', href: '/financeiro/conferencia', soDono: true, pronta: true },
   { rotulo: 'Cobranças', href: '/cobrancas', soDono: false, pronta: true },
   { rotulo: 'Contas a pagar', href: '/financeiro/contas', soDono: true, pronta: true },

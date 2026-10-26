@@ -4,7 +4,8 @@ const iso = (dias: number) => new Date(Date.now() + dias * 86_400_000 - 3 * 3_60
 const br = (data: string) => data.split('-').reverse().join('/')
 
 // E10-3 (R151): the day's money per payment form; checking the day, and the check falling when a movement changes.
-test('conferência diária: totais por forma, conferir e a marca cai', async ({ page }) => {
+// E10-4 (R152): the month overview shows the same numbers.
+test('conferência diária e visão geral do mês', async ({ page }) => {
   await page.goto('/cadastro')
   await page.getByLabel('Seu nome').fill('Pessoa caixa')
   await page.getByLabel('Nome da agência').fill('Agência caixa')
@@ -67,4 +68,13 @@ test('conferência diária: totais por forma, conferir e a marca cai', async ({ 
   await page.goto('/financeiro/conferencia')
   await expect(page.getByText(/Um lançamento deste dia mudou/)).toBeVisible()
   await expect(page.getByRole('region', { name: 'Totais do dia' })).toContainText('R$ 100,00')
+
+  // R152: the month overview agrees with the daily check and with Cobranças
+  await page.goto('/financeiro')
+  await expect(page.getByRole('region', { name: 'Vendido' })).toContainText('R$ 200,00')
+  await expect(page.getByRole('region', { name: 'Recebido' })).toContainText('R$ 100,00')
+  await expect(page.getByRole('region', { name: 'A receber' })).toContainText('R$ 100,00')
+  await expect(page.getByRole('region', { name: 'Resultado de caixa' })).toContainText('R$ 100,00')
+  await page.getByRole('region', { name: 'A receber' }).getByRole('link', { name: 'Ver cobranças' }).click()
+  await expect(page.getByText('1 reserva · R$ 100,00 a receber')).toBeVisible()
 })

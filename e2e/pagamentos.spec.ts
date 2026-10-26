@@ -129,11 +129,13 @@ test('payments, balance, refunds, due dates and the billing list', async ({ page
   // Billing list and filters
   // R143: one Financeiro entry in the menu; its tabs reach Cobranças and Comissões
   await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Financeiro' }).click()
-  await expect(page.getByRole('heading', { name: 'Cobranças' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Visão geral', level: 1 })).toBeVisible() // the owner starts at the overview (R152)
   const secoes = page.getByRole('navigation', { name: 'Seções do financeiro' })
+  await secoes.getByRole('link', { name: 'Cobranças' }).click()
+  await expect(page.getByRole('heading', { name: 'Cobranças' })).toBeVisible()
   await expect(secoes.getByRole('link', { name: 'Cobranças' })).toHaveAttribute('aria-current', 'page')
   await expect(secoes.getByRole('link', { name: 'Comissões e repasses' })).toHaveAttribute('href', '/comissoes')
-  await expect(page.getByText('3 reservas')).toBeVisible()
+  await expect(page.getByText('3 reservas ·')).toBeVisible()
   const itens = page.locator('ul > li').filter({ hasText: 'Ver reserva e pagamentos' })
   await expect(itens.nth(0)).toContainText('Ana Souza') // most urgent first
   await expect(itens.nth(0)).toContainText('Vencida há 10 dias')
