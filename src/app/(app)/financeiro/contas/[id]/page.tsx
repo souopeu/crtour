@@ -38,10 +38,11 @@ async function Conteudo({ params }: Pick<PageProps<'/financeiro/contas/[id]'>, '
         {conta.pago_em ? (
           <div className="flex flex-wrap items-center gap-3">
             <p>Paga em <strong>{formatarDataBr(conta.pago_em)}</strong>{conta.forma_pago && <> · {FORMA[conta.forma_pago]}</>}</p>
+            {conta.comprovante_id && <a href={`/financeiro/comprovante/${conta.comprovante_id}`} target="_blank" rel="noopener noreferrer" className="text-primaria underline">Ver comprovante</a>}
             <ConfirmarExclusao acao={desfazerPagamento.bind(null, conta.id)} rotulo="Desfazer pagamento" rotuloConfirmar="Desfazer mesmo" rotuloVoltar="Voltar"
               aviso="A conta volta para a lista do que falta pagar." />
           </div>
-        ) : <PagarLinha acao={pagar.bind(null, 'conta', conta.id)} hoje={hoje} descricao={conta.descricao} comForma />}
+        ) : <PagarLinha acao={pagar.bind(null, 'conta', conta.id)} hoje={hoje} descricao={conta.descricao} />}
       </section>
       {conta.recorrente && conta.grupo_id && (
         <form action={pararRecorrencia.bind(null, conta.id, conta.grupo_id)} className="flex flex-wrap items-center gap-3">

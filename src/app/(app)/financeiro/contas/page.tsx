@@ -90,7 +90,7 @@ async function Lista({ searchParams }: Pick<PageProps<'/financeiro/contas'>, 'se
                     <td>{l.categoria}</td>
                     <td><span className={`whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-semibold ${s.classe}`}>{s.texto}</span>{l.pagoEm && <span className="block text-xs text-tinta-suave">em {formatarDataBr(l.pagoEm)}</span>}</td>
                     <td className="text-right tabular-nums">{formatarReais(l.valor)}</td>
-                    <td>{!l.pagoEm && <PagarLinha acao={pagar.bind(null, l.origem, l.id)} hoje={hoje} descricao={l.descricao} comForma={l.origem === 'conta'} />}</td>
+                    <td>{!l.pagoEm && <PagarLinha acao={pagar.bind(null, l.origem, l.id)} hoje={hoje} descricao={l.descricao} />}</td>
                   </tr>
                 )
               })}

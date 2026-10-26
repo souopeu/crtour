@@ -9,13 +9,14 @@ const ContaZ = z.object({
   id: z.uuid(), descricao: z.string(), categoria: z.enum(CATEGORIAS_CONTA), valor_centavos: z.number(), vencimento: z.string(),
   fornecedor_id: z.uuid().nullable(), observacao: z.string().nullable(), grupo_id: z.uuid().nullable(), parcela: z.number().nullable(),
   total_parcelas: z.number().nullable(), recorrente: z.boolean(), pago_em: z.string().nullable(), forma_pago: z.enum(FORMAS_PAGO).nullable(),
+  comprovante_id: z.uuid().nullable(),
 })
 export type Conta = z.infer<typeof ContaZ>
-const COLUNAS = 'id, descricao, categoria, valor_centavos, vencimento, fornecedor_id, observacao, grupo_id, parcela, total_parcelas, recorrente, pago_em, forma_pago'
+const COLUNAS = 'id, descricao, categoria, valor_centavos, vencimento, fornecedor_id, observacao, grupo_id, parcela, total_parcelas, recorrente, pago_em, forma_pago, comprovante_id'
 
 const CustoZ = z.object({
   id: z.uuid(), saida_id: z.uuid(), fornecedor_id: z.uuid().nullable(), descricao: z.string(), valor_centavos: z.number(),
-  vencimento: z.string().nullable(), pago_em: z.string().nullable(),
+  vencimento: z.string().nullable(), pago_em: z.string().nullable(), comprovante_id: z.uuid().nullable(),
 })
 const NomeZ = z.object({ id: z.uuid(), nome: z.string() })
 const SaidaZ = z.object({ id: z.uuid(), data: z.string(), passeio_id: z.uuid() })
@@ -27,7 +28,7 @@ export async function listarAPagar(): Promise<LinhaAPagar[]> {
   const supabase = await criarClienteServidor()
   const [contasR, custosR] = await Promise.all([
     supabase.from('contas_pagar').select(COLUNAS).order('vencimento').limit(LIMITE),
-    supabase.from('custos_saida').select('id, saida_id, fornecedor_id, descricao, valor_centavos, vencimento, pago_em').limit(LIMITE),
+    supabase.from('custos_saida').select('id, saida_id, fornecedor_id, descricao, valor_centavos, vencimento, pago_em, comprovante_id').limit(LIMITE),
   ])
   if (contasR.error) console.error('listarAPagar contas falhou', contasR.error.code)
   if (custosR.error) console.error('listarAPagar custos falhou', custosR.error.code)
@@ -49,6 +50,7 @@ export async function listarAPagar(): Promise<LinhaAPagar[]> {
       origem: 'conta', id: c.id, descricao: c.descricao, categoria: rotuloCategoriaConta(c.categoria), valor: c.valor_centavos,
       vencimento: c.vencimento, pagoEm: c.pago_em, fornecedor: c.fornecedor_id ? (fornecedor.get(c.fornecedor_id) ?? null) : null,
       parcela: textoParcela({ parcela: c.parcela, total: c.total_parcelas, recorrente: c.recorrente }), href: `/financeiro/contas/${c.id}`,
+      fornecedorId: c.fornecedor_id, comprovanteId: c.comprovante_id,
     })),
     ...custos.map((c): LinhaAPagar => {
       const s = saida.get(c.saida_id)
@@ -56,6 +58,7 @@ export async function listarAPagar(): Promise<LinhaAPagar[]> {
         origem: 'custo', id: c.id, descricao: s ? `${c.descricao} · ${passeio.get(s.passeio_id) ?? ''} ${formatarDataBr(s.data)}` : c.descricao,
         categoria: CATEGORIA_CUSTOS, valor: c.valor_centavos, vencimento: c.vencimento, pagoEm: c.pago_em,
         fornecedor: c.fornecedor_id ? (fornecedor.get(c.fornecedor_id) ?? null) : null, parcela: null, href: `/saidas/${c.saida_id}`,
+        fornecedorId: c.fornecedor_id, comprovanteId: c.comprovante_id,
       }
     }),
   ]

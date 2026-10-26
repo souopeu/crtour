@@ -54,6 +54,8 @@ export const pagarSchema = (hoje: string) => z
 export type LinhaAPagar = {
   origem: 'conta' | 'custo'; id: string; descricao: string; categoria: string; valor: number
   vencimento: string | null; pagoEm: string | null; fornecedor: string | null; parcela: string | null; href: string
+  fornecedorId?: string | null // R150: groups the payments to each supplier
+  comprovanteId?: string | null
 }
 
 export type SituacaoAPagar = 'paga' | 'vencida' | 'proxima' | 'a_pagar'

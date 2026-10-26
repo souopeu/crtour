@@ -3,7 +3,9 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
+import { getAgenciaId } from '@/lib/auth/agencia'
 import { contaSchema, pagarSchema } from '@/lib/contas/contas'
+import { enviarComprovanteSaida } from '@/lib/comprovantes/saida'
 import { hojeNoBrasil } from '@/lib/formato'
 import type { EstadoForm } from '@/lib/forms'
 import { criarClienteServidor } from '@/lib/supabase/server'
@@ -57,16 +59,20 @@ export async function editarConta(id: string, _: EstadoForm, fd: FormData): Prom
   return { ok: 'Alterações salvas.', valores, versao }
 }
 
-// Pays an agency bill (date + form) or a departure cost (date only, as on the departure page).
+// Pays an agency bill or a departure cost: date, form and (E10-2) an optional receipt.
 export async function pagar(origem: 'conta' | 'custo', id: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
   const versao = crypto.randomUUID()
   const r = pagarSchema(hojeNoBrasil()).safeParse({ data: texto(fd, 'data'), forma: texto(fd, 'forma') })
   if (!r.success) return { campos: r.error.flatten().fieldErrors, versao }
-  if (!uuid(id)) return { erro: ERRO, versao }
+  const agenciaId = await getAgenciaId()
+  if (!uuid(id) || !agenciaId) return { erro: ERRO, versao }
   const supabase = await criarClienteServidor()
+  const comp = await enviarComprovanteSaida(supabase, agenciaId, fd.get('comprovante'))
+  if (!comp.ok) return { erro: comp.erro, versao }
+  const linha = { ...r.data, comprovante_id: comp.id }
   const { data, error } = origem === 'conta'
-    ? await supabase.from('contas_pagar').update(r.data).eq('id', id).select('id')
-    : await supabase.from('custos_saida').update({ pago_em: r.data.pago_em }).eq('id', id).select('saida_id')
+    ? await supabase.from('contas_pagar').update(linha).eq('id', id).select('id')
+    : await supabase.from('custos_saida').update(linha).eq('id', id).select('saida_id')
   if (error || !data?.length) return { erro: falhou('pagar', error?.code ?? '42501'), versao }
   atualizar(origem === 'conta' ? id : undefined)
   if (origem === 'custo') revalidatePath('/saidas', 'layout')
@@ -77,7 +83,7 @@ export async function desfazerPagamento(id: string): Promise<EstadoForm> {
   const versao = crypto.randomUUID()
   if (!uuid(id)) return { erro: ERRO, versao }
   const supabase = await criarClienteServidor()
-  const { data, error } = await supabase.from('contas_pagar').update({ pago_em: null, forma_pago: null }).eq('id', id).select('id')
+  const { data, error } = await supabase.from('contas_pagar').update({ pago_em: null, forma_pago: null, comprovante_id: null }).eq('id', id).select('id')
   if (error || !data?.length) return { erro: falhou('desfazerPagamento', error?.code ?? '42501'), versao }
   atualizar(id)
   return { ok: 'Pagamento desfeito: a conta voltou para "a pagar".', versao }

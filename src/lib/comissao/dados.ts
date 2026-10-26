@@ -13,6 +13,21 @@ const linhaSchema = z.object({
 })
 export type LinhaComissao = z.infer<typeof linhaSchema> & { cliente_nome: string; passeio_nome: string; saida_data: string }
 
+const pagaSchema = z.object({
+  id: z.uuid(), vendedor_id: z.uuid(), valor_centavos: z.number(), pago_em: z.string(),
+  forma_pago: z.enum(['pix', 'dinheiro', 'cartao', 'transferencia', 'outro']), comprovante_id: z.uuid().nullable(),
+})
+export type ComissaoPaga = z.infer<typeof pagaSchema>
+
+// R149: payments of the month's commissions (RLS: the owner sees all, a seller only hers).
+export async function listarComissoesPagas(mes: string): Promise<ComissaoPaga[]> {
+  const supabase = await criarClienteServidor()
+  const { data, error } = await supabase.from('comissoes_pagas')
+    .select('id, vendedor_id, valor_centavos, pago_em, forma_pago, comprovante_id').eq('mes', `${mes}-01`).order('pago_em')
+  if (error) console.error('listarComissoesPagas falhou', error.code)
+  return z.array(pagaSchema).catch([]).parse(data ?? [])
+}
+
 export async function buscarConfigComissao() {
   const supabase = await criarClienteServidor()
   const [agencia, membros, passeios] = await Promise.all([
