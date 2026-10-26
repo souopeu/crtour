@@ -9,42 +9,15 @@ import { ChipStatus } from '@/components/reservas/ChipStatus'
 import { MoverReserva } from '@/components/reservas/MoverReserva'
 import { CabecalhoPagina } from '@/components/tela/CabecalhoPagina'
 import { EstadoVazio } from '@/components/tela/EstadoVazio'
-import { botaoSecundario, campoBarra, cartaoFiltros } from '@/components/tela/estilos'
+import { SeletorDeDia } from '@/components/tela/SeletorDeDia'
+import { botaoSecundario } from '@/components/tela/estilos'
 import { lugaresDasSaidas } from '@/lib/embarque/dados'
 import { contarEmbarque } from '@/lib/embarque/embarque'
-import { formatarDataBr, hojeNoBrasil } from '@/lib/formato'
+import { hojeNoBrasil } from '@/lib/formato'
 import { saidasDoDia, saidasDosPasseios, type SaidaDoDia } from '@/lib/operacao/dados'
 import { destinosParaMover, lerDia, ocupacao } from '@/lib/operacao/operacao'
-import { somarDias } from '@/lib/periodo/periodo'
 
 export const metadata = { title: 'Saídas do dia' }
-
-const DIAS = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', timeZone: 'UTC' })
-const diaDaSemana = (iso: string) => DIAS.format(new Date(`${iso}T12:00:00Z`))
-
-function SeletorDeDia({ dia, hoje }: { dia: string; hoje: string }) {
-  const seta = 'inline-flex size-11 items-center justify-center rounded-lg border border-controle bg-superficie hover:bg-superficie-suave'
-  return (
-    <section aria-label="Escolher o dia" className={cartaoFiltros}>
-      <div className="flex flex-wrap items-end gap-2">
-        <Link href={`/operacao?dia=${somarDias(dia, -1)}`} className={seta} aria-label="Dia anterior">‹</Link>
-        <form method="get" action="/operacao" className="flex items-end gap-2">
-          <label className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-tinta-suave">Data das saídas</span>
-            <input type="date" name="dia" defaultValue={dia} className={campoBarra} />
-          </label>
-          <button type="submit" className={botaoSecundario}>Ver</button>
-        </form>
-        <Link href={`/operacao?dia=${somarDias(dia, 1)}`} className={seta} aria-label="Próximo dia">›</Link>
-        <Link href="/operacao" aria-current={dia === hoje ? 'page' : undefined}
-          className="inline-flex min-h-11 items-center rounded-lg border border-controle bg-superficie px-4 text-sm aria-[current=page]:border-marca aria-[current=page]:bg-marca aria-[current=page]:font-semibold aria-[current=page]:text-white">
-          Hoje
-        </Link>
-      </div>
-      <p className="text-sm text-tinta-suave">{formatarDataBr(dia)}, {diaDaSemana(dia)}{dia === hoje ? ' (hoje)' : ''}</p>
-    </section>
-  )
-}
 
 function CartaoSaida({ s, destinos, hoje, embarque }: {
   s: SaidaDoDia; destinos: Awaited<ReturnType<typeof saidasDosPasseios>>; hoje: string; embarque: { embarcados: number; total: number }
@@ -110,7 +83,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/operacao'>, 'searchPa
   const lugares = saidas.reduce((t, s) => t + Math.max(s.livres, 0), 0)
   return (
     <>
-      <SeletorDeDia dia={dia} hoje={hoje} />
+      <SeletorDeDia caminho="/operacao" rotulo="Data das saídas" dia={dia} hoje={hoje} />
       {saidas.length === 0 ? (
         <EstadoVazio acoes={[{ href: '/passeios', rotulo: 'Ver passeios e criar saídas' }]}>Nenhuma saída neste dia.</EstadoVazio>
       ) : (
