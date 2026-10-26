@@ -24,6 +24,7 @@ export default defineConfig({
         'src/lib/veiculos/dados.ts',
         'src/lib/operacao/dados.ts',
         'src/lib/embarque/dados.ts',
+        'src/lib/contas/dados.ts',
         'src/lib/negociacoes/dados.ts',
         'src/lib/atividades/dados.ts',
         'src/lib/hoje/dados.ts',

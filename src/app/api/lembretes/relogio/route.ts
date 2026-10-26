@@ -18,6 +18,9 @@ export async function GET(request: Request) {
     console.error('gerar_lembretes falhou', error.code)
     return Response.json({ erro: 'falhou' }, { status: 500 })
   }
+  // R147: next month of each recurring bill, 30 days before its due date (idempotent); a failure does not stop the reminders.
+  const recorrencias = await admin.rpc('gerar_recorrencias')
+  if (recorrencias.error) console.error('gerar_recorrencias falhou', recorrencias.error.code)
 
   // Without VAPID keys the queue is left alone (nothing is marked as pushed).
   const vapid = configVapid(process.env)
