@@ -8,6 +8,7 @@ import { listarCobrancas } from '@/lib/pagamentos/dados'
 import { formatarReais } from '@/lib/passeios/dinheiro'
 import { Carregando } from '@/components/Carregando'
 import { CabecalhoPagina } from '@/components/tela/CabecalhoPagina'
+import { AbasFinanceiro } from '@/components/financeiro/AbasFinanceiro'
 import { EstadoVazio } from '@/components/tela/EstadoVazio'
 import { AbasDeVisao } from '@/components/tela/AbasDeVisao'
 
@@ -87,6 +88,7 @@ export default function CobrancasPage({ searchParams }: PageProps<'/cobrancas'>)
   return (
     <section className="mx-auto flex max-w-6xl flex-col gap-4">
       <CabecalhoPagina area="Financeiro" titulo="Cobranças" descricao="Reservas ativas com saldo a receber, das mais urgentes para as menos." />
+      <AbasFinanceiro caminho="/cobrancas" />
       <Suspense fallback={<Carregando altura="h-40" />}>
         <Lista searchParams={searchParams} />
       </Suspense>

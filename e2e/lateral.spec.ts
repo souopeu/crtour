@@ -15,8 +15,8 @@ test('desktop sidebar: groups, active entry, collapse remembered after reload', 
   const lateral = page.locator('aside')
 
   // Groups and entries, in the order of the spec (R133)
-  for (const titulo of ['Vendas', 'Catálogo', 'Operação', 'Financeiro', 'Gestão']) await expect(menu.getByRole('button', { name: titulo, exact: true })).toBeVisible()
-  for (const nome of ['Hoje', 'Calendário', 'Reservas', 'Funil', 'Clientes', 'Remarketing', 'Passeios', 'Fornecedores', 'Veículos', 'Cobranças', 'Comissões', 'Painel', 'Avisos', 'Configurações']) {
+  for (const titulo of ['Vendas', 'Catálogo', 'Operação', 'Gestão']) await expect(menu.getByRole('button', { name: titulo, exact: true })).toBeVisible()
+  for (const nome of ['Hoje', 'Calendário', 'Reservas', 'Funil', 'Clientes', 'Remarketing', 'Passeios', 'Fornecedores', 'Veículos', 'Financeiro', 'Painel', 'Avisos', 'Configurações']) {
     await expect(menu.getByRole('link', { name: nome })).toBeVisible()
   }
   await expect(menu.getByRole('link', { name: 'Clientes' })).toHaveAttribute('aria-current', 'page')
@@ -48,7 +48,7 @@ test('desktop sidebar: groups, active entry, collapse remembered after reload', 
   await page.getByRole('button', { name: 'Recolher menu' }).click()
   await expect(menu.getByText('Vendas', { exact: true })).toBeHidden()
   await expect(menu.getByRole('link', { name: 'Funil' })).toBeVisible()
-  await expect(menu.getByRole('link', { name: 'Comissões' })).toBeVisible() // icons only: every group shows
+  await expect(menu.getByRole('link', { name: 'Financeiro' })).toBeVisible() // icons only: every group shows
   await expect.poll(largura).toBeLessThan(100) // the width animates
   await page.reload()
   await expect(page.getByRole('button', { name: 'Expandir menu' })).toHaveAttribute('aria-expanded', 'false')

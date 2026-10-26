@@ -1,3 +1,4 @@
+import { inicioFinanceiro } from '@/lib/financeiro/abas'
 import { MAX_COOKIE_GRUPOS } from './config'
 
 export type IconeMenu =
@@ -13,7 +14,7 @@ export type ItemMenu = {
   novos?: number
 }
 
-export const IDS_GRUPOS = ['vendas', 'catalogo', 'operacao', 'financeiro', 'gestao'] as const
+export const IDS_GRUPOS = ['vendas', 'catalogo', 'operacao', 'gestao'] as const
 export type IdGrupo = (typeof IDS_GRUPOS)[number]
 
 // A titled group has an id and can be collapsed (R133); the untitled top block is always open.
@@ -62,17 +63,11 @@ export function montarMenu(papel: PapelMenu, avisosNovos: number, atendimento: n
       ],
     },
     {
-      id: 'financeiro',
-      titulo: 'Financeiro',
-      itens: [
-        item('/cobrancas', 'Cobranças', 'cobrancas'),
-        item('/comissoes', 'Comissões', 'comissoes'),
-      ],
-    },
-    {
       id: 'gestao',
       titulo: 'Gestão',
       itens: [
+        // R143: one entry; the tabs inside lead to Cobranças, Comissões and the rest (R144: a seller starts at Cobranças)
+        item(inicioFinanceiro(papel), 'Financeiro', 'cobrancas', ['/financeiro', '/cobrancas', '/comissoes']),
         item('/painel', 'Painel', 'painel'),
         item('/avisos', 'Avisos', 'avisos', [], avisosNovos), // R130: everyone has notices now (reminders are personal)
         item('/configuracoes', 'Configurações', 'configuracoes'),

@@ -8,6 +8,7 @@ import { formatarDataBr, hojeNoBrasil } from '@/lib/formato'
 import { lerFiltrosPainel, rotuloDoMes } from '@/lib/painel/painel'
 import { formatarReais } from '@/lib/passeios/dinheiro'
 import { CabecalhoPagina } from '@/components/tela/CabecalhoPagina'
+import { AbasFinanceiro } from '@/components/financeiro/AbasFinanceiro'
 import { EstadoVazio } from '@/components/tela/EstadoVazio'
 import { botaoBarra, caixaTabela, campoBarra, cartaoPainel, rodapeTabela, rotuloBarra, tabelaPadrao } from '@/components/tela/estilos'
 
@@ -85,6 +86,7 @@ export default function ComissoesPage({ searchParams }: PageProps<'/comissoes'>)
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <CabecalhoPagina area="Financeiro" titulo="Comissões" descricao="O que cada vendedor recebe pelas reservas quitadas no mês." />
+      <AbasFinanceiro caminho="/comissoes" />
       <Suspense fallback={<Carregando altura="h-64" />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>

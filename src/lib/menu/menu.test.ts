@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { inicioFinanceiro } from '@/lib/financeiro/abas'
 import { alternarGrupo, gravarGruposFechados, grupoAberto, itemAtivo, lerGruposFechados, montarMenu } from './menu'
 
 const hrefs = (menu: ReturnType<typeof montarMenu>) => menu.flatMap((g) => g.itens.map((i) => i.href))
@@ -8,18 +9,24 @@ const itemAtivoEm = (menu: ReturnType<typeof montarMenu>, caminho: string) =>
 describe('montarMenu', () => {
   it('puts Hoje, Calendário and Reservas loose on top, then the collapsible groups (R133)', () => {
     const menu = montarMenu('dono', 0)
-    expect(menu.map((g) => g.titulo)).toEqual([undefined, 'Vendas', 'Catálogo', 'Operação', 'Financeiro', 'Gestão'])
+    expect(menu.map((g) => g.titulo)).toEqual([undefined, 'Vendas', 'Catálogo', 'Operação', 'Gestão'])
     expect(menu[0].itens.map((i) => i.rotulo)).toEqual(['Hoje', 'Calendário', 'Reservas'])
     expect(menu[1].itens.map((i) => i.rotulo)).toEqual(['Funil', 'Clientes', 'Remarketing', 'Campanhas'])
     expect(menu[2].itens.map((i) => i.rotulo)).toEqual(['Passeios', 'Fornecedores'])
     expect(menu[3].itens.map((i) => i.rotulo)).toEqual(['Saídas do dia', 'Veículos'])
-    expect(menu[4].itens.map((i) => i.rotulo)).toEqual(['Cobranças', 'Comissões'])
-    expect(menu[5].itens.map((i) => i.rotulo)).toEqual(['Painel', 'Avisos', 'Configurações'])
+    expect(menu[4].itens.map((i) => i.rotulo)).toEqual(['Financeiro', 'Painel', 'Avisos', 'Configurações'])
   })
 
   it('gives every titled group a stable id and the loose top none', () => {
     const menu = montarMenu('dono', 0)
-    expect(menu.map((g) => g.id)).toEqual([undefined, 'vendas', 'catalogo', 'operacao', 'financeiro', 'gestao'])
+    expect(menu.map((g) => g.id)).toEqual([undefined, 'vendas', 'catalogo', 'operacao', 'gestao'])
+  })
+
+  it('has one Financeiro entry that opens the first tab each person can see (R143–R144)', () => {
+    const financeiro = (papel: 'dono' | 'vendedor') => montarMenu(papel, 0).flatMap((g) => g.itens).find((i) => i.rotulo === 'Financeiro')
+    expect(financeiro('vendedor')?.href).toBe('/cobrancas')
+    expect(financeiro('dono')?.href).toBe(inicioFinanceiro('dono'))
+    expect(financeiro('dono')?.alcance).toEqual(expect.arrayContaining(['/financeiro', '/cobrancas', '/comissoes']))
   })
 
   it('shows Avisos with the unread count to everyone (R130: reminders are personal)', () => {
@@ -30,7 +37,7 @@ describe('montarMenu', () => {
 
   it('keeps every route the old top menu had and never repeats a destination', () => {
     const todos = hrefs(montarMenu('dono', 0))
-    for (const antigo of ['/hoje', '/', '/funil', '/remarketing', '/passeios', '/cobrancas', '/painel', '/comissoes', '/avisos', '/configuracoes']) {
+    for (const antigo of ['/hoje', '/', '/funil', '/remarketing', '/passeios', '/painel', '/avisos', '/configuracoes']) {
       expect(todos).toContain(antigo)
     }
     expect(todos).toContain('/fornecedores')
@@ -72,9 +79,11 @@ describe('itemAtivo', () => {
     ['/fornecedores', 'Fornecedores'],
     ['/veiculos', 'Veículos'],
     ['/operacao', 'Saídas do dia'],
-    ['/cobrancas', 'Cobranças'],
+    ['/cobrancas', 'Financeiro'],
+    ['/financeiro', 'Financeiro'],
+    ['/financeiro/contas', 'Financeiro'],
     ['/painel', 'Painel'],
-    ['/comissoes', 'Comissões'],
+    ['/comissoes', 'Financeiro'],
     ['/avisos', 'Avisos'],
     ['/configuracoes', 'Configurações'],
   ])('marks %s as %s and as nothing else', (caminho, esperado) => {
@@ -120,7 +129,7 @@ describe('grupos recolhíveis (R133)', () => {
   })
 
   it('writes the closed groups back in the cookie format it reads', () => {
-    const fechados = new Set(['financeiro', 'vendas'])
+    const fechados = new Set(['gestao', 'vendas'])
     expect(lerGruposFechados(gravarGruposFechados(fechados))).toEqual(fechados)
   })
 })

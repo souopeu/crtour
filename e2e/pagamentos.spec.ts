@@ -127,8 +127,12 @@ test('payments, balance, refunds, due dates and the billing list', async ({ page
   await expect(page.getByText('Vencimento salvo.')).toBeVisible()
 
   // Billing list and filters
-  await page.getByRole('link', { name: 'Cobranças' }).click()
+  // R143: one Financeiro entry in the menu; its tabs reach Cobranças and Comissões
+  await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Financeiro' }).click()
   await expect(page.getByRole('heading', { name: 'Cobranças' })).toBeVisible()
+  const secoes = page.getByRole('navigation', { name: 'Seções do financeiro' })
+  await expect(secoes.getByRole('link', { name: 'Cobranças' })).toHaveAttribute('aria-current', 'page')
+  await expect(secoes.getByRole('link', { name: 'Comissões e repasses' })).toHaveAttribute('href', '/comissoes')
   await expect(page.getByText('3 reservas')).toBeVisible()
   const itens = page.locator('ul > li').filter({ hasText: 'Ver reserva e pagamentos' })
   await expect(itens.nth(0)).toContainText('Ana Souza') // most urgent first
