@@ -70,13 +70,13 @@ test('reservations: seat lock, custom total, cancel, capacity guard, isolation',
   await page.getByRole('button', { name: 'Reservar' }).click()
   await expect(page.getByText('Informe de 1 a 500 pessoas.')).toBeVisible()
   await page.getByLabel('Número de pessoas').fill('1')
-  await page.getByLabel('Valor total (R$)').fill('abc')
+  await page.getByLabel('Valor do passeio (R$)').fill('abc')
   await page.getByRole('button', { name: 'Reservar' }).click()
   await expect(page.getByText('Digite o valor total')).toBeVisible()
 
   // 1 person with a discount fills the departure
   await page.getByLabel('Número de pessoas').fill('1')
-  await page.getByLabel('Valor total (R$)').fill('800,00')
+  await page.getByLabel('Valor do passeio (R$)').fill('800,00')
   await page.getByRole('button', { name: 'Reservar' }).click()
   await expect(page.getByText('Vagas: 3 reservadas de 3 · 0 livres')).toBeVisible()
   await expect(page.getByText('Lotada', { exact: true })).toBeVisible()

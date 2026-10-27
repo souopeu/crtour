@@ -12,6 +12,7 @@ const SaidaZ = z.object({ id: z.uuid(), data: z.string(), passeio_id: z.uuid() }
 const ReservaZ = z.object({ id: z.uuid(), saida_id: z.uuid(), cliente_id: z.uuid(), valor_total_centavos: z.number() })
 const CustoZ = z.object({ id: z.uuid(), saida_id: z.uuid(), descricao: z.string(), valor_centavos: z.number() })
 const ContaZ = z.object({ id: z.uuid(), descricao: z.string(), categoria: z.enum(CATEGORIAS_CONTA), vencimento: z.string(), valor_centavos: z.number() })
+const ItemZ = z.object({ reserva_id: z.uuid(), nome: z.string(), custo_centavos: z.number(), quantidade: z.number() })
 const NomeZ = z.object({ id: z.uuid(), nome: z.string() })
 
 // Accrual basis: revenue and costs of the departures that happened in the period, commissions by the agency's rule
@@ -31,7 +32,11 @@ async function itensCompetencia(inicio: string, fim: string, meses: string[]): P
     emBlocos([...new Set(saidas.map((s) => s.passeio_id))], (b) => supabase.from('passeios').select('id, nome').in('id', b)),
   ])
   const reservas = ler(ReservaZ, reservasR, 'dre reservas')
-  const clientesR = await emBlocos([...new Set(reservas.map((r) => r.cliente_id))], (b) => supabase.from('clientes').select('id, nome').in('id', b))
+  const [clientesR, itensR] = await Promise.all([
+    emBlocos([...new Set(reservas.map((r) => r.cliente_id))], (b) => supabase.from('clientes').select('id, nome').in('id', b)),
+    emBlocos(reservas.map((r) => r.id), (b) => supabase.from('reserva_itens').select('reserva_id, nome, custo_centavos, quantidade').in('reserva_id', b).not('custo_centavos', 'is', null)),
+  ])
+  const saidaDaReserva = new Map(reservas.map((r) => [r.id, r.saida_id]))
   const cliente = new Map(ler(NomeZ, clientesR, 'dre clientes').map((c) => [c.id, c.nome]))
   const passeio = new Map(ler(NomeZ, passeiosR, 'dre passeios').map((p) => [p.id, p.nome]))
   const saida = new Map(saidas.map((s) => [s.id, { data: s.data, nome: passeio.get(s.passeio_id) ?? 'Passeio' }]))
@@ -44,6 +49,14 @@ async function itensCompetencia(inicio: string, fim: string, meses: string[]): P
     ...ler(CustoZ, custosR, 'dre custos').map((c): ItemDre => ({
       grupo: 'custo', descricao: `${c.descricao} · ${saida.get(c.saida_id)?.nome ?? 'Passeio'}`, data: saida.get(c.saida_id)?.data ?? inicio, valor: c.valor_centavos, href: `/saidas/${c.saida_id}`,
     })),
+    // R159: the cost of the extras sold counts with the departure costs (accrual only: it is not a payment)
+    ...ler(ItemZ, itensR, 'dre extras').map((i): ItemDre => {
+      const saidaId = saidaDaReserva.get(i.reserva_id) as string
+      return {
+        grupo: 'custo', descricao: `Extra ${i.quantidade} × ${i.nome} · ${saida.get(saidaId)?.nome ?? 'Passeio'}`,
+        data: saida.get(saidaId)?.data ?? inicio, valor: i.custo_centavos * i.quantidade, href: `/reservas/${i.reserva_id}`,
+      }
+    }),
     ...comissoes.flat().map((l): ItemDre => ({
       grupo: 'comissao', descricao: `${l.cliente_nome} · ${l.passeio_nome}`, data: l.quitada_em, valor: l.comissao_centavos, href: `/reservas/${l.reserva_id}`,
     })),

@@ -7,7 +7,9 @@ import { formatarDataBr, hojeNoBrasil } from '@/lib/formato'
 import { diasAte, situacaoCobranca } from '@/lib/pagamentos/cobranca'
 import { buscarReserva, listarPagamentos } from '@/lib/pagamentos/dados'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
-import { definirStatusOperacional, estornarPagamento, moverReserva } from '../actions'
+import { adicionarExtra, definirStatusOperacional, estornarPagamento, moverReserva, removerExtra } from '../actions'
+import { AdicionarExtra } from '@/components/extras/AdicionarExtra'
+import { extrasDoPasseio, itensDaReserva } from '@/lib/extras/dados'
 import { MoverReserva } from '@/components/reservas/MoverReserva'
 import { saidasDosPasseios } from '@/lib/operacao/dados'
 import { destinosParaMover } from '@/lib/operacao/operacao'
@@ -43,10 +45,13 @@ async function Conteudo({ params }: Pick<PageProps<'/reservas/[id]'>, 'params'>)
   const [pagamentos, vendedorId, membros, membro] = await Promise.all([listarPagamentos(reserva.id), buscarVendedorDaReserva(reserva.id), listarMembros(), getMembro()])
   const hoje = hojeNoBrasil()
   const ativa = reserva.situacao === 'ativa'
-  const [comComprovante, candidatas] = await Promise.all([
+  const [comComprovante, candidatas, itens, extrasVenda] = await Promise.all([
     pagamentosComComprovante(pagamentos.map((p) => p.id)),
     ativa && reserva.passeio_id ? saidasDosPasseios([reserva.passeio_id], hoje) : Promise.resolve([]),
+    itensDaReserva(reserva.id),
+    ativa && reserva.passeio_id ? extrasDoPasseio(reserva.passeio_id) : Promise.resolve([]),
   ])
+  const dono = membro?.papel === 'dono'
   const destinos = destinosParaMover(candidatas, reserva.saida_id, reserva.passeio_id, reserva.qtd_pessoas, hoje)
   const situacao = situacaoCobranca(reserva.saldo_centavos, reserva.vencimento_saldo, hoje)
   const rotuloSituacao = { quitada: 'Quitada', vencida: 'Vencida', a_vencer: 'Em aberto', sem_vencimento: 'Em aberto' }[situacao]
@@ -85,6 +90,30 @@ async function Conteudo({ params }: Pick<PageProps<'/reservas/[id]'>, 'params'>)
           {ativa && situacao !== 'quitada' && <p className="text-sm text-tinta-suave">{textoVencimento(reserva.vencimento_saldo, hoje)}</p>}
         </div>
       </section>
+
+      {(itens.length > 0 || (ativa && extrasVenda.length > 0)) && (
+        <section aria-labelledby="extras-titulo" className="flex flex-col gap-3">
+          <h2 id="extras-titulo" className="text-lg font-semibold">Extras</h2>
+          {itens.length > 0 && (
+            <ul className="flex flex-col gap-2">
+              {itens.map((i) => (
+                <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 rounded-[--radius-cartao] border border-linha bg-superficie p-3">
+                  <span>
+                    <span className="font-semibold">{i.quantidade} × {i.nome}</span>
+                    <span className="text-sm text-tinta-suave"> · {formatarReais(i.preco_centavos)} cada · {formatarReais(i.preco_centavos * i.quantidade)}</span>
+                    {dono && i.custo_centavos !== null && <span className="text-sm text-tinta-suave"> · custo {formatarReais(i.custo_centavos * i.quantidade)}</span>}
+                  </span>
+                  {ativa && (
+                    <ConfirmarExclusao acao={removerExtra.bind(null, reserva.id, i.id)} rotulo={`Remover ${i.nome}`} rotuloConfirmar="Remover mesmo" rotuloVoltar="Voltar"
+                      aviso={`Tira ${i.quantidade} × ${i.nome} da reserva e diminui o total em ${formatarReais(i.preco_centavos * i.quantidade)}.`} />
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+          {ativa && extrasVenda.length > 0 && <AdicionarExtra acao={adicionarExtra.bind(null, reserva.id)} extras={extrasVenda} pessoas={reserva.qtd_pessoas} />}
+        </section>
+      )}
 
       <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
         <section aria-labelledby="pagamentos-titulo" className="flex flex-col gap-3">

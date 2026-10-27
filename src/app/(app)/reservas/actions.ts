@@ -11,7 +11,7 @@ import { criarClienteServidor } from '@/lib/supabase/server'
 
 const uuid = (v: string) => z.uuid().safeParse(v).success
 const texto = (fd: FormData, n: string) => String(fd.get(n) ?? '')
-const ESPERADOS = ['CR001', 'CR002', 'CR006', 'CR007', 'CR008', 'CR014', 'CR018', '22008', '22023', '23514', '22003']
+const ESPERADOS = ['CR001', 'CR002', 'CR006', 'CR007', 'CR023', 'CR024', 'CR008', 'CR014', 'CR018', '22008', '22023', '23514', '22003']
 
 function atualizarTelas(reservaId: string) {
   revalidatePath(`/reservas/${reservaId}`)
@@ -106,4 +106,28 @@ export async function alterarValorTotal(reservaId: string, _: EstadoForm, fd: Fo
   if (error) return falha(error, valores)
   atualizarTelas(reservaId)
   return { ok: 'Valor total atualizado.', valores, versao }
+}
+
+// R158: an extra added or removed after the sale changes the total (never below what was paid).
+export async function adicionarExtra(reservaId: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const valores = { extra: texto(fd, 'extra'), quantidade: texto(fd, 'quantidade') }
+  const qtd = valores.quantidade.trim()
+  if (!uuid(valores.extra)) return { campos: { extra: ['Escolha um extra.'] }, valores, versao }
+  if (!/^\d+$/.test(qtd) || Number(qtd) < 1 || Number(qtd) > 500) return { campos: { quantidade: ['Informe de 1 a 500.'] }, valores, versao }
+  if (!uuid(reservaId)) return { erro: mensagemDeErroReserva(undefined), valores, versao }
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.rpc('adicionar_item_reserva', { p_reserva: reservaId, p_extra: valores.extra, p_qtd: Number(qtd) })
+  if (error) return falha(error, valores)
+  atualizarTelas(reservaId)
+  return { ok: 'Extra incluído e total atualizado.', versao }
+}
+
+export async function removerExtra(reservaId: string, itemId: string): Promise<EstadoForm> {
+  if (!uuid(reservaId) || !uuid(itemId)) return { erro: mensagemDeErroReserva(undefined) }
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.rpc('remover_item_reserva', { p_item: itemId })
+  if (error) return falha(error)
+  atualizarTelas(reservaId)
+  return { ok: 'Extra removido e total atualizado.' }
 }

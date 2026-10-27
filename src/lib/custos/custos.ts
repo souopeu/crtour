@@ -33,8 +33,10 @@ export const custoSchema = (hoje: string) => z.object({
 }))
 
 // Margin of a departure (or of a month): what was sold minus what it costs.
-export function margem(receita: number, custos: { valor_centavos: number; pago_em: string | null }[]) {
-  const total = custos.reduce((s, c) => s + c.valor_centavos, 0)
+// R159: the cost of the extras sold lowers the margin but is not a bill (it is not in "a pagar").
+export function margem(receita: number, custos: { valor_centavos: number; pago_em: string | null }[], custoExtras = 0) {
+  const lancados = custos.reduce((s, c) => s + c.valor_centavos, 0)
   const pagos = custos.filter((c) => c.pago_em).reduce((s, c) => s + c.valor_centavos, 0)
-  return { receita, custos: total, pagos, aPagar: total - pagos, margem: receita - total, percentual: receita > 0 ? (receita - total) / receita : null }
+  const total = lancados + custoExtras
+  return { receita, custos: total, pagos, aPagar: lancados - pagos, margem: receita - total, percentual: receita > 0 ? (receita - total) / receita : null, custoExtras }
 }

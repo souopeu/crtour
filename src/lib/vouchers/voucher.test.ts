@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { lerFormVoucher, listaDePassageiros, mensagemVoucher, montarDados, reservaQuitada } from './voucher'
+import { dadosVoucherSchema, lerFormVoucher, listaDePassageiros, mensagemVoucher, montarDados, reservaQuitada } from './voucher'
 
 const fd = (campos: Record<string, string>) => {
   const f = new FormData()
@@ -46,7 +46,13 @@ describe('montarDados / mensagemVoucher', () => {
       { encontro: 'Praça', horario: '07:30', observacoes: null },
       { agencia: 'Alfa', cliente: 'Ana', passeio: 'Lisboa', destino: 'Portugal', saida: '2027-03-10', inclui: null, pessoas: 2, passageiros: ['Ana', 'Bia'] },
     )
-    expect(d).toMatchObject({ agencia: 'Alfa', encontro: 'Praça', horario: '07:30', passageiros: ['Ana', 'Bia'] })
+    expect(d).toMatchObject({ agencia: 'Alfa', encontro: 'Praça', horario: '07:30', passageiros: ['Ana', 'Bia'], extras: [] })
+  })
+  test('extras sold go in the snapshot; vouchers issued before extras still read (R158)', () => {
+    const c = { agencia: 'Alfa', cliente: 'Ana', passeio: 'Lisboa', destino: null, saida: '2027-03-10', inclui: null, pessoas: 2, passageiros: ['Ana', 'Bia'] }
+    const d = montarDados({ encontro: null, horario: null, observacoes: null }, { ...c, extras: ['2 × Almoço'] })
+    expect(dadosVoucherSchema.parse(d).extras).toEqual(['2 × Almoço'])
+    expect(dadosVoucherSchema.parse({ ...c, encontro: null, horario: null, observacoes: null }).extras).toEqual([])
   })
   test('message greets by first name and carries the link', () => {
     expect(mensagemVoucher('Ana Souza', 'https://x.com/v/abc', 'Lisboa')).toBe('Olá, Ana! Segue o voucher do passeio Lisboa: https://x.com/v/abc')

@@ -12,7 +12,7 @@ describe('montarMenu', () => {
     expect(menu.map((g) => g.titulo)).toEqual([undefined, 'Vendas', 'Catálogo', 'Operação', 'Gestão'])
     expect(menu[0].itens.map((i) => i.rotulo)).toEqual(['Hoje', 'Calendário', 'Reservas'])
     expect(menu[1].itens.map((i) => i.rotulo)).toEqual(['Funil', 'Clientes', 'Remarketing', 'Campanhas'])
-    expect(menu[2].itens.map((i) => i.rotulo)).toEqual(['Passeios', 'Fornecedores'])
+    expect(menu[2].itens.map((i) => i.rotulo)).toEqual(['Passeios', 'Extras', 'Fornecedores'])
     expect(menu[3].itens.map((i) => i.rotulo)).toEqual(['Saídas do dia', 'Veículos'])
     expect(menu[4].itens.map((i) => i.rotulo)).toEqual(['Financeiro', 'Painel', 'Avisos', 'Configurações'])
   })
@@ -76,6 +76,7 @@ describe('itemAtivo', () => {
     ['/reservas', 'Reservas'],
     ['/reservas/2', 'Reservas'],
     ['/calendario', 'Calendário'],
+    ['/extras/4', 'Extras'],
     ['/fornecedores', 'Fornecedores'],
     ['/veiculos', 'Veículos'],
     ['/operacao', 'Saídas do dia'],

@@ -3,7 +3,7 @@ import { MAX_COOKIE_GRUPOS } from './config'
 
 export type IconeMenu =
   | 'hoje' | 'atendimento' | 'funil' | 'clientes' | 'remarketing' | 'campanhas' | 'passeios' | 'calendario' | 'fornecedores'
-  | 'cobrancas' | 'comissoes' | 'painel' | 'avisos' | 'configuracoes' | 'reservas' | 'veiculos' | 'operacao'
+  | 'cobrancas' | 'comissoes' | 'painel' | 'avisos' | 'configuracoes' | 'reservas' | 'veiculos' | 'operacao' | 'extras'
 
 export type ItemMenu = {
   href: string
@@ -51,6 +51,7 @@ export function montarMenu(papel: PapelMenu, avisosNovos: number, atendimento: n
       titulo: 'Catálogo',
       itens: [
         item('/passeios', 'Passeios', 'passeios', ['/saidas']),
+        item('/extras', 'Extras', 'extras'),
         item('/fornecedores', 'Fornecedores', 'fornecedores'),
       ],
     },

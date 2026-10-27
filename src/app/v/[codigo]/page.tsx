@@ -55,6 +55,7 @@ async function Conteudo({ params }: Pick<PageProps<'/v/[codigo]'>, 'params'>) {
       <Bloco titulo={`Passageiros (${v.pessoas})`}>
         <ol className="list-decimal pl-5">{v.passageiros.map((nome, i) => <li key={i}>{nome}</li>)}</ol>
       </Bloco>
+      {v.extras.length > 0 && <Bloco titulo="Extras"><ul className="list-disc pl-5">{v.extras.map((e, i) => <li key={i}>{e}</li>)}</ul></Bloco>}
       {v.inclui && <Bloco titulo="O que inclui"><p className="whitespace-pre-line">{v.inclui}</p></Bloco>}
       {v.observacoes && <Bloco titulo="Observações"><p className="whitespace-pre-line">{v.observacoes}</p></Bloco>}
       {site && <div className="flex justify-center border-t border-linha pt-4"><Qr texto={`${site}/v/${codigo}`} /></div>}

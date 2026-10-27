@@ -146,7 +146,7 @@ async function Conteudo({ searchParams }: Pick<PageProps<'/painel'>, 'searchPara
 
       {doMes && !filtros.responsavel && doMes.saidas > 0 && (() => {
         // Costs and margin come from departures, not deals: shown even with an empty funnel.
-        const m = margem(doMes.receita, doMes.custos)
+        const m = margem(doMes.receita, doMes.custos, doMes.custoExtras)
         return <Numero titulo={`Margem das saídas de ${rotulo}`} valor={formatarReais(m.margem)}
           detalhe={`${doMes.saidas} ${doMes.saidas === 1 ? 'saída' : 'saídas'} · vendido ${formatarReais(m.receita)} · custos ${formatarReais(m.custos)}`} />
       })()}

@@ -45,9 +45,13 @@ describe('custoSchema', () => {
 describe('margem', () => {
   test('sold − costs, with paid and still to pay', () => {
     expect(margem(500000, [{ valor_centavos: 150000, pago_em: '2026-10-10' }, { valor_centavos: 50000, pago_em: null }]))
-      .toEqual({ receita: 500000, custos: 200000, pagos: 150000, aPagar: 50000, margem: 300000, percentual: 0.6 })
+      .toEqual({ receita: 500000, custos: 200000, pagos: 150000, aPagar: 50000, margem: 300000, percentual: 0.6, custoExtras: 0 })
   })
   test('no revenue: no percentage; negative margin is shown as is', () => {
-    expect(margem(0, [{ valor_centavos: 1000, pago_em: null }])).toEqual({ receita: 0, custos: 1000, pagos: 0, aPagar: 1000, margem: -1000, percentual: null })
+    expect(margem(0, [{ valor_centavos: 1000, pago_em: null }])).toEqual({ receita: 0, custos: 1000, pagos: 0, aPagar: 1000, margem: -1000, percentual: null, custoExtras: 0 })
+  })
+  test('counts the cost of the extras sold, which is not a bill to pay (R159)', () => {
+    expect(margem(29500, [{ valor_centavos: 5000, pago_em: null }], 5000))
+      .toEqual({ receita: 29500, custos: 10000, pagos: 0, aPagar: 5000, margem: 19500, percentual: 19500 / 29500, custoExtras: 5000 })
   })
 })

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
+import { lerItens } from '@/lib/extras/extras'
 import type { EstadoForm } from '@/lib/forms'
 import { passageiroSchema } from '@/lib/passageiros/lista'
 import { mensagemDeErroReserva, reservaSchema } from '@/lib/reservas/schema'
@@ -15,10 +16,13 @@ const texto = (fd: FormData, n: string) => String(fd.get(n) ?? '')
 // so two sellers reserving at the same time can never exceed the capacity.
 export async function criarReserva(saidaId: string, clienteId: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
   const versao = crypto.randomUUID()
-  const valores = { qtd: texto(fd, 'qtd'), valor: texto(fd, 'valor'), observacao: texto(fd, 'observacao') }
+  const quantidades = [...fd.entries()].filter(([n]) => n.startsWith('extra:')).map(([n, v]) => [n, String(v)])
+  const valores = { qtd: texto(fd, 'qtd'), valor: texto(fd, 'valor'), observacao: texto(fd, 'observacao'), ...Object.fromEntries(quantidades) }
   const r = reservaSchema.safeParse(valores)
   if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
   if (!uuid(saidaId) || !uuid(clienteId)) return { erro: mensagemDeErroReserva(undefined), valores, versao }
+  const itens = lerItens(fd.entries())
+  if (itens === null) return { campos: { extras: ['Informe a quantidade de cada extra (de 0 a 500).'] }, valores, versao }
 
   const supabase = await criarClienteServidor()
   const { error } = await supabase.rpc('criar_reserva', {
@@ -27,9 +31,10 @@ export async function criarReserva(saidaId: string, clienteId: string, _: Estado
     p_qtd: r.data.qtd_pessoas,
     p_valor_total: r.data.valor_total_centavos,
     p_observacao: r.data.observacao,
+    p_itens: itens.length ? itens : null,
   })
   if (error) {
-    if (!['CR001', 'CR002'].includes(error.code ?? '')) console.error('criarReserva falhou', error.code)
+    if (!['CR001', 'CR002', 'CR023'].includes(error.code ?? '')) console.error('criarReserva falhou', error.code)
     return { erro: mensagemDeErroReserva(error.code), valores, versao }
   }
   revalidatePath('/passeios', 'layout')
