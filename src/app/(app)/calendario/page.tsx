@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { connection } from 'next/server'
 import { Suspense } from 'react'
 import { Carregando } from '@/components/Carregando'
 import { getMembro } from '@/lib/auth/agencia'
@@ -61,6 +62,7 @@ function ItensDoDia({ itens }: { itens: ItemCalendario[] }) {
 
 async function Conteudo({ searchParams }: Pick<PageProps<'/calendario'>, 'searchParams'>) {
   const p = await searchParams
+  await connection() // "today" is per request
   const hoje = hojeNoBrasil()
   const mes = lerMes(p.mes, hoje)
   const ocultos = lerOcultos(p.sem)
