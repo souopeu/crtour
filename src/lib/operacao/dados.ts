@@ -2,6 +2,8 @@ import 'server-only'
 import { z } from 'zod'
 import { emBlocos } from '@/lib/consultas/emBlocos'
 import { statusSchema, type StatusOperacional } from '@/lib/reservas/status'
+import { perguntasDosPasseios, respostasDasReservas } from '@/lib/perguntas/dados'
+import { pendentes } from '@/lib/perguntas/perguntas'
 import { criarClienteServidor } from '@/lib/supabase/server'
 import { OPERACAO } from './config'
 import { ordenarPorHorario } from './operacao'
@@ -15,7 +17,7 @@ const ReservaZ = z.object({ id: z.uuid(), saida_id: z.uuid(), cliente_id: z.uuid
 const NomeZ = z.object({ id: z.uuid(), nome: z.string() })
 const VeiculoZ = z.object({ id: z.uuid(), nome: z.string(), lugares: z.number() })
 
-export type ReservaDoDia = { id: string; clienteId: string; clienteNome: string; pessoas: number; status: StatusOperacional }
+export type ReservaDoDia = { id: string; clienteId: string; clienteNome: string; pessoas: number; status: StatusOperacional; faltam: number }
 export type SaidaDoDia = {
   id: string; passeioId: string; passeio: string; data: string; horario: string | null; situacao: 'aberta' | 'encerrada'
   capacidade: number; reservadas: number; livres: number; veiculo: { nome: string; lugares: number } | null; reservas: ReservaDoDia[]
@@ -40,7 +42,11 @@ export async function saidasDoDia(dia: string): Promise<SaidaDoDia[]> {
       .select('id, saida_id, cliente_id, qtd_pessoas, status_operacional').eq('situacao', 'ativa').in('saida_id', b).order('criada_em')),
   ])
   const reservas = z.array(ReservaZ).catch([]).parse(reservasBrutas.data ?? [])
-  const clientes = await emBlocos([...new Set(reservas.map((r) => r.cliente_id))], (b) => supabase.from('clientes').select('id, nome').in('id', b))
+  const [clientes, perguntas, respostas] = await Promise.all([
+    emBlocos([...new Set(reservas.map((r) => r.cliente_id))], (b) => supabase.from('clientes').select('id, nome').in('id', b)),
+    perguntasDosPasseios([...new Set(saidas.map((s) => s.passeio_id))]),
+    respostasDasReservas(reservas.map((r) => r.id)),
+  ])
   const nomePasseio = new Map(z.array(NomeZ).catch([]).parse(passeios.data ?? []).map((p) => [p.id, p.nome]))
   const nomeCliente = new Map(z.array(NomeZ).catch([]).parse(clientes.data ?? []).map((c) => [c.id, c.nome]))
   const veiculo = new Map(z.array(VeiculoZ).catch([]).parse(veiculos.data ?? []).map((v) => [v.id, { nome: v.nome, lugares: v.lugares }]))
@@ -51,6 +57,8 @@ export async function saidasDoDia(dia: string): Promise<SaidaDoDia[]> {
     capacidade: s.capacidade, reservadas: s.reservadas, livres: s.livres, veiculo: s.veiculo_id ? (veiculo.get(s.veiculo_id) ?? null) : null,
     reservas: reservas.filter((r) => r.saida_id === s.id).map((r) => ({
       id: r.id, clienteId: r.cliente_id, clienteNome: nomeCliente.get(r.cliente_id) ?? 'Cliente', pessoas: r.qtd_pessoas, status: r.status_operacional,
+      // R161: required answers still missing
+      faltam: pendentes(perguntas.filter((p) => p.passeio_id === s.passeio_id), respostas.filter((x) => x.reserva_id === r.id), r.qtd_pessoas),
     })),
   })))
 }

@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { lerItens } from '@/lib/extras/extras'
 import type { EstadoForm } from '@/lib/forms'
+import { perguntasDoPasseio } from '@/lib/perguntas/dados'
+import { lerRespostas } from '@/lib/perguntas/perguntas'
 import { passageiroSchema } from '@/lib/passageiros/lista'
 import { mensagemDeErroReserva, reservaSchema } from '@/lib/reservas/schema'
 import { criarClienteServidor } from '@/lib/supabase/server'
@@ -16,7 +18,7 @@ const texto = (fd: FormData, n: string) => String(fd.get(n) ?? '')
 // so two sellers reserving at the same time can never exceed the capacity.
 export async function criarReserva(saidaId: string, clienteId: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
   const versao = crypto.randomUUID()
-  const quantidades = [...fd.entries()].filter(([n]) => n.startsWith('extra:')).map(([n, v]) => [n, String(v)])
+  const quantidades = [...fd.entries()].filter(([n]) => n.startsWith('extra:') || n.startsWith('resposta:')).map(([n, v]) => [n, String(v)])
   const valores = { qtd: texto(fd, 'qtd'), valor: texto(fd, 'valor'), observacao: texto(fd, 'observacao'), ...Object.fromEntries(quantidades) }
   const r = reservaSchema.safeParse(valores)
   if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
@@ -25,7 +27,12 @@ export async function criarReserva(saidaId: string, clienteId: string, _: Estado
   if (itens === null) return { campos: { extras: ['Informe a quantidade de cada extra (de 0 a 500).'] }, valores, versao }
 
   const supabase = await criarClienteServidor()
-  const { error } = await supabase.rpc('criar_reserva', {
+  // R161: answers are checked before the sale; required ones may stay blank (the reservation shows what is missing)
+  const { data: saida } = await supabase.from('saidas').select('passeio_id').eq('id', saidaId).maybeSingle()
+  const lidas = lerRespostas(fd.entries(), saida ? await perguntasDoPasseio(saida.passeio_id) : [], r.data.qtd_pessoas)
+  if (!lidas.ok) return { campos: lidas.campos, erro: 'Confira as respostas marcadas.', valores, versao }
+
+  const { data: reservaId, error } = await supabase.rpc('criar_reserva', {
     p_saida: saidaId,
     p_cliente: clienteId,
     p_qtd: r.data.qtd_pessoas,
@@ -36,6 +43,11 @@ export async function criarReserva(saidaId: string, clienteId: string, _: Estado
   if (error) {
     if (!['CR001', 'CR002', 'CR023'].includes(error.code ?? '')) console.error('criarReserva falhou', error.code)
     return { erro: mensagemDeErroReserva(error.code), valores, versao }
+  }
+  const respostas = lidas.respostas.filter((x) => x.resposta !== '')
+  if (respostas.length) {
+    const { error: erroRespostas } = await supabase.rpc('responder_reserva', { p_reserva: reservaId, p_respostas: respostas })
+    if (erroRespostas) console.error('criarReserva respostas falhou', erroRespostas.code) // the reservation shows them as missing
   }
   revalidatePath('/passeios', 'layout')
   revalidatePath(`/saidas/${saidaId}`)

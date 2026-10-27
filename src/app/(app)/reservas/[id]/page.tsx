@@ -7,8 +7,11 @@ import { formatarDataBr, hojeNoBrasil } from '@/lib/formato'
 import { diasAte, situacaoCobranca } from '@/lib/pagamentos/cobranca'
 import { buscarReserva, listarPagamentos } from '@/lib/pagamentos/dados'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
-import { adicionarExtra, definirStatusOperacional, estornarPagamento, moverReserva, removerExtra } from '../actions'
+import { adicionarExtra, definirStatusOperacional, estornarPagamento, moverReserva, removerExtra, salvarRespostas } from '../actions'
 import { AdicionarExtra } from '@/components/extras/AdicionarExtra'
+import { RespostasDaReserva } from '@/components/perguntas/RespostasDaReserva'
+import { nomesDaReserva, perguntasDoPasseio, respostasDasReservas } from '@/lib/perguntas/dados'
+import { campoResposta, pendentes } from '@/lib/perguntas/perguntas'
 import { extrasDoPasseio, itensDaReserva } from '@/lib/extras/dados'
 import { MoverReserva } from '@/components/reservas/MoverReserva'
 import { saidasDosPasseios } from '@/lib/operacao/dados'
@@ -45,12 +48,18 @@ async function Conteudo({ params }: Pick<PageProps<'/reservas/[id]'>, 'params'>)
   const [pagamentos, vendedorId, membros, membro] = await Promise.all([listarPagamentos(reserva.id), buscarVendedorDaReserva(reserva.id), listarMembros(), getMembro()])
   const hoje = hojeNoBrasil()
   const ativa = reserva.situacao === 'ativa'
-  const [comComprovante, candidatas, itens, extrasVenda] = await Promise.all([
+  const [comComprovante, candidatas, itens, extrasVenda, perguntas, respostas, nomes] = await Promise.all([
     pagamentosComComprovante(pagamentos.map((p) => p.id)),
     ativa && reserva.passeio_id ? saidasDosPasseios([reserva.passeio_id], hoje) : Promise.resolve([]),
     itensDaReserva(reserva.id),
     ativa && reserva.passeio_id ? extrasDoPasseio(reserva.passeio_id) : Promise.resolve([]),
+    reserva.passeio_id ? perguntasDoPasseio(reserva.passeio_id) : Promise.resolve([]),
+    respostasDasReservas([reserva.id]),
+    nomesDaReserva(reserva.id, reserva.cliente_nome),
   ])
+  const faltam = pendentes(perguntas, respostas, reserva.qtd_pessoas)
+  // Answers to questions deleted since then still show, as text.
+  const antigas = respostas.filter((r) => r.pergunta_id === null || !perguntas.some((p) => p.id === r.pergunta_id))
   const dono = membro?.papel === 'dono'
   const destinos = destinosParaMover(candidatas, reserva.saida_id, reserva.passeio_id, reserva.qtd_pessoas, hoje)
   const situacao = situacaoCobranca(reserva.saldo_centavos, reserva.vencimento_saldo, hoje)
@@ -74,7 +83,7 @@ async function Conteudo({ params }: Pick<PageProps<'/reservas/[id]'>, 'params'>)
       </div>
 
       {ativa ? (
-        <StatusOperacional atual={reserva.status_operacional} acao={definirStatusOperacional.bind(null, reserva.id)} />
+        <StatusOperacional atual={reserva.status_operacional} acao={definirStatusOperacional.bind(null, reserva.id)} faltam={faltam} />
       ) : (
         <p className="text-sm text-tinta-suave">Status da operação: <ChipStatus status={reserva.status_operacional} /> (reserva cancelada, não muda mais)</p>
       )}
@@ -112,6 +121,23 @@ async function Conteudo({ params }: Pick<PageProps<'/reservas/[id]'>, 'params'>)
             </ul>
           )}
           {ativa && extrasVenda.length > 0 && <AdicionarExtra acao={adicionarExtra.bind(null, reserva.id)} extras={extrasVenda} pessoas={reserva.qtd_pessoas} />}
+        </section>
+      )}
+
+      {(perguntas.length > 0 || antigas.length > 0) && (
+        <section aria-labelledby="perguntas-titulo" className="flex flex-col gap-3">
+          <h2 id="perguntas-titulo" className="text-lg font-semibold">Perguntas antes do passeio</h2>
+          {faltam > 0 && <p role="note" className="w-fit rounded-xl bg-alerta-suave p-3 text-sm text-alerta">Faltam {faltam} {faltam === 1 ? 'resposta obrigatória' : 'respostas obrigatórias'}.</p>}
+          {perguntas.length > 0 && reserva.passeio_id && (
+            <RespostasDaReserva acao={salvarRespostas.bind(null, reserva.id, reserva.passeio_id, reserva.qtd_pessoas)} perguntas={perguntas}
+              pessoas={reserva.qtd_pessoas} nomes={nomes} editavel={ativa}
+              respostas={Object.fromEntries(respostas.filter((r) => r.pergunta_id).map((r) => [campoResposta(r.pergunta_id as string, r.lugar ?? undefined), r.resposta]))} />
+          )}
+          {antigas.length > 0 && (
+            <ul aria-label="Respostas a perguntas excluídas" className="text-sm text-tinta-suave">
+              {antigas.map((r, i) => <li key={i}>{r.pergunta_texto}{r.lugar && ` (pessoa ${r.lugar})`}: {r.resposta}</li>)}
+            </ul>
+          )}
         </section>
       )}
 

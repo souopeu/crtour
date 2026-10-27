@@ -7,6 +7,7 @@ import { getAgenciaId } from '@/lib/auth/agencia'
 import type { EstadoForm } from '@/lib/forms'
 import { hojeNoBrasil } from '@/lib/formato'
 import { alteracaoLoteSchema, loteSchema, resumoDaAlteracao } from '@/lib/passeios/lote'
+import { perguntaSchema } from '@/lib/perguntas/perguntas'
 import { passeioSchema, saidaSchema } from '@/lib/passeios/schema'
 import { mensagemDeErroReserva } from '@/lib/reservas/schema'
 import { criarClienteServidor } from '@/lib/supabase/server'
@@ -163,4 +164,61 @@ export async function excluirSaida(passeioId: string, saidaId: string): Promise<
   }
   revalidatePath(`/passeios/${passeioId}`)
   redirect(`/passeios/${passeioId}`)
+}
+
+// R160: questions asked before the tour (at most 10; the database refuses the 11th with CR025).
+export async function criarPergunta(passeioId: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const valores = { texto: texto(fd, 'texto'), tipo: texto(fd, 'tipo'), opcoes: texto(fd, 'opcoes'), obrigatoria: texto(fd, 'obrigatoria'), por_passageiro: texto(fd, 'por_passageiro') }
+  const r = perguntaSchema.safeParse(valores)
+  if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
+  const agenciaId = await getAgenciaId()
+  if (!uuid(passeioId) || !agenciaId) return { erro: ERRO, valores, versao }
+  const supabase = await criarClienteServidor()
+  const { data: ultima } = await supabase.from('passeio_perguntas').select('ordem').eq('passeio_id', passeioId).order('ordem', { ascending: false }).limit(1).maybeSingle()
+  const { error } = await supabase.from('passeio_perguntas').insert({ ...r.data, agencia_id: agenciaId, passeio_id: passeioId, ordem: (ultima?.ordem ?? 0) + 1 })
+  if (error) {
+    if (error.code !== 'CR025') console.error('criarPergunta falhou', error.code)
+    return { erro: error.code === 'CR025' ? 'Um passeio tem no máximo 10 perguntas.' : ERRO, valores, versao }
+  }
+  revalidatePath(`/passeios/${passeioId}`)
+  return { ok: 'Pergunta incluída.', versao }
+}
+
+// Text and "required" can change; type and options stay (answers already given follow them).
+export async function editarPergunta(passeioId: string, perguntaId: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const valores = { texto: texto(fd, 'texto'), obrigatoria: texto(fd, 'obrigatoria') }
+  const t = valores.texto.trim()
+  if (t === '' || t.length > 200) return { campos: { texto: ['Digite a pergunta (até 200 caracteres).'] }, valores, versao }
+  if (!uuid(passeioId) || !uuid(perguntaId)) return { erro: ERRO, valores, versao }
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.from('passeio_perguntas').update({ texto: t, obrigatoria: valores.obrigatoria === '1' }).eq('id', perguntaId)
+  if (error) { console.error('editarPergunta falhou', error.code); return { erro: ERRO, valores, versao } }
+  revalidatePath(`/passeios/${passeioId}`)
+  return { ok: 'Pergunta salva.', valores, versao }
+}
+
+export async function subirPergunta(passeioId: string, perguntaId: string): Promise<void> {
+  if (!uuid(passeioId) || !uuid(perguntaId)) return
+  const supabase = await criarClienteServidor()
+  const { data } = await supabase.from('passeio_perguntas').select('id, ordem').eq('passeio_id', passeioId).order('ordem').order('criado_em')
+  const lista = data ?? []
+  const i = lista.findIndex((p) => p.id === perguntaId)
+  if (i <= 0) return
+  // Renumber in the new order (two rows swap places, the others keep theirs).
+  const nova = [...lista.slice(0, i - 1), lista[i], lista[i - 1], ...lista.slice(i + 1)]
+  const resultados = await Promise.all(nova.map((p, n) => supabase.from('passeio_perguntas').update({ ordem: n + 1 }).eq('id', p.id)))
+  const erro = resultados.find((x) => x.error)?.error
+  if (erro) console.error('subirPergunta falhou', erro.code)
+  revalidatePath(`/passeios/${passeioId}`)
+}
+
+export async function excluirPergunta(passeioId: string, perguntaId: string): Promise<EstadoForm> {
+  if (!uuid(passeioId) || !uuid(perguntaId)) return { erro: ERRO }
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.from('passeio_perguntas').delete().eq('id', perguntaId)
+  if (error) { console.error('excluirPergunta falhou', error.code); return { erro: ERRO } }
+  revalidatePath(`/passeios/${passeioId}`)
+  return { ok: 'Pergunta excluída. As respostas já dadas continuam nas reservas.' }
 }

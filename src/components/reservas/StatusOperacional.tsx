@@ -6,10 +6,10 @@ import type { EstadoForm } from '@/lib/forms'
 import { STATUS_OPERACIONAL, ehVolta, rotuloDoStatus, type StatusOperacional as Status } from '@/lib/reservas/status'
 import { COR_STATUS } from './ChipStatus'
 
-type Props = { atual: Status; acao: (prev: EstadoForm, fd: FormData) => Promise<EstadoForm> }
+type Props = { atual: Status; acao: (prev: EstadoForm, fd: FormData) => Promise<EstadoForm>; faltam?: number }
 
 // R136: one click moves forward (even skipping steps); going back asks first, inline (no window.confirm).
-export function StatusOperacional({ atual, acao }: Props) {
+export function StatusOperacional({ atual, acao, faltam = 0 }: Props) {
   const [estado, enviar, enviando] = useActionState(acao, {})
   const [volta, setVolta] = useState<Status | null>(null)
 
@@ -17,6 +17,9 @@ export function StatusOperacional({ atual, acao }: Props) {
     <section aria-labelledby="status-titulo" className="flex flex-col gap-2">
       <h2 id="status-titulo" className="text-lg font-semibold">Status da operação</h2>
       <Mensagem estado={estado} />
+      {faltam > 0 && (atual === 'a_definir' || atual === 'em_organizacao' || atual === 'a_comunicar') && (
+        <p className="text-sm text-alerta">Antes de marcar Pronta: faltam {faltam} {faltam === 1 ? 'resposta obrigatória' : 'respostas obrigatórias'} (veja Perguntas abaixo).</p>
+      )}
       <form action={enviar}>
         <ol className="flex flex-wrap gap-1.5">
           {STATUS_OPERACIONAL.map((s) => {

@@ -6,6 +6,7 @@ import { PasseioForm } from '@/components/passeios/PasseioForm'
 import { SaidaForm } from '@/components/passeios/SaidaForm'
 import { SaidasDoPasseio } from '@/components/passeios/SaidasDoPasseio'
 import { SaidasLoteForm } from '@/components/passeios/SaidasLoteForm'
+import { PerguntasDoPasseio } from '@/components/perguntas/PerguntasDoPasseio'
 import { hojeNoBrasil } from '@/lib/formato'
 import { buscarPasseio, listarSaidas } from '@/lib/passeios/dados'
 import { listarVeiculos } from '@/lib/veiculos/dados'
@@ -83,6 +84,7 @@ async function Conteudo({ params }: Pick<PageProps<'/passeios/[id]'>, 'params'>)
           )}
         </section>
       </div>
+      <PerguntasDoPasseio passeioId={passeio.id} />
     </div>
   )
 }

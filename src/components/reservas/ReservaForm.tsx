@@ -5,11 +5,13 @@ import { criarReserva } from '@/app/(app)/saidas/actions'
 import { BotaoEnviar } from '@/components/auth/BotaoEnviar'
 import { Mensagem } from '@/components/auth/Mensagem'
 import { COBRANCAS, campoDoExtra, quantidadeSugerida, totalComExtras, type Cobranca } from '@/lib/extras/extras'
+import { CamposRespostas } from '@/components/perguntas/CamposRespostas'
 import type { EstadoForm } from '@/lib/forms'
+import type { Pergunta } from '@/lib/perguntas/perguntas'
 import { formatarReais, reaisParaCentavos } from '@/lib/passeios/dinheiro'
 
 type ExtraVenda = { id: string; nome: string; preco_centavos: number; cobranca: Cobranca }
-type Props = { saidaId: string; clienteId: string; vagasLivres: number; precoCentavos: number; extras: ExtraVenda[] }
+type Props = { saidaId: string; clienteId: string; vagasLivres: number; precoCentavos: number; extras: ExtraVenda[]; perguntas: Pergunta[] }
 
 const campo = 'h-12 rounded-xl border border-controle bg-superficie px-3 text-base'
 
@@ -18,7 +20,7 @@ function Dica({ id, erro, children }: { id: string; erro?: string; children: Rea
 }
 
 // R158: extras with a quantity each; the total below follows what is typed (tour value + extras).
-function Campos({ v, estado, vagasLivres, precoCentavos, extras }: { v: Record<string, string>; estado: EstadoForm } & Omit<Props, 'saidaId' | 'clienteId'>) {
+function Campos({ v, estado, vagasLivres, precoCentavos, extras, perguntas }: { v: Record<string, string>; estado: EstadoForm } & Omit<Props, 'saidaId' | 'clienteId'>) {
   const [qtd, setQtd] = useState(v.qtd)
   const [valor, setValor] = useState(v.valor)
   const [itens, setItens] = useState<Record<string, string>>(Object.fromEntries(extras.map((e) => [e.id, v[campoDoExtra(e.id)] ?? ''])))
@@ -62,6 +64,7 @@ function Campos({ v, estado, vagasLivres, precoCentavos, extras }: { v: Record<s
           {erro('extras') && <p id="reserva-extras-erro" role="alert" className="text-sm text-despesa">{erro('extras')}</p>}
         </fieldset>
       )}
+      <CamposRespostas perguntas={perguntas} pessoas={pessoas} valores={v} erros={estado.campos} />
       <div className="flex flex-col gap-1">
         <label htmlFor="observacao" className="text-sm font-medium">Observação</label>
         <textarea id="observacao" name="observacao" rows={2} defaultValue={v.observacao} className="rounded-xl border border-controle bg-superficie px-3 py-2 text-base" />

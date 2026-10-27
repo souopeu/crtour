@@ -8,6 +8,7 @@ import { ReservaForm } from '@/components/reservas/ReservaForm'
 import { formatarWhatsapp } from '@/lib/clientes/rotulos'
 import { formatarDataBr } from '@/lib/formato'
 import { extrasDoPasseio } from '@/lib/extras/dados'
+import { perguntasDoPasseio } from '@/lib/perguntas/dados'
 import { buscarClientesParaReserva, buscarNomeDoCliente, buscarSaida, listarReservas } from '@/lib/passeios/dados'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
 import { excluirSaida, salvarSaida } from '../../passeios/actions'
@@ -28,13 +29,14 @@ async function Conteudo({ params, searchParams }: Pick<PageProps<'/saidas/[id]'>
 
   const busca = um(sp.busca).trim().slice(0, 100)
   const clienteEscolhido = um(sp.cliente)
-  const [reservas, resultados, nomeEscolhido, ativos, veiculoAtual, extras] = await Promise.all([
+  const [reservas, resultados, nomeEscolhido, ativos, veiculoAtual, extras, perguntas] = await Promise.all([
     listarReservas(saida.id),
     busca ? buscarClientesParaReserva(busca) : Promise.resolve([]),
     clienteEscolhido ? buscarNomeDoCliente(clienteEscolhido) : Promise.resolve(null),
     listarVeiculos(),
     saida.veiculo_id ? buscarVeiculo(saida.veiculo_id) : Promise.resolve(null),
     clienteEscolhido ? extrasDoPasseio(saida.passeio_id) : Promise.resolve([]),
+    clienteEscolhido ? perguntasDoPasseio(saida.passeio_id) : Promise.resolve([]),
   ])
   // An archived vehicle still shows as the current choice, so saving the form does not drop it.
   const veiculos = veiculoAtual && !ativos.some((v) => v.id === veiculoAtual.id) ? [...ativos, veiculoAtual] : ativos
@@ -124,7 +126,7 @@ async function Conteudo({ params, searchParams }: Pick<PageProps<'/saidas/[id]'>
             ) : nomeEscolhido ? (
               <>
                 <p>Reserva para <strong>{nomeEscolhido}</strong>. <Link href={href({})} className="text-primaria underline">Escolher outro cliente</Link></p>
-                <ReservaForm saidaId={saida.id} clienteId={clienteEscolhido} vagasLivres={saida.livres} precoCentavos={saida.preco_centavos} extras={extras} />
+                <ReservaForm saidaId={saida.id} clienteId={clienteEscolhido} vagasLivres={saida.livres} precoCentavos={saida.preco_centavos} extras={extras} perguntas={perguntas} />
               </>
             ) : (
               <>

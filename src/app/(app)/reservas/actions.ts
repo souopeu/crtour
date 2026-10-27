@@ -5,13 +5,15 @@ import { z } from 'zod'
 import type { EstadoForm } from '@/lib/forms'
 import { hojeNoBrasil } from '@/lib/formato'
 import { criarPagamentoSchema, totalSchema, vencimentoSchema } from '@/lib/pagamentos/cobranca'
+import { perguntasDoPasseio } from '@/lib/perguntas/dados'
+import { lerRespostas } from '@/lib/perguntas/perguntas'
 import { mensagemDeErroReserva } from '@/lib/reservas/schema'
 import { rotuloDoStatus, statusSchema } from '@/lib/reservas/status'
 import { criarClienteServidor } from '@/lib/supabase/server'
 
 const uuid = (v: string) => z.uuid().safeParse(v).success
 const texto = (fd: FormData, n: string) => String(fd.get(n) ?? '')
-const ESPERADOS = ['CR001', 'CR002', 'CR006', 'CR007', 'CR023', 'CR024', 'CR008', 'CR014', 'CR018', '22008', '22023', '23514', '22003']
+const ESPERADOS = ['CR001', 'CR002', 'CR006', 'CR007', 'CR023', 'CR024', 'CR026', 'CR008', 'CR014', 'CR018', '22008', '22023', '23514', '22003']
 
 function atualizarTelas(reservaId: string) {
   revalidatePath(`/reservas/${reservaId}`)
@@ -130,4 +132,18 @@ export async function removerExtra(reservaId: string, itemId: string): Promise<E
   if (error) return falha(error)
   atualizarTelas(reservaId)
   return { ok: 'Extra removido e total atualizado.' }
+}
+
+// R161: answers can be filled or changed later; an empty field clears the answer.
+export async function salvarRespostas(reservaId: string, passeioId: string, pessoas: number, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const valores = Object.fromEntries([...fd.entries()].filter(([n]) => n.startsWith('resposta:')).map(([n, v]) => [n, String(v)]))
+  if (!uuid(reservaId) || !uuid(passeioId)) return { erro: mensagemDeErroReserva(undefined), valores, versao }
+  const lidas = lerRespostas(fd.entries(), await perguntasDoPasseio(passeioId), pessoas)
+  if (!lidas.ok) return { campos: lidas.campos, erro: 'Confira as respostas marcadas.', valores, versao }
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.rpc('responder_reserva', { p_reserva: reservaId, p_respostas: lidas.respostas })
+  if (error) return falha(error, valores)
+  atualizarTelas(reservaId)
+  return { ok: 'Respostas salvas.', valores, versao }
 }

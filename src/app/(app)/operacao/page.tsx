@@ -59,7 +59,7 @@ function CartaoSaida({ s, destinos, hoje, embarque }: {
             <li key={r.id} className="flex flex-col gap-1 py-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <Link href={`/reservas/${r.id}`} className="font-medium text-primaria underline">{r.clienteNome}</Link>
-                <span className="flex items-center gap-2 text-sm">{r.pessoas} {r.pessoas === 1 ? 'pessoa' : 'pessoas'} <ChipStatus status={r.status} /></span>
+                <span className="flex flex-wrap items-center gap-2 text-sm">{r.pessoas} {r.pessoas === 1 ? 'pessoa' : 'pessoas'} <ChipStatus status={r.status} />{r.faltam > 0 && <span className="rounded-md bg-alerta-suave px-2 py-0.5 text-alerta">Faltam {r.faltam} {r.faltam === 1 ? 'resposta' : 'respostas'}</span>}</span>
               </div>
               <MoverReserva compacto acao={moverReserva.bind(null, r.id)} destinos={destinosParaMover(destinos, s.id, s.passeioId, r.pessoas, hoje)} />
             </li>

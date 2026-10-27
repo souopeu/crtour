@@ -18,6 +18,8 @@ export type LinhaDaLista = {
   telefone: string
   reserva: string
   semNome: boolean
+  reserva_id: string
+  lugar: number // 1 = responsible, then companions in order (R161: per-passenger answers)
 }
 
 export const NOME_A_INFORMAR = '(nome a informar)'
@@ -30,21 +32,22 @@ export function montarLista(reservas: ReservaDaLista[], passageiros: PassageiroD
 
   const linhas: LinhaDaLista[] = []
   for (const r of reservas.filter((x) => x.situacao === 'ativa')) {
-    const base = { reserva: r.cliente_nome }
-    linhas.push({ ...base, numero: linhas.length + 1, nome: r.cliente_nome, tipo: 'Responsável', telefone: formatarWhatsapp(r.cliente_whatsapp), semNome: false })
+    const base = { reserva: r.cliente_nome, reserva_id: r.id }
+    linhas.push({ ...base, numero: linhas.length + 1, nome: r.cliente_nome, tipo: 'Responsável', telefone: formatarWhatsapp(r.cliente_whatsapp), semNome: false, lugar: 1 })
     const nomeados = porReserva.get(r.id) ?? []
-    for (const p of nomeados) {
-      linhas.push({ ...base, numero: linhas.length + 1, nome: p.nome, tipo: 'Acompanhante', telefone: formatarWhatsapp(p.whatsapp), semNome: false })
-    }
+    nomeados.forEach((p, i) => {
+      linhas.push({ ...base, numero: linhas.length + 1, nome: p.nome, tipo: 'Acompanhante', telefone: formatarWhatsapp(p.whatsapp), semNome: false, lugar: i + 2 })
+    })
     for (let i = nomeados.length + 1; i < r.qtd_pessoas; i++) {
-      linhas.push({ ...base, numero: linhas.length + 1, nome: NOME_A_INFORMAR, tipo: 'Acompanhante', telefone: '', semNome: true })
+      linhas.push({ ...base, numero: linhas.length + 1, nome: NOME_A_INFORMAR, tipo: 'Acompanhante', telefone: '', semNome: true, lugar: i + 1 })
     }
   }
   return linhas
 }
 
-export function montarCsvPassageiros(linhas: LinhaDaLista[]): string {
-  return paraCsv(['Nº', 'Nome', 'Tipo', 'WhatsApp', 'Reserva'], linhas.map((l) => [l.numero, l.nome, l.tipo, l.telefone, l.reserva]))
+// R161: one column per question at the end, when the tour has questions.
+export function montarCsvPassageiros(linhas: LinhaDaLista[], perguntas: string[] = [], respostas: (l: LinhaDaLista) => string[] = () => []): string {
+  return paraCsv(['Nº', 'Nome', 'Tipo', 'WhatsApp', 'Reserva', ...perguntas], linhas.map((l) => [l.numero, l.nome, l.tipo, l.telefone, l.reserva, ...respostas(l)]))
 }
 
 export const passageiroSchema = z

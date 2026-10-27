@@ -5,6 +5,8 @@ import { BotaoImprimir } from '@/components/BotaoImprimir'
 import { formatarDataBr, ouTraco } from '@/lib/formato'
 import { buscarSaida, listarPassageirosDaSaida } from '@/lib/passeios/dados'
 import { montarLista } from '@/lib/passageiros/lista'
+import { perguntasDoPasseio, respostasDasReservas } from '@/lib/perguntas/dados'
+import { respostasPorLinha } from '@/lib/perguntas/perguntas'
 import { Carregando } from '@/components/Carregando'
 import { EstadoVazio } from '@/components/tela/EstadoVazio'
 
@@ -16,10 +18,12 @@ async function Conteudo({ params }: Pick<PageProps<'/saidas/[id]/passageiros'>, 
   if (!saida) notFound()
   const { reservas, passageiros } = await listarPassageirosDaSaida(saida.id)
   const linhas = montarLista(reservas, passageiros)
+  const [perguntas, respostas] = await Promise.all([perguntasDoPasseio(saida.passeio_id), respostasDasReservas(reservas.map((r) => r.id))])
+  const respostasDa = respostasPorLinha(perguntas, respostas)
   const semNome = linhas.filter((l) => l.semNome).length
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4">
+    <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <div className="print:hidden">
         <Link href={`/saidas/${saida.id}`} className="text-sm text-primaria underline">← Voltar para a saída</Link>
       </div>
@@ -39,14 +43,15 @@ async function Conteudo({ params }: Pick<PageProps<'/saidas/[id]/passageiros'>, 
       {linhas.length === 0 ? (
         <EstadoVazio acoes={[{ href: `/saidas/${saida.id}`, rotulo: 'Reservar nesta saída' }]}>Esta saída ainda não tem reservas ativas.</EstadoVazio>
       ) : (
-        <table className="w-full border-collapse text-left text-base">
+        <div className="overflow-x-auto print:overflow-visible"><table className="w-full border-collapse text-left text-base">
           <thead>
             <tr className="border-b-2 border-tinta">
               <th className="w-12 py-2 pr-2">Nº</th>
               <th className="py-2 pr-2">Nome</th>
               <th className="py-2 pr-2">Tipo</th>
               <th className="py-2 pr-2">WhatsApp</th>
-              <th className="py-2">Reserva</th>
+              <th className="py-2 pr-2">Reserva</th>
+              {perguntas.map((p) => <th key={p.id} className="py-2 pr-2">{p.texto}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -56,11 +61,12 @@ async function Conteudo({ params }: Pick<PageProps<'/saidas/[id]/passageiros'>, 
                 <td className={`py-2 pr-2 ${l.semNome ? 'italic text-tinta-suave print:text-black' : 'font-medium'}`}>{l.nome}</td>
                 <td className="py-2 pr-2">{l.tipo}</td>
                 <td className="py-2 pr-2">{ouTraco(l.telefone)}</td>
-                <td className="py-2">{ouTraco(l.reserva)}</td>
+                <td className="py-2 pr-2">{ouTraco(l.reserva)}</td>
+                {respostasDa(l).map((r, i) => <td key={perguntas[i].id} className="py-2 pr-2">{ouTraco(r)}</td>)}
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       )}
     </div>
   )
