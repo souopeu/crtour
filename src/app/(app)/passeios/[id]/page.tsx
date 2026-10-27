@@ -1,14 +1,15 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { connection } from 'next/server'
 import { Suspense } from 'react'
 import { ConfirmarExclusao } from '@/components/passeios/ConfirmarExclusao'
 import { PasseioForm } from '@/components/passeios/PasseioForm'
 import { SaidaForm } from '@/components/passeios/SaidaForm'
-import { formatarDataBr } from '@/lib/formato'
+import { SaidasDoPasseio } from '@/components/passeios/SaidasDoPasseio'
+import { SaidasLoteForm } from '@/components/passeios/SaidasLoteForm'
+import { hojeNoBrasil } from '@/lib/formato'
 import { buscarPasseio, listarSaidas } from '@/lib/passeios/dados'
-import { formatarReais } from '@/lib/passeios/dinheiro'
 import { listarVeiculos } from '@/lib/veiculos/dados'
-import { alternarArquivado, excluirPasseio, salvarPasseio, salvarSaida } from '../actions'
+import { alterarSaidasLote, alternarArquivado, criarSaidasLote, excluirPasseio, salvarPasseio, salvarSaida } from '../actions'
 import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Passeio' }
@@ -21,6 +22,8 @@ async function Conteudo({ params }: Pick<PageProps<'/passeios/[id]'>, 'params'>)
   if (!passeio) notFound()
   const [saidas, veiculos] = await Promise.all([listarSaidas(passeio.id), listarVeiculos()])
   const nomeVeiculo = new Map(veiculos.map((v) => [v.id, v.nome]))
+  await connection() // "today" is per request
+  const hoje = hojeNoBrasil()
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8">
@@ -54,23 +57,15 @@ async function Conteudo({ params }: Pick<PageProps<'/passeios/[id]'>, 'params'>)
           {saidas.length === 0 ? (
             <p className="text-sm text-tinta-suave">Nenhuma saída ainda. Crie a primeira abaixo.</p>
           ) : (
-            <ul className="flex flex-col gap-2">
-              {saidas.map((s) => (
-                <li key={s.id}>
-                  <Link href={`/saidas/${s.id}`} className="flex min-h-14 flex-col gap-1 rounded-[--radius-cartao] border border-linha bg-superficie p-3 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="font-semibold">
-                      {formatarDataBr(s.data)}{s.horario && ` · ${s.horario.slice(0, 5)}`}
-                      {s.veiculo_id && <span className="font-normal text-tinta-suave"> · {nomeVeiculo.get(s.veiculo_id) ?? 'veículo arquivado'}</span>}
-                    </span>
-                    <span className="flex flex-wrap gap-x-3 text-sm text-tinta-suave">
-                      <span>Vagas: {s.reservadas} / {s.capacidade}</span>
-                      <span>{formatarReais(s.preco_centavos)} por pessoa</span>
-                      <span className={s.situacao === 'cancelada' ? 'text-despesa' : ''}>{s.situacao === 'aberta' && s.livres <= 0 ? 'Lotada' : ROTULO_SITUACAO[s.situacao]}</span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <SaidasDoPasseio
+              acao={alterarSaidasLote.bind(null, passeio.id)}
+              saidas={saidas.map((s) => ({
+                id: s.id, data: s.data, horario: s.horario, reservadas: s.reservadas, capacidade: s.capacidade,
+                preco_centavos: s.preco_centavos, futura: s.data >= hoje,
+                veiculo: s.veiculo_id ? (nomeVeiculo.get(s.veiculo_id) ?? 'veículo arquivado') : null,
+                situacao: s.situacao === 'aberta' && s.livres <= 0 ? 'Lotada' : ROTULO_SITUACAO[s.situacao],
+              }))}
+            />
           )}
           <h3 className="mt-2 font-semibold">Nova saída</h3>
           <SaidaForm
@@ -79,6 +74,13 @@ async function Conteudo({ params }: Pick<PageProps<'/passeios/[id]'>, 'params'>)
             veiculos={veiculos}
             rotuloBotao="Criar saída"
           />
+          {!passeio.arquivado && (
+            <SaidasLoteForm
+              acao={criarSaidasLote.bind(null, passeio.id)}
+              veiculos={veiculos}
+              existentes={saidas.map((s) => ({ data: s.data, horario: s.horario }))}
+            />
+          )}
         </section>
       </div>
     </div>

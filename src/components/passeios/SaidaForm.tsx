@@ -21,7 +21,7 @@ const campo = 'h-12 rounded-xl border border-controle bg-superficie px-3 text-ba
 
 // R138: choosing a vehicle suggests its seats as the capacity (never over a number the person typed).
 // Remounted with the form (key = versao), so the state restarts from what was submitted.
-function VeiculoECapacidade({ veiculos, inicial, erros }: {
+export function VeiculoECapacidade({ veiculos, inicial, erros }: {
   veiculos: VeiculoOpcao[]; inicial: Pick<Valores, 'capacidade' | 'veiculo'>; erros: Record<string, string[] | undefined> | undefined
 }) {
   const id = useId()

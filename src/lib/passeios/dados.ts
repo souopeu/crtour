@@ -43,7 +43,7 @@ export async function buscarPasseio(id: string): Promise<PasseioLinha | null> {
 
 export async function listarSaidas(passeioId: string): Promise<SaidaLinha[]> {
   const supabase = await criarClienteServidor()
-  const { data } = await supabase.from('v_saidas_vagas').select(COLUNAS_SAIDA).eq('passeio_id', passeioId).order('data')
+  const { data } = await supabase.from('v_saidas_vagas').select(COLUNAS_SAIDA).eq('passeio_id', passeioId).order('data').order('horario', { nullsFirst: true })
   return (data ?? []) as SaidaLinha[]
 }
 

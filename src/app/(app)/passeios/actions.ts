@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { getAgenciaId } from '@/lib/auth/agencia'
 import type { EstadoForm } from '@/lib/forms'
+import { hojeNoBrasil } from '@/lib/formato'
+import { alteracaoLoteSchema, loteSchema, resumoDaAlteracao } from '@/lib/passeios/lote'
 import { passeioSchema, saidaSchema } from '@/lib/passeios/schema'
 import { mensagemDeErroReserva } from '@/lib/reservas/schema'
 import { criarClienteServidor } from '@/lib/supabase/server'
@@ -98,6 +100,57 @@ export async function salvarSaida(passeioId: string, saidaId: string | null, _: 
   revalidatePath(`/saidas/${saidaId}`)
   revalidatePath(`/passeios/${passeioId}`)
   return { ok: 'Alterações salvas.', valores, versao }
+}
+
+// R155: the dates come from the form; the database skips a date and time that already has a departure.
+export async function criarSaidasLote(passeioId: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const dias = fd.getAll('dias').map(String)
+  const valores = {
+    de: texto(fd, 'de'), ate: texto(fd, 'ate'), dias: dias.join(','), horarios: texto(fd, 'horarios'),
+    capacidade: texto(fd, 'capacidade'), preco: texto(fd, 'preco'), veiculo: texto(fd, 'veiculo'),
+  }
+  const r = loteSchema(hojeNoBrasil()).safeParse({ ...valores, dias })
+  if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
+  if (!uuid(passeioId)) return { erro: ERRO, valores, versao }
+
+  const supabase = await criarClienteServidor()
+  const { data, error } = await supabase.rpc('criar_saidas_lote', {
+    p_passeio: passeioId, p_datas: r.data.datas, p_horarios: r.data.horarios, p_capacidade: r.data.capacidade,
+    p_preco: r.data.preco_centavos, p_veiculo: r.data.veiculo_id,
+  }).single<{ criadas: number; puladas: number }>()
+  if (error || !data) {
+    const conhecido = error?.code === 'CR019' ? mensagemDeErroReserva('CR019')
+      : error?.code === 'CR022' ? 'Este passeio está arquivado: desarquive para criar saídas.' : null
+    if (!conhecido) console.error('criarSaidasLote falhou', error?.code)
+    return { erro: conhecido ?? ERRO, valores, versao }
+  }
+  revalidatePath(`/passeios/${passeioId}`)
+  revalidatePath('/passeios')
+  const puladas = data.puladas > 0 ? ` ${data.puladas} já existiam e foram puladas.` : ''
+  return { ok: `${data.criadas} ${data.criadas === 1 ? 'saída criada' : 'saídas criadas'}.${puladas}`, versao }
+}
+
+// R156: reservations keep their total; departures that cannot change come back with the reason.
+export async function alterarSaidasLote(passeioId: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const valores = { preco: texto(fd, 'preco'), capacidade: texto(fd, 'capacidade') }
+  const r = alteracaoLoteSchema.safeParse({ ...valores, saidas: fd.getAll('saida').map(String) })
+  if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
+  if (!uuid(passeioId)) return { erro: ERRO, valores, versao }
+
+  const supabase = await criarClienteServidor()
+  const { data, error } = await supabase.rpc('alterar_saidas_lote', {
+    p_saidas: r.data.saidas, p_preco: r.data.preco_centavos, p_capacidade: r.data.capacidade,
+  })
+  if (error || !data) {
+    console.error('alterarSaidasLote falhou', error?.code)
+    return { erro: ERRO, valores, versao }
+  }
+  revalidatePath(`/passeios/${passeioId}`)
+  const falhas = data as { saida_id: string; motivo: string }[]
+  const resumo = resumoDaAlteracao(r.data.saidas.length, falhas)
+  return falhas.length === r.data.saidas.length ? { erro: resumo, valores, versao } : { ok: resumo, versao }
 }
 
 export async function excluirSaida(passeioId: string, saidaId: string): Promise<EstadoForm> {
