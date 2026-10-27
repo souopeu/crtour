@@ -5,6 +5,7 @@ import { z } from 'zod'
 import type { EstadoForm } from '@/lib/forms'
 import { contextoDaReserva } from '@/lib/vouchers/dados'
 import { itensDaReserva } from '@/lib/extras/dados'
+import { roteiroDoContexto } from '@/lib/passeios/roteiro'
 import { lerFormVoucher, listaDePassageiros, montarDados } from '@/lib/vouchers/voucher'
 import { criarClienteServidor } from '@/lib/supabase/server'
 
@@ -26,6 +27,7 @@ export async function criarVoucher(reservaId: string, _: EstadoForm, fd: FormDat
   const dados = montarDados(r.dados, {
     agencia: c.agencia.nome, cliente: c.cliente.nome, passeio: c.saida.passeio.nome, destino: c.saida.passeio.destino, saida: c.saida.data,
     inclui: c.saida.passeio.inclui, pessoas: c.reserva.qtd_pessoas, passageiros: listaDePassageiros(responsavel, acompanhantes, c.reserva.qtd_pessoas), extras,
+    ...roteiroDoContexto(c.saida.data, c.saida.passeio),
   })
   const supabase = await criarClienteServidor()
   const { error } = await supabase.from('vouchers').insert({ agencia_id: c.reserva.agencia_id, reserva_id: reservaId, dados })

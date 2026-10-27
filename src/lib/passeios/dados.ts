@@ -5,7 +5,7 @@ import type { PassageiroDaLista, ReservaDaLista } from '@/lib/passageiros/lista'
 import { criarClienteServidor } from '@/lib/supabase/server'
 import { emBlocos } from '@/lib/consultas/emBlocos'
 
-export type PasseioLinha = { id: string; nome: string; destino: string | null; descricao: string | null; inclui: string | null; nao_inclui: string | null; arquivado: boolean }
+export type PasseioLinha = { id: string; nome: string; destino: string | null; descricao: string | null; inclui: string | null; nao_inclui: string | null; arquivado: boolean; tipo: 'individual' | 'excursao' | 'combo'; dias: number }
 export type SaidaLinha = {
   id: string; passeio_id: string; data: string; capacidade: number; preco_centavos: number
   situacao: 'aberta' | 'encerrada' | 'cancelada'; reservadas: number; livres: number
@@ -13,7 +13,7 @@ export type SaidaLinha = {
   embarque_iniciado_em: string | null // R141
 }
 
-const COLUNAS_PASSEIO = 'id, nome, destino, descricao, inclui, nao_inclui, arquivado'
+const COLUNAS_PASSEIO = 'id, nome, destino, descricao, inclui, nao_inclui, arquivado, tipo, dias'
 const COLUNAS_SAIDA = 'id, passeio_id, data, capacidade, preco_centavos, situacao, reservadas, livres, horario, veiculo_id, embarque_iniciado_em'
 const uuid = (v: string) => z.uuid().safeParse(v).success
 
@@ -133,4 +133,13 @@ export async function listarPassageirosDaSaida(saidaId: string): Promise<{ reser
     })),
     passageiros: (ps.data ?? []) as PassageiroDaLista[],
   }
+}
+
+// R164: itinerary of an excursion, by day.
+export async function roteiroDoPasseio(passeioId: string): Promise<{ dia: number; titulo: string; descricao: string | null }[]> {
+  if (!uuid(passeioId)) return []
+  const supabase = await criarClienteServidor()
+  const { data, error } = await supabase.from('passeio_dias').select('dia, titulo, descricao').eq('passeio_id', passeioId).order('dia')
+  if (error) console.error('roteiroDoPasseio falhou', error.code)
+  return data ?? []
 }

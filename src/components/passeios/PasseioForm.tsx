@@ -1,15 +1,32 @@
 'use client'
 
 import Link from 'next/link'
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { rodapeForm } from '@/components/tela/estilos'
 import { BotaoEnviar } from '@/components/auth/BotaoEnviar'
 import { Campo } from '@/components/auth/Campo'
 import { Mensagem } from '@/components/auth/Mensagem'
 import type { EstadoForm } from '@/lib/forms'
 
-type Valores = { nome: string; destino: string; descricao: string; inclui: string; nao_inclui: string }
+type Valores = { nome: string; destino: string; descricao: string; inclui: string; nao_inclui: string; tipo?: string; dias?: string }
 type Props = { acao: (e: EstadoForm, fd: FormData) => Promise<EstadoForm>; inicial: Valores; rotuloBotao: string }
+
+// R164: one-day tour or excursion of several days (the itinerary is filled on the tour page).
+function TipoEDias({ inicial, erro }: { inicial: Valores; erro?: string }) {
+  const [tipo, setTipo] = useState(inicial.tipo ?? 'individual')
+  return (
+    <>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="passeio-tipo" className="text-sm font-medium">Tipo</label>
+        <select id="passeio-tipo" name="tipo" value={tipo} onChange={(e) => setTipo(e.target.value)} className="h-12 rounded-xl border border-controle bg-superficie px-3 text-base">
+          <option value="individual">Passeio de um dia</option>
+          <option value="excursao">Excursão de vários dias</option>
+        </select>
+      </div>
+      {tipo === 'excursao' && <Campo nome="dias" rotulo="Número de dias" tipo="number" valor={inicial.dias ?? ''} erros={erro ? [erro] : undefined} dica="De 2 a 30. A saída é o primeiro dia." />}
+    </>
+  )
+}
 
 export function PasseioForm({ acao, inicial, rotuloBotao }: Props) {
   const [estado, enviar] = useActionState<EstadoForm, FormData>(acao, {})
@@ -19,6 +36,7 @@ export function PasseioForm({ acao, inicial, rotuloBotao }: Props) {
     <form key={estado.versao ?? 'inicial'} action={enviar} className="flex max-w-xl flex-col gap-4">
       <Mensagem estado={estado} />
       <Campo nome="nome" rotulo="Nome do passeio" valor={v.nome} erros={estado.campos?.nome} autoComplete="off" />
+      {inicial.tipo !== 'combo' && <TipoEDias inicial={v} erro={estado.campos?.dias?.[0]} />}
       <Campo nome="destino" rotulo="Destino" valor={v.destino} erros={estado.campos?.destino} dica="Ex.: Portugal" />
       <div className="flex flex-col gap-1">
         <label htmlFor="descricao" className="text-sm font-medium">Descrição</label>

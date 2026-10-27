@@ -4,7 +4,14 @@ import { passeioSchema, saidaSchema } from './schema'
 describe('passeioSchema', () => {
   test('requires a name and nulls the optional fields', () => {
     expect(passeioSchema.parse({ nome: '  Lisboa clássica ', destino: '', descricao: '', inclui: '', nao_inclui: '' }))
-      .toEqual({ nome: 'Lisboa clássica', destino: null, descricao: null, inclui: null, nao_inclui: null })
+      .toEqual({ nome: 'Lisboa clássica', destino: null, descricao: null, inclui: null, nao_inclui: null, tipo: 'individual', dias: 1 })
+  })
+  test('an excursion has 2 to 30 days; a one-day tour ignores the days field (R164)', () => {
+    const base = { nome: 'Serra', destino: '', descricao: '', inclui: '', nao_inclui: '' }
+    expect(passeioSchema.parse({ ...base, tipo: 'excursao', dias: '3' })).toMatchObject({ tipo: 'excursao', dias: 3 })
+    expect(passeioSchema.parse({ ...base, tipo: 'individual', dias: '9' })).toMatchObject({ tipo: 'individual', dias: 1 })
+    expect(passeioSchema.safeParse({ ...base, tipo: 'excursao', dias: '1' }).error?.flatten().fieldErrors).toHaveProperty('dias')
+    expect(passeioSchema.safeParse({ ...base, tipo: 'excursao', dias: '31' }).success).toBe(false)
   })
   test('keeps what is and is not included (used by proposals)', () => {
     expect(passeioSchema.parse({ nome: 'A', destino: '', descricao: '', inclui: ' Aéreo ', nao_inclui: 'Refeições' })).toMatchObject({ inclui: 'Aéreo', nao_inclui: 'Refeições' })

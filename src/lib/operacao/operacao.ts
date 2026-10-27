@@ -34,3 +34,8 @@ export function destinosParaMover<T extends SaidaDestino>(saidas: readonly T[], 
     .filter((s) => s.id !== atual && s.passeioId === passeioId && s.situacao === 'aberta' && s.data >= hoje && s.livres >= pessoas)
     .sort((a, b) => a.data.localeCompare(b.data))
 }
+
+const DIA_MS = 86_400_000
+// R165: day number of an excursion on a date (1 = the departure date) and its last day.
+export const diaDaExcursao = (inicio: string, dia: string) => Math.round((Date.parse(`${dia}T00:00:00Z`) - Date.parse(`${inicio}T00:00:00Z`)) / DIA_MS) + 1
+export const fimDaExcursao = (inicio: string, dias: number) => new Date(Date.parse(`${inicio}T00:00:00Z`) + (dias - 1) * DIA_MS).toISOString().slice(0, 10)

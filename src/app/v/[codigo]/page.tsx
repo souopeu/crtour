@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { BotaoImprimir } from '@/components/BotaoImprimir'
+import { ListaRoteiro } from '@/components/passeios/ListaRoteiro'
 import { Carregando } from '@/components/Carregando'
 import { siteDaRequisicao } from '@/lib/auth/siteDaRequisicao'
 import { matrizQr } from '@/lib/formulario/qr'
@@ -50,11 +51,13 @@ async function Conteudo({ params }: Pick<PageProps<'/v/[codigo]'>, 'params'>) {
       <Bloco titulo="Passeio">
         <p className="text-lg font-semibold">{v.passeio}{v.destino ? ` · ${v.destino}` : ''}</p>
         <p>Saída em {formatarDataBr(v.saida)}{v.horario ? ` às ${v.horario}` : ''}</p>
+        {v.volta && <p>Volta em {formatarDataBr(v.volta)}</p>}
         {v.encontro && <p>Encontro: {v.encontro}</p>}
       </Bloco>
       <Bloco titulo={`Passageiros (${v.pessoas})`}>
         <ol className="list-decimal pl-5">{v.passageiros.map((nome, i) => <li key={i}>{nome}</li>)}</ol>
       </Bloco>
+      {v.roteiro.length > 0 && <Bloco titulo="Roteiro"><ListaRoteiro roteiro={v.roteiro} /></Bloco>}
       {v.extras.length > 0 && <Bloco titulo="Extras"><ul className="list-disc pl-5">{v.extras.map((e, i) => <li key={i}>{e}</li>)}</ul></Bloco>}
       {v.inclui && <Bloco titulo="O que inclui"><p className="whitespace-pre-line">{v.inclui}</p></Bloco>}
       {v.observacoes && <Bloco titulo="Observações"><p className="whitespace-pre-line">{v.observacoes}</p></Bloco>}

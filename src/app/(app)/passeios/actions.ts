@@ -8,6 +8,7 @@ import type { EstadoForm } from '@/lib/forms'
 import { hojeNoBrasil } from '@/lib/formato'
 import { alteracaoLoteSchema, loteSchema, resumoDaAlteracao } from '@/lib/passeios/lote'
 import { perguntaSchema } from '@/lib/perguntas/perguntas'
+import { lerRoteiro } from '@/lib/passeios/roteiro'
 import { passeioSchema, saidaSchema } from '@/lib/passeios/schema'
 import { mensagemDeErroReserva } from '@/lib/reservas/schema'
 import { criarClienteServidor } from '@/lib/supabase/server'
@@ -18,7 +19,10 @@ const texto = (fd: FormData, n: string) => String(fd.get(n) ?? '')
 
 export async function salvarPasseio(id: string | null, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
   const versao = crypto.randomUUID()
-  const valores = { nome: texto(fd, 'nome'), destino: texto(fd, 'destino'), descricao: texto(fd, 'descricao'), inclui: texto(fd, 'inclui'), nao_inclui: texto(fd, 'nao_inclui') }
+  const valores = {
+    nome: texto(fd, 'nome'), destino: texto(fd, 'destino'), descricao: texto(fd, 'descricao'), inclui: texto(fd, 'inclui'), nao_inclui: texto(fd, 'nao_inclui'),
+    tipo: texto(fd, 'tipo') || 'individual', dias: texto(fd, 'dias'),
+  }
   const r = passeioSchema.safeParse(valores)
   if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
 
@@ -221,4 +225,26 @@ export async function excluirPergunta(passeioId: string, perguntaId: string): Pr
   if (error) { console.error('excluirPergunta falhou', error.code); return { erro: ERRO } }
   revalidatePath(`/passeios/${passeioId}`)
   return { ok: 'Pergunta excluída. As respostas já dadas continuam nas reservas.' }
+}
+
+// R164: the itinerary is saved as a whole; days left blank (or beyond the excursion) are removed.
+export async function salvarRoteiro(passeioId: string, dias: number, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const valores = Object.fromEntries([...fd.entries()].filter(([n]) => /^(titulo|descricao)_\d+$/.test(n)).map(([n, v]) => [n, String(v)]))
+  const r = lerRoteiro(fd.entries(), dias)
+  if (!r.ok) return { campos: r.campos, valores, versao }
+  const agenciaId = await getAgenciaId()
+  if (!uuid(passeioId) || !agenciaId) return { erro: ERRO, valores, versao }
+  const supabase = await criarClienteServidor()
+  const preenchidos = r.dias.filter((d) => d.titulo !== null)
+  const vazios = r.dias.filter((d) => d.titulo === null).map((d) => d.dia)
+  const salvou = preenchidos.length === 0 ? { error: null }
+    : await supabase.from('passeio_dias').upsert(preenchidos.map((d) => ({ ...d, agencia_id: agenciaId, passeio_id: passeioId })), { onConflict: 'passeio_id,dia' })
+  const limpou = await supabase.from('passeio_dias').delete().eq('passeio_id', passeioId).or(`dia.gt.${dias}${vazios.length ? `,dia.in.(${vazios.join(',')})` : ''}`)
+  if (salvou.error || limpou.error) {
+    console.error('salvarRoteiro falhou', salvou.error?.code ?? limpou.error?.code)
+    return { erro: ERRO, valores, versao }
+  }
+  revalidatePath(`/passeios/${passeioId}`)
+  return { ok: 'Roteiro salvo.', valores, versao }
 }

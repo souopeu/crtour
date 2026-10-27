@@ -20,7 +20,7 @@ const contextoSchema = z.object({
   agencia: z.object({ nome: z.string() }),
   reserva: z.object({ qtd_pessoas: z.number().int(), agencia_id: z.uuid() }),
   cliente: z.object({ nome: z.string(), whatsapp: z.string().nullable(), consentimento_whatsapp: z.string() }),
-  saida: z.object({ data: z.string(), passeio: z.object({ nome: z.string(), destino: z.string().nullable(), inclui: z.string().nullable() }) }),
+  saida: z.object({ data: z.string(), passeio: z.object({ nome: z.string(), destino: z.string().nullable(), inclui: z.string().nullable(), passeio_dias: z.array(z.object({ dia: z.number(), titulo: z.string(), descricao: z.string().nullable() })).default([]), dias: z.number().default(1) }) }),
   passageiros: z.array(z.object({ nome: z.string() })),
 })
 export type ContextoVoucher = z.infer<typeof contextoSchema>
@@ -33,7 +33,7 @@ export async function contextoDaReserva(reservaId: string): Promise<ContextoVouc
   const [agencia, cliente, saida, passageiros] = await Promise.all([
     supabase.from('agencias').select('nome').eq('id', reserva.agencia_id).maybeSingle(),
     supabase.from('clientes').select('nome, whatsapp, consentimento_whatsapp').eq('id', reserva.cliente_id).maybeSingle(),
-    supabase.from('saidas').select('data, passeio:passeios(nome, destino, inclui)').eq('id', reserva.saida_id).maybeSingle(),
+    supabase.from('saidas').select('data, passeio:passeios(nome, destino, inclui, dias, passeio_dias(dia, titulo, descricao))').eq('id', reserva.saida_id).maybeSingle(),
     supabase.from('passageiros').select('nome').eq('reserva_id', reservaId).order('criado_em'),
   ])
   const r = contextoSchema.safeParse({ agencia: agencia.data, reserva, cliente: cliente.data, saida: saida.data, passageiros: passageiros.data ?? [] })

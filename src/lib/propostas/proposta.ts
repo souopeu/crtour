@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { roteiroSchema, voltaSchema } from '@/lib/passeios/roteiro'
 import { primeiroNome } from '@/lib/clientes/whatsappLink'
 import { formatarDataBr } from '@/lib/formato'
 import { reaisParaCentavos } from '@/lib/passeios/dinheiro'
@@ -46,14 +47,15 @@ export const dadosPropostaSchema = z.object({
   inclui: z.string().nullable(), naoInclui: z.string().nullable(),
   pessoas: z.number().int(), totalCentavos: z.number().int(), sinalCentavos: z.number().int(),
   sinalAte: z.string().nullable(), saldoAte: z.string().nullable(), observacoes: z.string().nullable(),
+  roteiro: roteiroSchema, volta: voltaSchema, // R165: excursions; older proposals have none
 })
 export type DadosProposta = z.infer<typeof dadosPropostaSchema>
-type Contexto = Pick<DadosProposta, 'agencia' | 'cliente' | 'titulo' | 'passeio' | 'destino' | 'saida' | 'inclui' | 'naoInclui'>
+type Contexto = Pick<DadosProposta, 'agencia' | 'cliente' | 'titulo' | 'passeio' | 'destino' | 'saida' | 'inclui' | 'naoInclui'> & Partial<Pick<DadosProposta, 'roteiro' | 'volta'>>
 
 // The frozen snapshot: names and texts as they are now, so later edits never change a sent proposal.
 export function montarDados(f: FormProposta, c: Contexto): DadosProposta {
   return {
-    ...c, pessoas: f.pessoas, totalCentavos: f.totalCentavos, sinalCentavos: f.sinalCentavos,
+    roteiro: [], volta: null, ...c, pessoas: f.pessoas, totalCentavos: f.totalCentavos, sinalCentavos: f.sinalCentavos,
     sinalAte: f.sinalAte, saldoAte: f.saldoAte, observacoes: f.observacoes,
   }
 }

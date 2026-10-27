@@ -12,7 +12,13 @@ export const passeioSchema = z.object({
   descricao: textoOpcional(1000, 'A descrição'),
   inclui: textoOpcional(2000, 'O texto'),
   nao_inclui: textoOpcional(2000, 'O texto'),
+  // R164: an excursion lasts 2 to 30 days; any other tour lasts one
+  tipo: z.enum(['individual', 'excursao'], 'Escolha o tipo do passeio.').default('individual'),
+  dias: z.string().trim().default(''),
 })
+  .refine((v) => v.tipo !== 'excursao' || (/^\d+$/.test(v.dias) && Number(v.dias) >= 2 && Number(v.dias) <= 30),
+    { path: ['dias'], message: 'Uma excursão tem de 2 a 30 dias.' })
+  .transform((v) => ({ ...v, dias: v.tipo === 'excursao' ? Number(v.dias) : 1 }))
 
 const dataReal = (iso: string) => /^\d{4}-\d{2}-\d{2}$/.test(iso) && new Date(`${iso}T00:00:00Z`).toISOString().slice(0, 10) === iso
 

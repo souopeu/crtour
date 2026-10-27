@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { ListaRoteiro } from '@/components/passeios/ListaRoteiro'
 import { Suspense } from 'react'
 import { BotaoImprimir } from '@/components/BotaoImprimir'
 import { Carregando } from '@/components/Carregando'
@@ -41,6 +42,7 @@ async function Conteudo({ params }: Pick<PageProps<'/p/[codigo]'>, 'params'>) {
       <Bloco titulo="Viagem">
         {p.passeio && <p className="text-lg font-semibold">{p.passeio}{p.destino ? ` · ${p.destino}` : ''}</p>}
         {p.saida && <p>Saída em {formatarDataBr(p.saida)}</p>}
+        {p.volta && <p>Volta em {formatarDataBr(p.volta)}</p>}
         <p>{p.pessoas} {p.pessoas === 1 ? 'pessoa' : 'pessoas'}</p>
       </Bloco>
       <Bloco titulo="Valores">
@@ -49,6 +51,7 @@ async function Conteudo({ params }: Pick<PageProps<'/p/[codigo]'>, 'params'>) {
         {p.sinalCentavos > 0 && <p className="tabular-nums">Sinal: {formatarReais(p.sinalCentavos)}{p.sinalAte ? ` até ${formatarDataBr(p.sinalAte)}` : ''}</p>}
         <p className="tabular-nums">Saldo: {formatarReais(saldoCentavos)}{p.saldoAte ? ` até ${formatarDataBr(p.saldoAte)}` : ''}</p>
       </Bloco>
+      {p.roteiro.length > 0 && <Bloco titulo="Roteiro"><ListaRoteiro roteiro={p.roteiro} /></Bloco>}
       {(p.inclui || p.naoInclui) && (
         <div className="grid gap-4 sm:grid-cols-2">
           {p.inclui && <Bloco titulo="O que inclui"><p className="whitespace-pre-line">{p.inclui}</p></Bloco>}

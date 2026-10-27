@@ -6,12 +6,13 @@ import { PasseioForm } from '@/components/passeios/PasseioForm'
 import { SaidaForm } from '@/components/passeios/SaidaForm'
 import { SaidasDoPasseio } from '@/components/passeios/SaidasDoPasseio'
 import { SaidasLoteForm } from '@/components/passeios/SaidasLoteForm'
+import { RoteiroForm } from '@/components/passeios/RoteiroForm'
 import { PerguntasDoPasseio } from '@/components/perguntas/PerguntasDoPasseio'
 import { getMembro } from '@/lib/auth/agencia'
 import { hojeNoBrasil } from '@/lib/formato'
-import { buscarPasseio, listarSaidas } from '@/lib/passeios/dados'
+import { buscarPasseio, listarSaidas, roteiroDoPasseio } from '@/lib/passeios/dados'
 import { listarVeiculos } from '@/lib/veiculos/dados'
-import { alterarSaidasLote, alternarArquivado, criarSaidasLote, excluirPasseio, salvarPasseio, salvarSaida } from '../actions'
+import { alterarSaidasLote, alternarArquivado, criarSaidasLote, excluirPasseio, salvarPasseio, salvarRoteiro, salvarSaida } from '../actions'
 import { Carregando } from '@/components/Carregando'
 
 export const metadata = { title: 'Passeio' }
@@ -22,7 +23,7 @@ async function Conteudo({ params }: Pick<PageProps<'/passeios/[id]'>, 'params'>)
   const { id } = await params
   const passeio = await buscarPasseio(id)
   if (!passeio) notFound()
-  const [saidas, veiculos, membro] = await Promise.all([listarSaidas(passeio.id), listarVeiculos(), getMembro()])
+  const [saidas, veiculos, membro, roteiro] = await Promise.all([listarSaidas(passeio.id), listarVeiculos(), getMembro(), passeio.tipo === 'excursao' ? roteiroDoPasseio(passeio.id) : Promise.resolve([])])
   const nomeVeiculo = new Map(veiculos.map((v) => [v.id, v.nome]))
   await connection() // "today" is per request
   const hoje = hojeNoBrasil()
@@ -39,7 +40,7 @@ async function Conteudo({ params }: Pick<PageProps<'/passeios/[id]'>, 'params'>)
           <h2 id="dados-titulo" className="text-lg font-semibold">Dados do passeio</h2>
           <PasseioForm
             acao={salvarPasseio.bind(null, passeio.id)}
-            inicial={{ nome: passeio.nome, destino: passeio.destino ?? '', descricao: passeio.descricao ?? '', inclui: passeio.inclui ?? '', nao_inclui: passeio.nao_inclui ?? '' }}
+            inicial={{ nome: passeio.nome, destino: passeio.destino ?? '', descricao: passeio.descricao ?? '', inclui: passeio.inclui ?? '', nao_inclui: passeio.nao_inclui ?? '', tipo: passeio.tipo, dias: String(passeio.dias) }}
             rotuloBotao="Salvar alterações"
           />
           <form action={alternarArquivado.bind(null, passeio.id, !passeio.arquivado)}>
@@ -86,6 +87,15 @@ async function Conteudo({ params }: Pick<PageProps<'/passeios/[id]'>, 'params'>)
           )}
         </section>
       </div>
+      {passeio.tipo === 'excursao' && (
+        <section aria-labelledby="roteiro-titulo" className="flex flex-col gap-3">
+          <div>
+            <h2 id="roteiro-titulo" className="text-lg font-semibold">Roteiro ({passeio.dias} dias)</h2>
+            <p className="text-sm text-tinta-suave">Aparece no voucher e na proposta. Cada saída começa no dia 1 e termina {passeio.dias - 1} dias depois.</p>
+          </div>
+          <RoteiroForm acao={salvarRoteiro.bind(null, passeio.id, passeio.dias)} dias={passeio.dias} roteiro={roteiro} />
+        </section>
+      )}
       <PerguntasDoPasseio passeioId={passeio.id} />
     </div>
   )

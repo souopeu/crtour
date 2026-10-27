@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { lerFormProposta, mensagemProposta, montarDados, resumoValores, situacaoProposta } from './proposta'
+import { dadosPropostaSchema, lerFormProposta, mensagemProposta, montarDados, resumoValores, situacaoProposta } from './proposta'
 
 const fd = (campos: Record<string, string>) => {
   const f = new FormData()
@@ -56,5 +56,15 @@ describe('situacaoProposta', () => {
 describe('mensagemProposta', () => {
   test('first name, the link and the validity', () => {
     expect(mensagemProposta('Ana Souza', 'https://x.dev/p/ABC', '2026-10-25')).toBe('Olá, Ana! Segue a proposta da sua viagem: https://x.dev/p/ABC (válida até 25/10/2026).')
+  })
+})
+
+describe('roteiro in the proposal (R165)', () => {
+  test('a proposal keeps the itinerary; older ones read without it', () => {
+    const c = { agencia: 'A', cliente: 'B', titulo: 'T', passeio: 'Serra', destino: null, saida: '2030-11-07', inclui: null, naoInclui: null }
+    const f = { pessoas: 1, totalCentavos: 100, sinalCentavos: 0, sinalAte: null, saldoAte: null, validade: '2030-10-01', observacoes: null }
+    const d = montarDados(f, { ...c, roteiro: [{ dia: 1, titulo: 'Gramado', descricao: null }], volta: '2030-11-09' })
+    expect(dadosPropostaSchema.parse(d)).toMatchObject({ roteiro: [{ dia: 1, titulo: 'Gramado', descricao: null }], volta: '2030-11-09' })
+    expect(dadosPropostaSchema.parse({ ...montarDados(f, c), roteiro: undefined, volta: undefined })).toMatchObject({ roteiro: [], volta: null })
   })
 })

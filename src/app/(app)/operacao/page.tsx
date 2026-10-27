@@ -15,7 +15,8 @@ import { lugaresDasSaidas } from '@/lib/embarque/dados'
 import { contarEmbarque } from '@/lib/embarque/embarque'
 import { hojeNoBrasil } from '@/lib/formato'
 import { saidasDoDia, saidasDosPasseios, type SaidaDoDia } from '@/lib/operacao/dados'
-import { destinosParaMover, lerDia, ocupacao } from '@/lib/operacao/operacao'
+import { destinosParaMover, fimDaExcursao, lerDia, ocupacao } from '@/lib/operacao/operacao'
+import { formatarDataBr } from '@/lib/formato'
 
 export const metadata = { title: 'Saídas do dia' }
 
@@ -30,6 +31,13 @@ function CartaoSaida({ s, destinos, hoje, embarque }: {
           <p className="text-lg font-semibold tabular-nums">{s.horario ? s.horario.slice(0, 5) : 'Sem horário'}</p>
           <h2 id={`saida-${s.id}`} className="font-semibold"><Link href={`/saidas/${s.id}`} className="text-primaria underline">{s.passeio}</Link></h2>
           <p className="text-sm text-tinta-suave">{s.veiculo ? `${s.veiculo.nome} · ${s.veiculo.lugares} lugares` : 'Sem veículo'}</p>
+          {s.excursao && (
+            <p className="text-sm font-medium text-primaria">
+              {s.excursao.dia === 1
+                ? `Excursão de ${s.excursao.de} dias · volta em ${formatarDataBr(fimDaExcursao(s.data, s.excursao.de))}`
+                : `Excursão em andamento · dia ${s.excursao.dia} de ${s.excursao.de}`}
+            </p>
+          )}
         </div>
         <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${s.situacao === 'aberta' ? 'bg-primaria-suave text-primaria' : 'bg-superficie-suave text-tinta'}`}>
           {s.situacao === 'aberta' ? 'Aberta' : 'Vendas encerradas'}
@@ -41,7 +49,7 @@ function CartaoSaida({ s, destinos, hoje, embarque }: {
           <div className="h-full rounded-full bg-marca" style={{ width: `${pct}%` }} />
         </div>
       </div>
-      {embarque.total > 0 && (
+      {embarque.total > 0 && (!s.excursao || s.excursao.dia === 1) && (
         // R141: start the boarding here, or follow it once started
         s.embarqueIniciado ? (
           <Link href={`/saidas/${s.id}/embarque`} className={`${botaoSecundario} w-fit`}>

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { roteiroSchema, voltaSchema } from '@/lib/passeios/roteiro'
 import { primeiroNome } from '@/lib/clientes/whatsappLink'
 import { NOME_A_INFORMAR } from '@/lib/passageiros/lista'
 
@@ -26,13 +27,14 @@ export const dadosVoucherSchema = z.object({
   inclui: z.string().nullable(), pessoas: z.number().int(), passageiros: z.array(z.string()),
   encontro: z.string().nullable(), horario: z.string().nullable(), observacoes: z.string().nullable(),
   extras: z.array(z.string()).default([]), // R158: "2 × Almoço"; vouchers issued before extras have none
+  roteiro: roteiroSchema, volta: voltaSchema, // R165: excursions
 })
 export type DadosVoucher = z.infer<typeof dadosVoucherSchema>
-type Contexto = Pick<DadosVoucher, 'agencia' | 'cliente' | 'passeio' | 'destino' | 'saida' | 'inclui' | 'pessoas' | 'passageiros'> & { extras?: string[] }
+type Contexto = Pick<DadosVoucher, 'agencia' | 'cliente' | 'passeio' | 'destino' | 'saida' | 'inclui' | 'pessoas' | 'passageiros'> & Partial<Pick<DadosVoucher, 'extras' | 'roteiro' | 'volta'>>
 
 // The frozen snapshot: later edits to the tour or the reservation never change an issued voucher.
 export function montarDados(f: FormVoucher, c: Contexto): DadosVoucher {
-  return { extras: [], ...c, ...f }
+  return { extras: [], roteiro: [], volta: null, ...c, ...f }
 }
 
 // A voucher exists only for an active reservation that is fully paid (the database enforces the same rule).

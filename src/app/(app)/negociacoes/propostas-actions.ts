@@ -7,6 +7,7 @@ import { hojeNoBrasil } from '@/lib/formato'
 import type { EstadoForm } from '@/lib/forms'
 import { buscarNegociacao } from '@/lib/negociacoes/dados'
 import { contextoDaNegociacao } from '@/lib/propostas/dados'
+import { roteiroDoContexto } from '@/lib/passeios/roteiro'
 import { lerFormProposta, montarDados } from '@/lib/propostas/proposta'
 import { criarClienteServidor } from '@/lib/supabase/server'
 
@@ -27,6 +28,7 @@ export async function criarProposta(negociacaoId: string, _: EstadoForm, fd: For
     agencia: c.agencia.nome, cliente: c.cliente.nome, titulo: n.titulo,
     passeio: c.saida?.passeio.nome ?? null, destino: c.saida?.passeio.destino ?? null, saida: c.saida?.data ?? null,
     inclui: c.saida?.passeio.inclui ?? null, naoInclui: c.saida?.passeio.nao_inclui ?? null,
+    ...(c.saida ? roteiroDoContexto(c.saida.data, c.saida.passeio) : {}),
   })
   const supabase = await criarClienteServidor()
   const { error } = await supabase.from('propostas').insert({ agencia_id: agenciaId, negociacao_id: n.id, dados, validade: r.dados.validade })

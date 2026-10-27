@@ -5,7 +5,7 @@ it('explains the database refusals when moving (R140)', () => {
   expect(mensagemDeErroReserva('CR014')).toMatch(/mesmo passeio/)
   expect(mensagemDeErroReserva('CR001')).toMatch(/vagas/)
 })
-import { destinosParaMover, lerDia, ocupacao, ordenarPorHorario, type SaidaDestino } from './operacao'
+import { destinosParaMover, lerDia, ocupacao, ordenarPorHorario, type SaidaDestino, diaDaExcursao, fimDaExcursao } from './operacao'
 
 const HOJE = '2026-10-25'
 
@@ -56,5 +56,14 @@ describe('destinosParaMover (R140)', () => {
       s('hoje', { data: HOJE }),
     ]
     expect(destinosParaMover(todas, 'atual', 'p1', 2, HOJE).map((d) => d.id)).toEqual(['hoje', 'antes', 'depois'])
+  })
+})
+
+describe('diaDaExcursao / fimDaExcursao (R165)', () => {
+  it('counts the day of an excursion from its start, across months', () => {
+    expect(diaDaExcursao('2030-11-07', '2030-11-07')).toBe(1)
+    expect(diaDaExcursao('2030-10-31', '2030-11-02')).toBe(3)
+    expect(fimDaExcursao('2030-10-30', 3)).toBe('2030-11-01')
+    expect(fimDaExcursao('2030-10-30', 1)).toBe('2030-10-30')
   })
 })

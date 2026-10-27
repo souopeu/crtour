@@ -58,3 +58,12 @@ describe('montarDados / mensagemVoucher', () => {
     expect(mensagemVoucher('Ana Souza', 'https://x.com/v/abc', 'Lisboa')).toBe('Olá, Ana! Segue o voucher do passeio Lisboa: https://x.com/v/abc')
   })
 })
+
+describe('roteiro in the voucher (R165)', () => {
+  test('a voucher keeps the itinerary and the return date; older vouchers read without them', () => {
+    const c = { agencia: 'Alfa', cliente: 'Ana', passeio: 'Serra', destino: null, saida: '2030-11-07', inclui: null, pessoas: 1, passageiros: ['Ana'] }
+    const d = montarDados({ encontro: null, horario: null, observacoes: null }, { ...c, roteiro: [{ dia: 1, titulo: 'Gramado', descricao: null }], volta: '2030-11-09' })
+    expect(dadosVoucherSchema.parse(d)).toMatchObject({ roteiro: [{ dia: 1, titulo: 'Gramado', descricao: null }], volta: '2030-11-09' })
+    expect(dadosVoucherSchema.parse({ ...c, encontro: null, horario: null, observacoes: null })).toMatchObject({ roteiro: [], volta: null })
+  })
+})
