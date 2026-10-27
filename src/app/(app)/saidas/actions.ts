@@ -3,7 +3,9 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
+import { getMembro } from '@/lib/auth/agencia'
 import { lerItens } from '@/lib/extras/extras'
+import { reaisParaCentavos } from '@/lib/passeios/dinheiro'
 import type { EstadoForm } from '@/lib/forms'
 import { perguntasDoPasseio } from '@/lib/perguntas/dados'
 import { lerRespostas } from '@/lib/perguntas/perguntas'
@@ -19,7 +21,7 @@ const texto = (fd: FormData, n: string) => String(fd.get(n) ?? '')
 export async function criarReserva(saidaId: string, clienteId: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
   const versao = crypto.randomUUID()
   const quantidades = [...fd.entries()].filter(([n]) => n.startsWith('extra:') || n.startsWith('resposta:')).map(([n, v]) => [n, String(v)])
-  const valores = { qtd: texto(fd, 'qtd'), valor: texto(fd, 'valor'), observacao: texto(fd, 'observacao'), ...Object.fromEntries(quantidades) }
+  const valores = { qtd: texto(fd, 'qtd'), valor: texto(fd, 'valor'), observacao: texto(fd, 'observacao'), tarifa: texto(fd, 'tarifa'), ...Object.fromEntries(quantidades) }
   const r = reservaSchema.safeParse(valores)
   if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
   if (!uuid(saidaId) || !uuid(clienteId)) return { erro: mensagemDeErroReserva(undefined), valores, versao }
@@ -39,9 +41,10 @@ export async function criarReserva(saidaId: string, clienteId: string, _: Estado
     p_valor_total: r.data.valor_total_centavos,
     p_observacao: r.data.observacao,
     p_itens: itens.length ? itens : null,
+    p_tarifa: valores.tarifa === 'b2b' ? 'b2b' : 'balcao', // R162: the database checks owner, partner and B2B price
   })
   if (error) {
-    if (!['CR001', 'CR002', 'CR023'].includes(error.code ?? '')) console.error('criarReserva falhou', error.code)
+    if (!['CR001', 'CR002', 'CR023', 'CR027', 'CR028'].includes(error.code ?? '')) console.error('criarReserva falhou', error.code)
     return { erro: mensagemDeErroReserva(error.code), valores, versao }
   }
   const respostas = lidas.respostas.filter((x) => x.resposta !== '')
@@ -97,4 +100,24 @@ export async function removerPassageiro(saidaId: string, passageiroId: string): 
   const { error } = await supabase.rpc('remover_passageiro', { p_passageiro: passageiroId })
   if (error) console.error('removerPassageiro falhou', error.code)
   revalidatePath(`/saidas/${saidaId}`, 'layout')
+}
+
+// R162: B2B price of one departure, owner only (RLS refuses a seller). Empty removes it.
+export async function definirPrecoB2b(saidaId: string, _: EstadoForm, fd: FormData): Promise<EstadoForm> {
+  const versao = crypto.randomUUID()
+  const valores = { preco_b2b: texto(fd, 'preco_b2b') }
+  const centavos = valores.preco_b2b.trim() === '' ? null : reaisParaCentavos(valores.preco_b2b)
+  if (centavos === null && valores.preco_b2b.trim() !== '') return { campos: { preco_b2b: ['Digite o preço, ex.: 70,00, ou deixe em branco.'] }, valores, versao }
+  const membro = await getMembro()
+  if (!uuid(saidaId) || membro?.papel !== 'dono') return { erro: 'Só o dono define o preço B2B.', valores, versao }
+  const supabase = await criarClienteServidor()
+  const { error } = centavos === null
+    ? await supabase.from('saidas_b2b').delete().eq('saida_id', saidaId)
+    : await supabase.from('saidas_b2b').upsert({ saida_id: saidaId, agencia_id: membro.agencia_id, preco_centavos: centavos })
+  if (error) {
+    console.error('definirPrecoB2b falhou', error.code)
+    return { erro: mensagemDeErroReserva(undefined), valores, versao }
+  }
+  revalidatePath(`/saidas/${saidaId}`)
+  return { ok: centavos === null ? 'Esta saída não é mais vendida B2B.' : 'Preço B2B salvo.', valores, versao }
 }

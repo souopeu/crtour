@@ -1,4 +1,7 @@
 import Link from 'next/link'
+import { FiltroTarifa } from '@/components/b2b/FiltroTarifa'
+import { getMembro } from '@/lib/auth/agencia'
+import { lerFiltroTarifa } from '@/lib/b2b/tarifa'
 import { connection } from 'next/server'
 import { Suspense } from 'react'
 import { formatarDataBr, hojeNoBrasil, ouTraco } from '@/lib/formato'
@@ -40,7 +43,9 @@ async function Lista({ searchParams }: Pick<PageProps<'/reservas'>, 'searchParam
   const situacao: SituacaoLista = params.aba === 'canceladas' ? 'cancelada' : 'ativa'
   const periodo = lerPeriodo(params, hojeNoBrasil())
   const status = lerFiltroStatus(params)
-  const { linhas, cortado } = await listarReservas(periodo, situacao, status)
+  const dono = (await getMembro())?.papel === 'dono'
+  const tarifa = dono ? lerFiltroTarifa(params.tarifa) : null
+  const { linhas, cortado } = await listarReservas(periodo, situacao, status, tarifa)
   const totalPessoas = linhas.reduce((s, r) => s + r.pessoas, 0)
   const totalSaldo = linhas.reduce((s, r) => s + r.saldo, 0)
 
@@ -60,6 +65,7 @@ async function Lista({ searchParams }: Pick<PageProps<'/reservas'>, 'searchParam
           </Link>
         ))}
       </nav>
+      {dono && <FiltroTarifa base="/reservas" params={params} atual={tarifa} />}
       {linhas.length === 0 ? (
         situacao === 'ativa' && !status
           ? <EstadoVazio acoes={[{ href: '/passeios', rotulo: 'Ver passeios e saídas' }]}>Nenhuma reserva neste período. As reservas nascem dentro de uma saída do passeio.</EstadoVazio>
@@ -71,7 +77,7 @@ async function Lista({ searchParams }: Pick<PageProps<'/reservas'>, 'searchParam
             <tbody>
               {linhas.map((r) => (
                 <tr key={r.id} className="hover:bg-superficie-suave">
-                  <td><Link href={`/reservas/${r.id}`} className="font-medium text-primaria underline">{r.clienteNome}</Link></td>
+                  <td><Link href={`/reservas/${r.id}`} className="font-medium text-primaria underline">{r.clienteNome}</Link>{r.tarifa === 'b2b' && <span className="ml-2 rounded-md bg-primaria-suave px-1.5 py-0.5 text-xs text-primaria">B2B</span>}</td>
                   <td>{ouTraco(r.passeio)}</td>
                   <td><Link href={`/saidas/${r.saidaId}`} className="underline-offset-2 hover:underline">{formatarDataBr(r.saidaData)}</Link></td>
                   <td><ChipStatus status={r.status} /></td>

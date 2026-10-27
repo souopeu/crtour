@@ -9,7 +9,7 @@ export const BASES_DRE = ['caixa', 'competencia'] as const
 export type BaseDre = (typeof BASES_DRE)[number]
 export type PeriodoDre = { de: string; ate: string; base: BaseDre }
 // One entry behind a DRE line. Revenue may be negative (a refund, on the cash basis).
-export type ItemDre = { grupo: 'receita' | 'custo' | 'comissao' | 'despesa'; categoria?: string; descricao: string; data: string; valor: number; href?: string }
+export type ItemDre = { grupo: 'receita' | 'custo' | 'comissao' | 'despesa'; tarifa?: 'balcao' | 'b2b'; categoria?: string; descricao: string; data: string; valor: number; href?: string }
 export type LinhaDre = { chave: string; rotulo: string; valor: number; total: boolean; itens: ItemDre[] }
 
 export const MAX_MESES_DRE = 12
@@ -31,7 +31,14 @@ export function montarDre(itens: readonly ItemDre[]): LinhaDre[] {
     .sort((a, b) => b.valor - a.valor)
   const margem = receita.valor - custo.valor
   const resultado = margem - comissao.valor - despesas.reduce((s, d) => s + d.valor, 0)
-  return [receita, custo, total('margem', '= Margem', margem), comissao, ...despesas, total('resultado', '= Resultado', resultado)]
+  // R163: with B2B sales, revenue shows as counter + B2B, then the gross total
+  const b2b = de('receita').filter((i) => i.tarifa === 'b2b')
+  const receitas = b2b.length === 0 ? [receita] : [
+    linha('receita:balcao', 'Receita balcão', de('receita').filter((i) => i.tarifa !== 'b2b')),
+    linha('receita:b2b', 'Receita B2B', b2b),
+    total('receita', '= Receita bruta', receita.valor),
+  ]
+  return [...receitas, custo, total('margem', '= Margem', margem), comissao, ...despesas, total('resultado', '= Resultado', resultado)]
 }
 
 const GRUPO: Record<Movimento['origem'], ItemDre['grupo']> = { pagamento: 'receita', estorno: 'receita', custo: 'custo', comissao: 'comissao', conta: 'despesa' }
@@ -39,7 +46,7 @@ const GRUPO: Record<Movimento['origem'], ItemDre['grupo']> = { pagamento: 'recei
 // Cash basis: the money that moved in the period (same source as the daily check). A refund is negative revenue.
 export function itensCaixa(movimentos: readonly Movimento[]): ItemDre[] {
   return movimentos.map((m) => ({
-    grupo: GRUPO[m.origem], categoria: m.categoria, descricao: m.descricao, data: m.data,
+    grupo: GRUPO[m.origem], categoria: m.categoria, tarifa: m.tarifa, descricao: m.descricao, data: m.data,
     valor: m.origem === 'estorno' ? -m.valor : m.valor, href: m.href,
   }))
 }

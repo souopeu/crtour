@@ -9,7 +9,7 @@ import { itensCaixa, mesesDoPeriodo, type ItemDre, type PeriodoDre } from './dre
 import { fimDoMes } from './visaoGeral'
 
 const SaidaZ = z.object({ id: z.uuid(), data: z.string(), passeio_id: z.uuid() })
-const ReservaZ = z.object({ id: z.uuid(), saida_id: z.uuid(), cliente_id: z.uuid(), valor_total_centavos: z.number() })
+const ReservaZ = z.object({ id: z.uuid(), saida_id: z.uuid(), cliente_id: z.uuid(), valor_total_centavos: z.number(), tarifa: z.enum(['balcao', 'b2b']) })
 const CustoZ = z.object({ id: z.uuid(), saida_id: z.uuid(), descricao: z.string(), valor_centavos: z.number() })
 const ContaZ = z.object({ id: z.uuid(), descricao: z.string(), categoria: z.enum(CATEGORIAS_CONTA), vencimento: z.string(), valor_centavos: z.number() })
 const ItemZ = z.object({ reserva_id: z.uuid(), nome: z.string(), custo_centavos: z.number(), quantidade: z.number() })
@@ -27,7 +27,7 @@ async function itensCompetencia(inicio: string, fim: string, meses: string[]): P
   const saidas = ler(SaidaZ, saidasR, 'dre saidas')
   const ids = saidas.map((s) => s.id)
   const [reservasR, custosR, passeiosR] = await Promise.all([
-    emBlocos(ids, (b) => supabase.from('reservas').select('id, saida_id, cliente_id, valor_total_centavos').eq('situacao', 'ativa').in('saida_id', b)),
+    emBlocos(ids, (b) => supabase.from('reservas').select('id, saida_id, cliente_id, valor_total_centavos, tarifa').eq('situacao', 'ativa').in('saida_id', b)),
     emBlocos(ids, (b) => supabase.from('custos_saida').select('id, saida_id, descricao, valor_centavos').in('saida_id', b)),
     emBlocos([...new Set(saidas.map((s) => s.passeio_id))], (b) => supabase.from('passeios').select('id, nome').in('id', b)),
   ])
@@ -44,7 +44,7 @@ async function itensCompetencia(inicio: string, fim: string, meses: string[]): P
   return [
     ...reservas.map((r): ItemDre => ({
       grupo: 'receita', descricao: `${cliente.get(r.cliente_id) ?? 'Cliente'} · ${saida.get(r.saida_id)?.nome ?? 'Passeio'}`,
-      data: saida.get(r.saida_id)?.data ?? inicio, valor: r.valor_total_centavos, href: `/reservas/${r.id}`,
+      data: saida.get(r.saida_id)?.data ?? inicio, valor: r.valor_total_centavos, href: `/reservas/${r.id}`, tarifa: r.tarifa,
     })),
     ...ler(CustoZ, custosR, 'dre custos').map((c): ItemDre => ({
       grupo: 'custo', descricao: `${c.descricao} · ${saida.get(c.saida_id)?.nome ?? 'Passeio'}`, data: saida.get(c.saida_id)?.data ?? inicio, valor: c.valor_centavos, href: `/saidas/${c.saida_id}`,

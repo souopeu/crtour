@@ -7,6 +7,7 @@ import { SaidaForm } from '@/components/passeios/SaidaForm'
 import { SaidasDoPasseio } from '@/components/passeios/SaidasDoPasseio'
 import { SaidasLoteForm } from '@/components/passeios/SaidasLoteForm'
 import { PerguntasDoPasseio } from '@/components/perguntas/PerguntasDoPasseio'
+import { getMembro } from '@/lib/auth/agencia'
 import { hojeNoBrasil } from '@/lib/formato'
 import { buscarPasseio, listarSaidas } from '@/lib/passeios/dados'
 import { listarVeiculos } from '@/lib/veiculos/dados'
@@ -21,7 +22,7 @@ async function Conteudo({ params }: Pick<PageProps<'/passeios/[id]'>, 'params'>)
   const { id } = await params
   const passeio = await buscarPasseio(id)
   if (!passeio) notFound()
-  const [saidas, veiculos] = await Promise.all([listarSaidas(passeio.id), listarVeiculos()])
+  const [saidas, veiculos, membro] = await Promise.all([listarSaidas(passeio.id), listarVeiculos(), getMembro()])
   const nomeVeiculo = new Map(veiculos.map((v) => [v.id, v.nome]))
   await connection() // "today" is per request
   const hoje = hojeNoBrasil()
@@ -80,6 +81,7 @@ async function Conteudo({ params }: Pick<PageProps<'/passeios/[id]'>, 'params'>)
               acao={criarSaidasLote.bind(null, passeio.id)}
               veiculos={veiculos}
               existentes={saidas.map((s) => ({ data: s.data, horario: s.horario }))}
+              mostrarB2b={membro?.papel === 'dono'}
             />
           )}
         </section>

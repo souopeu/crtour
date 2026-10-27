@@ -46,6 +46,7 @@ export const loteSchema = (hoje: string) =>
       capacidade: z.string().trim().refine((v) => /^\d+$/.test(v) && Number(v) >= 1 && Number(v) <= 500, 'A capacidade deve ser um número inteiro entre 1 e 500.'),
       preco: z.string().refine((v) => reaisParaCentavos(v) !== null, 'Digite o preço por pessoa, ex.: 89,00 (use 0 se for gratuito).'),
       veiculo: z.string().trim().default('').refine((v) => v === '' || z.uuid().safeParse(v).success, 'Escolha um veículo da lista.'),
+      preco_b2b: z.string().default('').refine((v) => v.trim() === '' || reaisParaCentavos(v) !== null, 'Digite o preço B2B, ex.: 70,00, ou deixe em branco.'),
     })
     .superRefine((v, ctx) => {
       if (dataReal(v.de) && dataReal(v.ate)) {
@@ -67,6 +68,7 @@ export const loteSchema = (hoje: string) =>
       capacidade: Number(v.capacidade),
       preco_centavos: reaisParaCentavos(v.preco) as number,
       veiculo_id: v.veiculo === '' ? null : v.veiculo,
+      preco_b2b_centavos: v.preco_b2b.trim() === '' ? null : reaisParaCentavos(v.preco_b2b), // R162: owner only
     }))
 
 export const alteracaoLoteSchema = z

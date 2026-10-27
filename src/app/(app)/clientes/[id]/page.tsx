@@ -5,6 +5,7 @@ import { ChamarWhatsapp } from '@/components/clientes/ChamarWhatsapp'
 import { ClienteForm } from '@/components/clientes/ClienteForm'
 import { EtiquetasCliente } from '@/components/clientes/EtiquetasCliente'
 import { getMembro } from '@/lib/auth/agencia'
+import { clienteParceiro } from '@/lib/b2b/dados'
 import { getUsuario } from '@/lib/auth/usuario'
 import { buscarAnotacoes, buscarCliente, buscarEtiquetas, listarSugestoes, listarViagensDoCliente } from '@/lib/clientes/dados'
 import { SugestoesCliente } from '@/components/clientes/SugestoesCliente'
@@ -20,7 +21,7 @@ import { listarNegociacoesDoCliente } from '@/lib/negociacoes/dados'
 import { HistoricoDeViagens } from '@/components/clientes/HistoricoDeViagens'
 import { valoresDaLinha } from '@/lib/clientes/formulario'
 import { formatarDataHora, hojeNoBrasil } from '@/lib/formato'
-import { salvarCliente } from '../actions'
+import { alternarParceiro, salvarCliente } from '../actions'
 import { Carregando } from '@/components/Carregando'
 import { DeOndeVeio } from '@/components/clientes/DeOndeVeio'
 import { listarOrigens } from '@/lib/origens/dados'
@@ -46,6 +47,7 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
     listarOrigens(cliente.id),
   ])
   const aplicadasIds = new Set(etiquetas.aplicadas.map((e) => e.id))
+  const parceiro = membro?.papel === 'dono' && (await clienteParceiro(cliente.id))
   const { futuras, passadas } = separarViagens(viagens, hojeNoBrasil())
   const agora = new Date().toISOString()
 
@@ -54,6 +56,12 @@ async function Ficha({ params }: Pick<PageProps<'/clientes/[id]'>, 'params'>) {
       <div>
         <h1 className="text-[1.75rem] font-medium tracking-tight">{cliente.nome}</h1>
         <p className="text-sm text-tinta-suave">{textoUltimaInteracao(ultimaInteracao, hojeNoBrasil())}</p>
+        {membro?.papel === 'dono' && (
+          <form action={alternarParceiro.bind(null, cliente.id, !parceiro)} className="mt-2 flex flex-wrap items-center gap-3">
+            {parceiro && <span className="rounded-md bg-primaria-suave px-2 py-0.5 text-sm text-primaria">Agência parceira (B2B)</span>}
+            <button type="submit" className="min-h-11 text-sm text-primaria underline">{parceiro ? 'Desmarcar agência parceira' : 'Marcar como agência parceira (B2B)'}</button>
+          </form>
+        )}
       </div>
       <ChamarWhatsapp
         key={`${cliente.nome}|${cliente.whatsapp}|${cliente.consentimento_whatsapp}`}

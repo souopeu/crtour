@@ -8,11 +8,14 @@ import { ReservaForm } from '@/components/reservas/ReservaForm'
 import { formatarWhatsapp } from '@/lib/clientes/rotulos'
 import { formatarDataBr } from '@/lib/formato'
 import { extrasDoPasseio } from '@/lib/extras/dados'
+import { clienteParceiro, precoB2b } from '@/lib/b2b/dados'
+import { getMembro } from '@/lib/auth/agencia'
+import { PrecoB2bForm } from '@/components/b2b/PrecoB2bForm'
 import { perguntasDoPasseio } from '@/lib/perguntas/dados'
 import { buscarClientesParaReserva, buscarNomeDoCliente, buscarSaida, listarReservas } from '@/lib/passeios/dados'
 import { centavosParaCampo, formatarReais } from '@/lib/passeios/dinheiro'
 import { excluirSaida, salvarSaida } from '../../passeios/actions'
-import { cancelarReserva } from '../actions'
+import { cancelarReserva, definirPrecoB2b } from '../actions'
 import { Carregando } from '@/components/Carregando'
 import { CustosSaida } from '@/components/custos/CustosSaida'
 import { buscarVeiculo, listarVeiculos } from '@/lib/veiculos/dados'
@@ -29,7 +32,7 @@ async function Conteudo({ params, searchParams }: Pick<PageProps<'/saidas/[id]'>
 
   const busca = um(sp.busca).trim().slice(0, 100)
   const clienteEscolhido = um(sp.cliente)
-  const [reservas, resultados, nomeEscolhido, ativos, veiculoAtual, extras, perguntas] = await Promise.all([
+  const [reservas, resultados, nomeEscolhido, ativos, veiculoAtual, extras, perguntas, membro, b2b, parceiro] = await Promise.all([
     listarReservas(saida.id),
     busca ? buscarClientesParaReserva(busca) : Promise.resolve([]),
     clienteEscolhido ? buscarNomeDoCliente(clienteEscolhido) : Promise.resolve(null),
@@ -37,7 +40,11 @@ async function Conteudo({ params, searchParams }: Pick<PageProps<'/saidas/[id]'>
     saida.veiculo_id ? buscarVeiculo(saida.veiculo_id) : Promise.resolve(null),
     clienteEscolhido ? extrasDoPasseio(saida.passeio_id) : Promise.resolve([]),
     clienteEscolhido ? perguntasDoPasseio(saida.passeio_id) : Promise.resolve([]),
+    getMembro(),
+    precoB2b(saida.id),
+    clienteEscolhido ? clienteParceiro(clienteEscolhido) : Promise.resolve(false),
   ])
+  const dono = membro?.papel === 'dono'
   // An archived vehicle still shows as the current choice, so saving the form does not drop it.
   const veiculos = veiculoAtual && !ativos.some((v) => v.id === veiculoAtual.id) ? [...ativos, veiculoAtual] : ativos
   const lotada = saida.livres <= 0
@@ -69,6 +76,7 @@ async function Conteudo({ params, searchParams }: Pick<PageProps<'/saidas/[id]'>
             </Link>
           )}
         </div>
+        {dono && <div className="mt-3"><PrecoB2bForm acao={definirPrecoB2b.bind(null, saida.id)} atual={b2b === null ? '' : centavosParaCampo(b2b)} /></div>}
         {sp.feito === '1' && <p role="status" className="mt-3 w-fit rounded-xl bg-receita-suave p-3 text-sm text-receita">Reserva feita.</p>}
       </div>
 
@@ -126,7 +134,7 @@ async function Conteudo({ params, searchParams }: Pick<PageProps<'/saidas/[id]'>
             ) : nomeEscolhido ? (
               <>
                 <p>Reserva para <strong>{nomeEscolhido}</strong>. <Link href={href({})} className="text-primaria underline">Escolher outro cliente</Link></p>
-                <ReservaForm saidaId={saida.id} clienteId={clienteEscolhido} vagasLivres={saida.livres} precoCentavos={saida.preco_centavos} extras={extras} perguntas={perguntas} />
+                <ReservaForm saidaId={saida.id} clienteId={clienteEscolhido} vagasLivres={saida.livres} precoCentavos={saida.preco_centavos} extras={extras} perguntas={perguntas} precoB2b={dono && parceiro ? b2b : null} />
               </>
             ) : (
               <>

@@ -5,6 +5,7 @@ export type Movimento = {
   id: string
   data: string
   categoria?: string // bills only: the expense category, for the DRE
+  tarifa?: 'balcao' | 'b2b' // payments only: the reservation's rate, for the DRE (R163)
   sentido: 'entrada' | 'saida'
   origem: 'pagamento' | 'estorno' | 'conta' | 'custo' | 'comissao'
   descricao: string

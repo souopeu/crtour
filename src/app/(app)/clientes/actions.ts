@@ -2,7 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { getAgenciaId } from '@/lib/auth/agencia'
+import { z } from 'zod'
+import { getAgenciaId, getMembro } from '@/lib/auth/agencia'
 import { clienteSchema } from '@/lib/clientes/schema'
 import { valoresDoForm } from '@/lib/clientes/formulario'
 import type { EstadoForm } from '@/lib/forms'
@@ -44,4 +45,14 @@ export async function salvarCliente(id: string | null, _: EstadoForm, fd: FormDa
   revalidatePath('/')
   revalidatePath(`/clientes/${id}`)
   return { ok: 'Alterações salvas.', valores, versao }
+}
+
+// R162: a partner agency (B2B). Only the owner marks it; a seller's click changes nothing.
+export async function alternarParceiro(id: string, parceiro: boolean): Promise<void> {
+  const membro = await getMembro()
+  if (!z.uuid().safeParse(id).success || membro?.papel !== 'dono') return
+  const supabase = await criarClienteServidor()
+  const { error } = await supabase.from('clientes').update({ parceiro }).eq('id', id)
+  if (error) console.error('alternarParceiro falhou', error.code)
+  revalidatePath(`/clientes/${id}`)
 }

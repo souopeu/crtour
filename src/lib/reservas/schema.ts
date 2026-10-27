@@ -39,6 +39,8 @@ const MENSAGENS: Record<string, string> = {
   CR021: 'Inicie o embarque desta saída antes de marcar quem embarcou.',
   CR023: 'Este extra não está disponível para este passeio.',
   CR024: 'O total não pode ficar abaixo do valor dos extras.',
+  CR027: 'Esta saída não tem preço B2B.',
+  CR028: 'A tarifa B2B é só para cliente marcado como agência parceira.',
   CR026: 'Uma das respostas não vale para esta pergunta. Confira e salve de novo.',
   '22008': 'A data do pagamento não pode estar no futuro.',
   '22023': 'Esta operação não é permitida para este registro.',

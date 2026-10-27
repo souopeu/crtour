@@ -1,4 +1,7 @@
 import Link from 'next/link'
+import { FiltroTarifa } from '@/components/b2b/FiltroTarifa'
+import { getMembro } from '@/lib/auth/agencia'
+import { hrefTarifa, lerFiltroTarifa } from '@/lib/b2b/tarifa'
 import { connection } from 'next/server'
 import { Suspense } from 'react'
 import { formatarDataBr, hojeNoBrasil } from '@/lib/formato'
@@ -27,18 +30,22 @@ function textoVencimento(vencimento: string | null, hoje: string) {
 }
 
 async function Lista({ searchParams }: Pick<PageProps<'/cobrancas'>, 'searchParams'>) {
-  const bruto = (await searchParams).filtro
+  const params = await searchParams
+  const bruto = params.filtro
   const filtro = (FILTROS_COBRANCA as readonly string[]).includes(String(bruto)) ? (bruto as FiltroCobranca) : 'todas'
   await connection() // "today" must be computed per request (Cache Components)
   const hoje = hojeNoBrasil()
-  const cobrancas = await listarCobrancas(filtro, hoje)
+  const dono = (await getMembro())?.papel === 'dono'
+  const tarifa = dono ? lerFiltroTarifa(params.tarifa) : null
+  const cobrancas = await listarCobrancas(filtro, hoje, tarifa)
   const totalEmAberto = cobrancas.reduce((soma, c) => soma + c.saldo, 0)
 
   return (
     <>
       <AbasDeVisao rotulo="Filtros das cobranças" abas={FILTROS_COBRANCA.map((f) => (
-        { rotulo: ROTULO[f], href: f === 'todas' ? '/cobrancas' : `/cobrancas?filtro=${f}`, ativa: f === filtro }
+        { rotulo: ROTULO[f], href: hrefTarifa('/cobrancas', f === 'todas' ? {} : { filtro: f }, tarifa), ativa: f === filtro }
       ))} />
+      {dono && <FiltroTarifa base="/cobrancas" params={params} atual={tarifa} />}
       <p aria-live="polite" className="text-sm text-tinta-suave">
         {cobrancas.length === 0 ? 'Nada a receber neste filtro.' : <>{cobrancas.length} {cobrancas.length === 1 ? 'reserva' : 'reservas'} · <strong>{formatarReais(totalEmAberto)}</strong> a receber</>}
       </p>
@@ -55,7 +62,7 @@ async function Lista({ searchParams }: Pick<PageProps<'/cobrancas'>, 'searchPara
           return (
             <li key={c.reservaId} className={`flex flex-col gap-2 rounded-(--radius-cartao) border border-l-4 border-linha bg-superficie p-4 ${venc.vencida ? 'border-l-despesa' : 'border-l-primaria'}`}>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <Link href={`/clientes/${c.clienteId}`} className="text-lg font-semibold text-primaria underline">{c.clienteNome}</Link>
+                <span><Link href={`/clientes/${c.clienteId}`} className="text-lg font-semibold text-primaria underline">{c.clienteNome}</Link>{c.tarifa === 'b2b' && <span className="ml-2 rounded-md bg-primaria-suave px-1.5 py-0.5 text-xs text-primaria">B2B</span>}</span>
                 <span className={venc.vencida ? 'font-semibold text-despesa' : 'text-tinta-suave'}>{venc.texto}</span>
               </div>
               <p className="text-sm text-tinta-suave">{c.passeio} · saída de {formatarDataBr(c.saidaData)}</p>

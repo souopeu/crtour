@@ -11,7 +11,7 @@ import type { Pergunta } from '@/lib/perguntas/perguntas'
 import { formatarReais, reaisParaCentavos } from '@/lib/passeios/dinheiro'
 
 type ExtraVenda = { id: string; nome: string; preco_centavos: number; cobranca: Cobranca }
-type Props = { saidaId: string; clienteId: string; vagasLivres: number; precoCentavos: number; extras: ExtraVenda[]; perguntas: Pergunta[] }
+type Props = { saidaId: string; clienteId: string; vagasLivres: number; precoCentavos: number; extras: ExtraVenda[]; perguntas: Pergunta[]; precoB2b?: number | null }
 
 const campo = 'h-12 rounded-xl border border-controle bg-superficie px-3 text-base'
 
@@ -20,12 +20,14 @@ function Dica({ id, erro, children }: { id: string; erro?: string; children: Rea
 }
 
 // R158: extras with a quantity each; the total below follows what is typed (tour value + extras).
-function Campos({ v, estado, vagasLivres, precoCentavos, extras, perguntas }: { v: Record<string, string>; estado: EstadoForm } & Omit<Props, 'saidaId' | 'clienteId'>) {
+function Campos({ v, estado, vagasLivres, precoCentavos, extras, perguntas, precoB2b = null }: { v: Record<string, string>; estado: EstadoForm } & Omit<Props, 'saidaId' | 'clienteId'>) {
   const [qtd, setQtd] = useState(v.qtd)
   const [valor, setValor] = useState(v.valor)
+  const [tarifa, setTarifa] = useState(v.tarifa === 'b2b' && precoB2b !== null ? 'b2b' : 'balcao')
+  const preco = tarifa === 'b2b' && precoB2b !== null ? precoB2b : precoCentavos
   const [itens, setItens] = useState<Record<string, string>>(Object.fromEntries(extras.map((e) => [e.id, v[campoDoExtra(e.id)] ?? ''])))
   const pessoas = /^\d+$/.test(qtd) ? Number(qtd) : 0
-  const base = valor.trim() === '' ? pessoas * precoCentavos : (reaisParaCentavos(valor) ?? 0)
+  const base = valor.trim() === '' ? pessoas * preco : (reaisParaCentavos(valor) ?? 0)
   const vendidos = extras.map((e) => ({ ...e, quantidade: /^\d+$/.test(itens[e.id]) ? Number(itens[e.id]) : 0 })).filter((e) => e.quantidade > 0)
   const erro = (n: string) => estado.campos?.[n]?.[0]
 
@@ -37,12 +39,19 @@ function Campos({ v, estado, vagasLivres, precoCentavos, extras, perguntas }: { 
           aria-invalid={erro('qtd') ? true : undefined} aria-describedby="reserva-qtd-dica" className={campo} />
         <Dica id="reserva-qtd-dica" erro={erro('qtd')}>Restam {vagasLivres} {vagasLivres === 1 ? 'vaga' : 'vagas'}.</Dica>
       </div>
+      {precoB2b !== null && (
+        <fieldset className="flex flex-col gap-1">
+          <legend className="text-sm font-medium">Tarifa</legend>
+          <label className="inline-flex min-h-11 items-center gap-2"><input type="radio" name="tarifa" value="balcao" checked={tarifa === 'balcao'} onChange={() => setTarifa('balcao')} /> Balcão · {formatarReais(precoCentavos)} por pessoa</label>
+          <label className="inline-flex min-h-11 items-center gap-2"><input type="radio" name="tarifa" value="b2b" checked={tarifa === 'b2b'} onChange={() => setTarifa('b2b')} /> B2B (agência parceira) · {formatarReais(precoB2b)} por pessoa</label>
+        </fieldset>
+      )}
       <div className="flex flex-col gap-1">
         <label htmlFor="reserva-valor" className="text-sm font-medium">Valor do passeio (R$)</label>
         <input id="reserva-valor" name="valor" value={valor} onChange={(e) => setValor(e.target.value)}
           aria-invalid={erro('valor') ? true : undefined} aria-describedby="reserva-valor-dica" className={campo} />
         <Dica id="reserva-valor-dica" erro={erro('valor')}>
-          Deixe em branco para pessoas × {formatarReais(precoCentavos)}. Preencha só se houver desconto. Sem os extras.
+          Deixe em branco para pessoas × {formatarReais(preco)}. Preencha só se houver desconto. Sem os extras.
         </Dica>
       </div>
       {extras.length > 0 && (

@@ -27,7 +27,11 @@ const base = { de: '2030-01-07', ate: '2030-01-13', dias: ['1', '3'], horarios: 
 describe('loteSchema', () => {
   it('turns the form into dates, sorted unique times and cents', () => {
     const r = loteSchema('2030-01-01').parse(base)
-    expect(r).toEqual({ datas: ['2030-01-07', '2030-01-09'], horarios: ['08:00', '14:00'], capacidade: 12, preco_centavos: 9000, veiculo_id: null })
+    expect(r).toEqual({ datas: ['2030-01-07', '2030-01-09'], horarios: ['08:00', '14:00'], capacidade: 12, preco_centavos: 9000, veiculo_id: null, preco_b2b_centavos: null })
+  })
+  it('takes an optional B2B price (R162)', () => {
+    expect(loteSchema('2030-01-01').parse({ ...base, preco_b2b: '70,00' }).preco_b2b_centavos).toBe(7000)
+    expect(loteSchema('2030-01-01').safeParse({ ...base, preco_b2b: 'barato' }).error?.flatten().fieldErrors).toHaveProperty('preco_b2b')
   })
   it('accepts no time at all', () => {
     expect(loteSchema('2030-01-01').parse({ ...base, horarios: ' ' }).horarios).toEqual([])

@@ -109,7 +109,7 @@ export async function criarSaidasLote(passeioId: string, _: EstadoForm, fd: Form
   const dias = fd.getAll('dias').map(String)
   const valores = {
     de: texto(fd, 'de'), ate: texto(fd, 'ate'), dias: dias.join(','), horarios: texto(fd, 'horarios'),
-    capacidade: texto(fd, 'capacidade'), preco: texto(fd, 'preco'), veiculo: texto(fd, 'veiculo'),
+    capacidade: texto(fd, 'capacidade'), preco: texto(fd, 'preco'), veiculo: texto(fd, 'veiculo'), preco_b2b: texto(fd, 'preco_b2b'),
   }
   const r = loteSchema(hojeNoBrasil()).safeParse({ ...valores, dias })
   if (!r.success) return { campos: r.error.flatten().fieldErrors, valores, versao }
@@ -118,7 +118,7 @@ export async function criarSaidasLote(passeioId: string, _: EstadoForm, fd: Form
   const supabase = await criarClienteServidor()
   const { data, error } = await supabase.rpc('criar_saidas_lote', {
     p_passeio: passeioId, p_datas: r.data.datas, p_horarios: r.data.horarios, p_capacidade: r.data.capacidade,
-    p_preco: r.data.preco_centavos, p_veiculo: r.data.veiculo_id,
+    p_preco: r.data.preco_centavos, p_veiculo: r.data.veiculo_id, p_preco_b2b: r.data.preco_b2b_centavos,
   }).single<{ criadas: number; puladas: number }>()
   if (error || !data) {
     const conhecido = error?.code === 'CR019' ? mensagemDeErroReserva('CR019')

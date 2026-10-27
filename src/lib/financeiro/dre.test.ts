@@ -5,6 +5,19 @@ import { aPagarCsv, dreCsv, itensCaixa, lerPeriodoDre, mesesDoPeriodo, montarDre
 
 const item = (grupo: ItemDre['grupo'], valor: number, categoria?: string): ItemDre => ({ grupo, categoria, descricao: `${grupo} ${valor}`, data: '2026-10-05', valor })
 
+describe('montarDre with B2B sales (R163)', () => {
+  it('splits revenue into counter and B2B, with the gross total below', () => {
+    const linhas = montarDre([item('receita', 30000), { ...item('receita', 14000), tarifa: 'b2b' }, item('custo', 5000)])
+    expect(linhas.slice(0, 4).map((l) => [l.chave, l.rotulo, l.valor, l.total])).toEqual([
+      ['receita:balcao', 'Receita balcão', 30000, false],
+      ['receita:b2b', 'Receita B2B', 14000, false],
+      ['receita', '= Receita bruta', 44000, true],
+      ['custo', '(−) Custos das saídas', 5000, false],
+    ])
+    expect(linhas.find((l) => l.chave === 'resultado')?.valor).toBe(39000)
+  })
+})
+
 describe('montarDre', () => {
   const linhas = montarDre([
     item('receita', 50000), item('receita', -2000), item('custo', 15000), item('comissao', 1500),

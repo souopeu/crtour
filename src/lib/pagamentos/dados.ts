@@ -57,19 +57,20 @@ export async function listarPagamentos(reservaId: string): Promise<PagamentoLinh
 
 export type Cobranca = {
   reservaId: string; clienteId: string; clienteNome: string; clienteWhatsapp: string | null; consentimento: string
-  passeio: string; saidaData: string; total: number; pago: number; saldo: number; vencimento: string | null
+  passeio: string; saidaData: string; total: number; pago: number; saldo: number; vencimento: string | null; tarifa: 'balcao' | 'b2b'
 }
 
 // Active reservations with a balance, filtered and sorted by due date (no date last).
-export async function listarCobrancas(filtro: FiltroCobranca, hoje: string): Promise<Cobranca[]> {
+export async function listarCobrancas(filtro: FiltroCobranca, hoje: string, tarifa: 'balcao' | 'b2b' | null = null): Promise<Cobranca[]> {
   const supabase = await criarClienteServidor()
   const { data } = await supabase
     .from('v_reservas_saldo')
-    .select('id, saida_id, cliente_id, valor_total_centavos, pago_centavos, saldo_centavos, vencimento_saldo')
+    .select('id, saida_id, cliente_id, valor_total_centavos, pago_centavos, saldo_centavos, vencimento_saldo, tarifa')
     .eq('situacao', 'ativa')
     .gt('saldo_centavos', 0)
+    .in('tarifa', tarifa ? [tarifa] : ['balcao', 'b2b'])
     .limit(2000)
-  const reservas = ((data ?? []) as { id: string; saida_id: string; cliente_id: string; valor_total_centavos: number; pago_centavos: number; saldo_centavos: number; vencimento_saldo: string | null }[])
+  const reservas = ((data ?? []) as { id: string; saida_id: string; cliente_id: string; valor_total_centavos: number; pago_centavos: number; saldo_centavos: number; vencimento_saldo: string | null; tarifa: 'balcao' | 'b2b' }[])
     .filter((r) => passaFiltro({ saldo: r.saldo_centavos, vencimento: r.vencimento_saldo }, filtro, hoje))
   if (reservas.length === 0) return []
 
@@ -90,7 +91,7 @@ export async function listarCobrancas(filtro: FiltroCobranca, hoje: string): Pro
       return {
         reservaId: r.id, clienteId: r.cliente_id, clienteNome: c?.nome ?? 'Cliente', clienteWhatsapp: c?.whatsapp ?? null,
         consentimento: c?.consentimento_whatsapp ?? 'nao_informado', passeio: s ? (nomePasseio.get(s.passeio_id) ?? '') : '',
-        saidaData: s?.data ?? '', total: r.valor_total_centavos, pago: r.pago_centavos, saldo: r.saldo_centavos, vencimento: r.vencimento_saldo,
+        saidaData: s?.data ?? '', total: r.valor_total_centavos, pago: r.pago_centavos, saldo: r.saldo_centavos, vencimento: r.vencimento_saldo, tarifa: r.tarifa,
       }
     })
     .sort((a, b) => (a.vencimento ?? '9999-12-31').localeCompare(b.vencimento ?? '9999-12-31') || a.clienteNome.localeCompare(b.clienteNome))

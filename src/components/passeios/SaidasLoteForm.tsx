@@ -8,11 +8,12 @@ import type { EstadoForm } from '@/lib/forms'
 import { DIAS_SEMANA, MAX_DIAS_LOTE, contarLote, datasDoLote, lerHorarios } from '@/lib/passeios/lote'
 import { VeiculoECapacidade, type VeiculoOpcao } from './SaidaForm'
 
-type Valores = { de: string; ate: string; dias: string; horarios: string; capacidade: string; preco: string; veiculo: string }
+type Valores = { de: string; ate: string; dias: string; horarios: string; capacidade: string; preco: string; veiculo: string; preco_b2b?: string }
 type Props = {
   acao: (e: EstadoForm, fd: FormData) => Promise<EstadoForm>
   veiculos: VeiculoOpcao[]
   existentes: { data: string; horario: string | null }[]
+  mostrarB2b?: boolean // owner only (R162)
 }
 
 const VAZIO: Valores = { de: '', ate: '', dias: '1,2,3,4,5', horarios: '', capacidade: '', preco: '', veiculo: '' }
@@ -29,7 +30,7 @@ function previa(v: { de: string; ate: string; dias: string[]; horarios: string }
   return `Serão criadas ${novas} ${novas === 1 ? 'saída' : 'saídas'}${pul}.`
 }
 
-function Campos({ inicial, estado, veiculos, existentes }: { inicial: Valores; estado: EstadoForm } & Omit<Props, 'acao'>) {
+function Campos({ inicial, estado, veiculos, existentes, mostrarB2b = false }: { inicial: Valores; estado: EstadoForm } & Omit<Props, 'acao'>) {
   const id = useId()
   const [de, setDe] = useState(inicial.de)
   const [ate, setAte] = useState(inicial.ate)
@@ -73,13 +74,14 @@ function Campos({ inicial, estado, veiculos, existentes }: { inicial: Valores; e
       </div>
       <VeiculoECapacidade veiculos={veiculos} inicial={inicial} erros={estado.campos} />
       <Campo nome="preco" rotulo="Preço por pessoa (R$)" valor={inicial.preco} erros={estado.campos?.preco} dica="Para alta e baixa temporada, crie um lote para cada período." />
+      {mostrarB2b && <Campo nome="preco_b2b" rotulo="Preço B2B por pessoa (R$, opcional)" valor={inicial.preco_b2b ?? ''} erros={estado.campos?.preco_b2b} dica="Só o dono vê. Em branco, as saídas não são vendidas B2B." />}
       <p aria-live="polite" className="text-sm font-medium">{texto}</p>
     </>
   )
 }
 
 // The fields only exist while the block is open, so their labels never clash with the single-departure form.
-export function SaidasLoteForm({ acao, veiculos, existentes }: Props) {
+export function SaidasLoteForm({ acao, veiculos, existentes, mostrarB2b }: Props) {
   const [estado, enviar] = useActionState<EstadoForm, FormData>(acao, {})
   const [aberto, setAberto] = useState(false)
   const inicial = (estado.valores as Valores | undefined) ?? VAZIO
@@ -90,7 +92,7 @@ export function SaidasLoteForm({ acao, veiculos, existentes }: Props) {
         <form action={enviar} className="flex max-w-xl flex-col gap-4">
           <p className="text-sm text-tinta-suave">Escolha o período, os dias da semana e os horários. Datas que já têm saída no mesmo horário são puladas.</p>
           <Mensagem estado={estado} />
-          <Campos key={estado.versao ?? 'inicial'} inicial={inicial} estado={estado} veiculos={veiculos} existentes={existentes} />
+          <Campos key={estado.versao ?? 'inicial'} inicial={inicial} estado={estado} veiculos={veiculos} existentes={existentes} mostrarB2b={mostrarB2b} />
           <div><BotaoEnviar>Criar saídas</BotaoEnviar></div>
         </form>
       )}

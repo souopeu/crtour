@@ -13,7 +13,7 @@ const ContaZ = z.object({ id: z.uuid(), descricao: z.string(), categoria: z.enum
 const CustoZ = z.object({ id: z.uuid(), saida_id: z.uuid(), descricao: z.string(), pago_em: z.string(), valor_centavos: z.number(), forma_pago: forma.nullable() })
 const ComissaoZ = z.object({ id: z.uuid(), vendedor_id: z.uuid(), pago_em: z.string(), valor_centavos: z.number(), forma_pago: forma })
 const MembroZ = z.object({ user_id: z.uuid(), nome: z.string() })
-const ReservaZ = z.object({ id: z.uuid(), cliente_id: z.uuid() })
+const ReservaZ = z.object({ id: z.uuid(), cliente_id: z.uuid(), tarifa: z.enum(['balcao', 'b2b']) })
 const NomeZ = z.object({ id: z.uuid(), nome: z.string() })
 const ConferenciaZ = z.object({ conferido_por: z.uuid().nullable(), conferido_em: z.string(), observacao: z.string().nullable(), invalidada_em: z.string().nullable() })
 
@@ -39,16 +39,18 @@ export async function movimentosEntre(inicio: string, fim: string): Promise<{ mo
   const pagamentos = ler(PagamentoZ, pagR, 'pagamentos')
   const membro = new Map(ler(MembroZ, membrosR, 'membros').map((m) => [m.user_id, m.nome]))
 
-  const reservasR = await emBlocos([...new Set(pagamentos.map((p) => p.reserva_id))], (b) => supabase.from('reservas').select('id, cliente_id').in('id', b))
+  const reservasR = await emBlocos([...new Set(pagamentos.map((p) => p.reserva_id))], (b) => supabase.from('reservas').select('id, cliente_id, tarifa').in('id', b))
   const reservas = ler(ReservaZ, reservasR, 'reservas')
   const clientesR = await emBlocos([...new Set(reservas.map((r) => r.cliente_id))], (b) => supabase.from('clientes').select('id, nome').in('id', b))
   const cliente = new Map(ler(NomeZ, clientesR, 'clientes').map((c) => [c.id, c.nome]))
   const clienteDa = new Map(reservas.map((r) => [r.id, cliente.get(r.cliente_id) ?? 'Cliente']))
+  const tarifaDa = new Map(reservas.map((r) => [r.id, r.tarifa]))
 
   const movimentos: Movimento[] = [
     ...pagamentos.map((p): Movimento => ({
       id: p.id, data: p.data, sentido: p.tipo === 'estorno' ? 'saida' : 'entrada', origem: p.tipo === 'estorno' ? 'estorno' : 'pagamento',
       descricao: `${clienteDa.get(p.reserva_id) ?? 'Cliente'} · ${p.tipo}`, valor: p.valor_centavos, forma: p.forma, href: `/reservas/${p.reserva_id}`,
+      tarifa: tarifaDa.get(p.reserva_id),
     })),
     ...ler(ContaZ, contasR, 'contas').map((c): Movimento => ({
       id: c.id, data: c.pago_em, categoria: rotuloCategoriaConta(c.categoria), sentido: 'saida', origem: 'conta', descricao: c.descricao, valor: c.valor_centavos, forma: c.forma_pago, href: `/financeiro/contas/${c.id}`,
